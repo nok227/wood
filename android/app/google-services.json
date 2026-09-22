@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "209414153146",
+    "project_id": "wood-4f334",
+    "storage_bucket": "wood-4f334.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:209414153146:android:32072fd8a8e2532d0e3383",
+        "android_client_info": {
+          "package_name": "wood.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJBx_A7Qw3LxdQnt206IrDgGMcRJ8rYKo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,66 @@
+name: wood
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.8
+  get: ^4.6.6
+  firebase_core: ^4.15.0
+  cloud_firestore: ^6.10.0
+  http: ^1.6.0
+  image_picker: ^1.2.3
+  cached_network_image: ^3.4.1
+  intl: ^0.20.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.4
+
+flutter_native_splash:
+  color: "#42a5f5"  # สีพื้นหลัง
+  image: assets/Images/Image_screen.jpg  # ภาพที่แสดงตรงกลาง (ต้องเป็น PNG)
+  branding: assets/Images/Image_screen.jpg  # ภาพโลโก้ด้านล่าง (ถ้ามี)
+  android_12:
+    color: "#42a5f5"
+    image: assets/Images/Image_screen.jpg  # ภาพสำหรับ Android 12+
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/icons_app.jpg"        # เปลี่ยนเป็น PNG
+  min_sdk_android: 21
+  remove_alpha_ios: true
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/icons/icons_app.jpg"
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/Icons/
+    - assets/Images/
+    # - images/Image_screen.jpg
+
+ 

@@ -1,0 +1,225 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../controllers/wood_product_controller.dart';
+import '../../data/models/wood_product_model.dart';
+import '../widgets/wood_3d_scene.dart';
+
+class Wood3DPage extends StatefulWidget {
+  const Wood3DPage({super.key});
+
+  @override
+  State<Wood3DPage> createState() => _Wood3DPageState();
+}
+
+class _Wood3DPageState extends State<Wood3DPage> {
+  final controller = Get.find<WoodProductController>();
+
+  String selectedWoodType = 'ທັງໝົດ';
+  String? selectedName;
+  WoodProductModel? selectedVariant;
+  String? focusedDimension;
+
+  String _fmt(num v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('ໂມເດວ 3D ທຽບໄມ້ໃນຄັງ')),
+      body: Obx(() {
+        final allProducts = controller.products;
+
+        // 1. รายการชนิดไม้ทั้งหมด
+        final woodTypeOptions = ['ທັງໝົດ', ...controller.uniqueWoodTypes];
+
+        // 2. กรองตามชนิดไม้
+        final filteredProducts = selectedWoodType == 'ທັງໝົດ'
+            ? allProducts
+            : allProducts.where((p) => p.woodType.trim() == selectedWoodType).toList();
+
+        // 3. ชื่อไม้ที่ไม่ซ้ำกัน
+        final names = filteredProducts.map((p) => p.name).toSet().toList();
+
+        if (selectedName != null && !names.contains(selectedName)) {
+          selectedName = null;
+          selectedVariant = null;
+        }
+
+        // 4. รายการขนาดไม้
+        final variants = selectedName == null
+            ? <WoodProductModel>[]
+            : filteredProducts.where((p) => p.name == selectedName).toList();
+
+        if (variants.isEmpty) {
+          selectedVariant = null;
+        } else {
+          final matched = variants.where((v) => v.id == selectedVariant?.id).toList();
+          selectedVariant = matched.isNotEmpty ? matched.first : variants.first;
+        }
+
+        final hasSelection = selectedVariant != null;
+
+        return Column(
+          children: [
+            Expanded(
+              child: hasSelection
+                  ? Wood3DScene(
+                      // ✅ ล็อกมุมหมุน/ระยะซูมไว้ตราบใดที่ชื่อไม้ (selectedName) ยังเหมือนเดิม
+                      key: ValueKey(selectedName),
+                      productName: selectedVariant!.name,
+                      width: selectedVariant!.width,
+                      length: selectedVariant!.length,
+                      thickness: selectedVariant!.thickness,
+                      sizeUnit: selectedVariant!.sizeUnit,
+                      unit: selectedVariant!.unit,
+                      focusedDimension: focusedDimension,
+                    )
+                  : Container(
+                      width: double.infinity,
+                      color: Colors.brown[50],
+                      child: const Center(
+                        child: Text(
+                          'ພື້ນທີ່ສະແດງໂມເດວໄມ້ 3D',
+                          style: TextStyle(color: Colors.black45, fontSize: 15),
+                        ),
+                      ),
+                    ),
+            ),
+
+            if (hasSelection)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Expanded(child: _dimButton('ກວ້າງ', 'width')),
+                    const SizedBox(width: 8),
+                    Expanded(child: _dimButton('ຍາວ', 'length')),
+                    const SizedBox(width: 8),
+                    Expanded(child: _dimButton('ໜາ', 'thickness')),
+                  ],
+                ),
+              ),
+
+            const Divider(height: 1),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: allProducts.isEmpty
+                  ? const Text(
+                      'ຍັງບໍ່ມີຂໍ້ມູນໃນຄັງ ກະລຸນາເພີ່ມຂໍ້ມູນກ່ອນ',
+                      style: TextStyle(color: Colors.black54),
+                    )
+                  : Column(
+                      children: [
+                        // Dropdown ชนิดไม้
+                        DropdownButtonFormField<String>(
+                          value: selectedWoodType,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            labelText: 'ຊະນິດໄມ້',
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          ),
+                          items: woodTypeOptions
+                              .map((type) => DropdownMenuItem(
+                                    value: type,
+                                    child: Text(
+                                      type == 'ທັງໝົດ' ? 'ທັງໝົດ (ສະແດງທັງໝົດ)' : type,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ))
+                              .toList(),
+                          onChanged: (v) => setState(() {
+                            selectedWoodType = v ?? 'ທັງໝົດ';
+                            selectedName = null;
+                            selectedVariant = null;
+                            focusedDimension = null;
+                          }),
+                        ),
+                        const SizedBox(height: 10),
+
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Dropdown ชื่อไม้
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: selectedName,
+                                isExpanded: true,
+                                decoration: const InputDecoration(
+                                  labelText: 'ຊື່ໄມ້',
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                ),
+                                hint: const Text('ເລືອກຊື່ໄມ້'),
+                                items: names
+                                    .map((n) => DropdownMenuItem(
+                                          value: n,
+                                          child: Text(n, overflow: TextOverflow.ellipsis),
+                                        ))
+                                    .toList(),
+                                onChanged: (v) => setState(() {
+                                  selectedName = v;
+                                  focusedDimension = null;
+                                  final vs = v == null
+                                      ? <WoodProductModel>[]
+                                      : filteredProducts.where((p) => p.name == v).toList();
+                                  selectedVariant = vs.isNotEmpty ? vs.first : null;
+                                }),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+
+                            // Dropdown ขนาดไม้
+                            Expanded(
+                              child: DropdownButtonFormField<WoodProductModel>(
+                                value: selectedVariant,
+                                isExpanded: true,
+                                decoration: const InputDecoration(
+                                  labelText: 'ຂະໜາດ',
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                ),
+                                hint: const Text('ເລືອກຂະໜາດ'),
+                                items: variants
+                                    .map((v) => DropdownMenuItem<WoodProductModel>(
+                                          value: v,
+                                          child: Text(
+                                            '${_fmt(v.width)}×${_fmt(v.length)}×${_fmt(v.thickness)} ${v.sizeUnit}',
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ))
+                                    .toList(),
+                                onChanged: selectedName == null
+                                    ? null
+                                    : (v) => setState(() {
+                                          selectedVariant = v;
+                                          focusedDimension = null;
+                                        }),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  Widget _dimButton(String label, String value) {
+    final active = focusedDimension == value;
+    return OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        backgroundColor: active ? Colors.brown : null,
+        foregroundColor: active ? Colors.white : Colors.brown,
+        side: const BorderSide(color: Colors.brown),
+      ),
+      onPressed: () => setState(() {
+        focusedDimension = active ? null : value;
+      }),
+      child: Text(label),
+    );
+  }
+}
