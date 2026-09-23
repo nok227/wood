@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:wood/features/auth/auth_controller.dart';
+import 'package:wood/features/wood_products/presentation/widgets/wood_list_skeleton.dart';
 import '../controllers/wood_product_controller.dart';
 import '../../data/models/wood_product_model.dart';
 import 'wood_product_form_page.dart';
@@ -26,13 +28,16 @@ class _WoodProductListPageState extends State<WoodProductListPage> {
     final controller = Get.find<WoodProductController>();
     final currencyFormat = NumberFormat('#,###');
 
+    // 🔐 เช็คสิทธิ์ Admin จากจุดเดียว (AuthController)
+    final bool isAdmin = Get.find<AuthController>().isAdmin;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('ລາຍການໄມ້ໃນຄັງ'),
       ),
       body: Obx(() {
         if (controller.isLoading.value && controller.products.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const WoodListSkeleton();
         }
         if (controller.products.isEmpty) {
           return const Center(child: Text('ຍັງບໍ່ມີຂໍ້ມູນສິນຄ້າໄມ້'));
@@ -63,7 +68,7 @@ class _WoodProductListPageState extends State<WoodProductListPage> {
           groupedProducts[groupKey]!.add(item);
         }
 
-        // 4. เรียงลำดับรายการไม้ภายในแต่ละกลุ่มตามขนาด (กว้าง x ยาว x หนา)
+        // 4. เรียงลำดับรายการไม้ภายในแต่ละกลุ่มตามขนาด
         groupedProducts.forEach((key, list) {
           list.sort((a, b) {
             final volumeA = a.width * a.length * a.thickness;
@@ -266,56 +271,57 @@ class _WoodProductListPageState extends State<WoodProductListPage> {
                                             ),
                                           ),
 
-                                          // ปุ่มแก้ไข / ลบ
-                                          SizedBox(
-                                            width: 32,
-                                            height: 32,
-                                            child: PopupMenuButton<int>(
-                                              padding: EdgeInsets.zero,
-                                              icon: const Icon(Icons.more_vert,
-                                                  size: 22),
-                                              onSelected: (value) {
-                                                if (value == 1) {
-                                                  controller.startEdit(item);
-                                                  Get.to(() =>
-                                                      WoodProductFormPage());
-                                                } else if (value == 2) {
-                                                  _confirmDelete(
-                                                      context, controller, item);
-                                                }
-                                              },
-                                              itemBuilder: (context) => [
-                                                const PopupMenuItem(
-                                                  value: 1,
-                                                  child: Row(
-                                                    children: [
-                                                      Icon(Icons.edit,
-                                                          color: Colors.blue,
-                                                          size: 20),
-                                                      SizedBox(width: 12),
-                                                      Text('ແກ້ໄຂ'),
-                                                    ],
+                                          // 🔴 แสดงปุ่มแก้ไข / ลบ เฉพาะ Admin เท่านั้น
+                                          if (isAdmin)
+                                            SizedBox(
+                                              width: 32,
+                                              height: 32,
+                                              child: PopupMenuButton<int>(
+                                                padding: EdgeInsets.zero,
+                                                icon: const Icon(Icons.more_vert,
+                                                    size: 22),
+                                                onSelected: (value) {
+                                                  if (value == 1) {
+                                                    controller.startEdit(item);
+                                                    Get.to(() =>
+                                                        WoodProductFormPage());
+                                                  } else if (value == 2) {
+                                                    _confirmDelete(
+                                                        context, controller, item);
+                                                  }
+                                                },
+                                                itemBuilder: (context) => [
+                                                  const PopupMenuItem(
+                                                    value: 1,
+                                                    child: Row(
+                                                      children: [
+                                                        Icon(Icons.edit,
+                                                            color: Colors.blue,
+                                                            size: 20),
+                                                        SizedBox(width: 12),
+                                                        Text('ແກ້ໄຂ'),
+                                                      ],
+                                                    ),
                                                   ),
-                                                ),
-                                                const PopupMenuItem(
-                                                  value: 2,
-                                                  child: Row(
-                                                    children: [
-                                                      Icon(Icons.delete,
-                                                          color: Colors.red,
-                                                          size: 20),
-                                                      SizedBox(width: 12),
-                                                      Text(
-                                                        'ລົບ',
-                                                        style: TextStyle(
-                                                            color: Colors.red),
-                                                      ),
-                                                    ],
+                                                  const PopupMenuItem(
+                                                    value: 2,
+                                                    child: Row(
+                                                      children: [
+                                                        Icon(Icons.delete,
+                                                            color: Colors.red,
+                                                            size: 20),
+                                                        SizedBox(width: 12),
+                                                        Text(
+                                                          'ລົບ',
+                                                          style: TextStyle(
+                                                              color: Colors.red),
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
-                                                ),
-                                              ],
+                                                ],
+                                              ),
                                             ),
-                                          ),
                                         ],
                                       ),
                                     ),
@@ -342,7 +348,7 @@ class _WoodProductListPageState extends State<WoodProductListPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('ຍືນຍັນການລົບ'),
-        content: Text('ຕ້ອງການລົບຂໍ້ມູນຂະໜາດນີ້ ແມ່ນຫຼືບໍ່?'),
+        content: const Text('ຕ້ອງການລົບຂໍ້ມູນຂະໜາດນີ້ ແມ່ນຫຼືບໍ່?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),

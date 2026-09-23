@@ -12,7 +12,20 @@
           "package_name": "wood.com"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "209414153146-7cuugll1uaprio9j2uhg4cj0lc7jid2f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "wood.com",
+            "certificate_hash": "7af185b3977c3c213a8cd95b2bca65d5b6c80758"
+          }
+        },
+        {
+          "client_id": "209414153146-rdtkmcl4sgnfmid8orkg9lup678t51ra.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCJBx_A7Qw3LxdQnt206IrDgGMcRJ8rYKo"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "209414153146-rdtkmcl4sgnfmid8orkg9lup678t51ra.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

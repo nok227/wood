@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:wood/firebase_options.dart';
 import 'package:wood/features/wood_products/presentation/pages/home_shell.dart';
 import 'package:wood/features/wood_products/presentation/controllers/wood_product_controller.dart';
 
+// Import ฝั่ง Auth
+import 'package:wood/features/auth/auth_remote_data_source.dart';
+import 'package:wood/features/auth/auth_repository_impl.dart';
+import 'package:wood/features/auth/auth_controller.dart';
+import 'package:wood/features/auth/register_page.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ ครอบ try/catch ตอน Firebase init เพื่อไม่ให้แอปพังแบบเงียบ ๆ (จอขาว)
-  // ถ้า Firebase init fail จริง จะเห็น error message บนหน้าจอแทนที่จะเจอจอขาวเปล่า
   Object? firebaseInitError;
   try {
-    // ✅ เช็คก่อนว่ามี default app อยู่แล้วหรือยัง (เช่น ฝั่ง Android
-    // auto-init ผ่าน google-services.json ไว้แล้ว) ถ้ามีแล้วก็ไม่ต้อง
-    // initializeApp() ซ้ำ ป้องกัน [core/duplicate-app] error
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
@@ -22,7 +24,6 @@ void main() async {
     }
   } on FirebaseException catch (e, st) {
     if (e.code == 'duplicate-app') {
-      // ไม่ใช่ error จริง — Firebase ใช้งานได้ปกติ แค่ถูก init ไปแล้วก่อนหน้า
       debugPrint('Firebase already initialized, skipping: ${e.code}');
     } else {
       debugPrint('Firebase init error: $e');
@@ -35,11 +36,13 @@ void main() async {
     firebaseInitError = e;
   }
 
-  // ✅ สำคัญมาก: ต้อง put controller ก่อนที่หน้า UI จะเรียกใช้
-  // นี่คือสาเหตุที่พบบ่อยที่สุดของอาการ "จอขาว" เมื่อใช้ GetX
-  // (ถ้าไม่ put ไว้ก่อน แล้วหน้า page ไปเรียก Get.find<WoodProductController>()
-  // มันจะ throw exception ทันทีตอน build widget แรก)
+  // ✅ Inject Controllers
   Get.put(WoodProductController());
+
+  // ✅ Inject Auth Clean Architecture
+  final authRemoteDataSource = AuthRemoteDataSource();
+  final authRepository = AuthRepositoryImpl(remoteDataSource: authRemoteDataSource);
+  Get.put(AuthController(authRepository: authRepository));
 
   runApp(MyApp(firebaseInitError: firebaseInitError));
 }
@@ -57,17 +60,16 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.brown,
       ),
-      // ✅ ถ้า Firebase init fail จะโชว์หน้า error ที่เห็นได้ชัด
-      // แทนที่จะปล่อยให้จอขาวเปล่าโดยไม่รู้สาเหตุ
+      // ✅ เช็คว่าถ้ายังไม่ได้ Login ให้ไปหน้า RegisterPage ก่อน
       home: firebaseInitError != null
           ? FirebaseErrorPage(error: firebaseInitError!)
-          : const HomeShell(),
+          : (FirebaseAuth.instance.currentUser != null
+              ? const HomeShell()
+              : const RegisterPage()),
     );
   }
 }
 
-/// หน้าจอแสดง error กรณี Firebase.initializeApp() ล้มเหลว
-/// ช่วยให้เห็นสาเหตุจริงแทนที่จะเจอจอขาวเฉย ๆ
 class FirebaseErrorPage extends StatelessWidget {
   final Object error;
 
@@ -94,15 +96,6 @@ class FirebaseErrorPage extends StatelessWidget {
               Text(
                 error.toString(),
                 style: const TextStyle(fontSize: 14, color: Colors.black87),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'ตรวจสอบ:\n'
-                '1. มีไฟล์ android/app/google-services.json หรือไม่\n'
-                '2. applicationId ใน android/app/build.gradle ตรงกับ Firebase console หรือไม่\n'
-                '3. android/build.gradle มี classpath google-services หรือไม่\n'
-                '4. android/app/build.gradle มี apply plugin google-services หรือไม่',
-                style: TextStyle(fontSize: 13, color: Colors.black54),
               ),
             ],
           ),

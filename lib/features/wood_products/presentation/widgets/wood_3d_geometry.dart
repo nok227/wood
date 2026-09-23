@@ -202,13 +202,11 @@ class Wood3DGeometry {
 
   V3 _mid(V3 a, V3 b) => V3((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
 
-  Offset widthAnchor(Size size) {
+Offset widthAnchor(Size size) {
     V3 target;
     if (frameType == FrameType.door) {
-      // ✅ ชี้ไปที่ฐานขอบล่างซ้ายของเสาประตู ไม่ให้ชี้กลางช่องว่าง
-      target = V3(-hx, -hy, -hz);
+      target = V3(0, -hy, hz);
     } else {
-      // ไม้แผ่น หรือ วงกบช่องลม (ที่มีคานล่าง)
       final outer = _createBoxVertices(-hx, hx, -hy, hy, -hz, hz);
       target = _mid(outer[1], outer[0]);
     }

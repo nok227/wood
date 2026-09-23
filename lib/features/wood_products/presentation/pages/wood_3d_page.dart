@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:wood/features/auth/auth_controller.dart';
+import 'package:wood/features/auth/register_page.dart';
 import '../controllers/wood_product_controller.dart';
 import '../../data/models/wood_product_model.dart';
 import '../widgets/wood_3d_scene.dart';
+
 
 class Wood3DPage extends StatefulWidget {
   const Wood3DPage({super.key});
@@ -24,7 +27,17 @@ class _Wood3DPageState extends State<Wood3DPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('ໂມເດວ 3D ທຽບໄມ້ໃນຄັງ')),
+      appBar: AppBar(
+        title: const Text('ໂມເດວ 3D ທຽບໄມ້ໃນຄັງ'),
+        actions: [
+          // 🚪 ปุ่ม Logout มุมขวาบนสุด
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'ອອກຈາກລະບົບ',
+            onPressed: () => _confirmLogout(context),
+          ),
+        ],
+      ),
       body: Obx(() {
         final allProducts = controller.products;
 
@@ -63,7 +76,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
             Expanded(
               child: hasSelection
                   ? Wood3DScene(
-                      // ✅ ล็อกมุมหมุน/ระยะซูมไว้ตราบใดที่ชื่อไม้ (selectedName) ยังเหมือนเดิม
                       key: ValueKey(selectedName),
                       productName: selectedVariant!.name,
                       width: selectedVariant!.width,
@@ -220,6 +232,27 @@ class _Wood3DPageState extends State<Wood3DPage> {
         focusedDimension = active ? null : value;
       }),
       child: Text(label),
+    );
+  }
+
+  // 🔴 ฟังก์ชันยืนยันและดำเนินการ Logout
+  void _confirmLogout(BuildContext context) {
+    Get.defaultDialog(
+      title: 'ຍືນຍັນການອອກຈາກລະບົບ',
+      middleText: 'ທ່ານຕ້ອງການອອກຈາກລະບົບ ແມ່ນຫຼືບໍ່?',
+      textConfirm: 'ອອກຈາກລະບົບ',
+      textCancel: 'ຍົກເລີກ',
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.red,
+      onConfirm: () async {
+        Get.back(); // ปิด Dialog
+        try {
+          await Get.find<AuthController>().logout();
+          Get.offAll(() => const RegisterPage());
+        } catch (e) {
+          Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດອອກຈາກລະບົບໄດ້: $e');
+        }
+      },
     );
   }
 }
