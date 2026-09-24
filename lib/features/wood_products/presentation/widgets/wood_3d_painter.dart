@@ -47,15 +47,15 @@ class Wood3DPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final allDrawFaces = <_DrawFace>[];
 
-    // วนลูปวาดกล่องทุกชิ้น (กรณีเป็นวงกบจะมี 3 ชิ้น: เสาซ้าย เสาขวา ทับหลัง)
     for (final baseBox in geometry.allBoxesVertices) {
-      final rotated = baseBox.map((v) => v.rotate(geometry.rotationX, geometry.rotationY)).toList();
+      final rotated = baseBox.map(geometry.transform).toList();
 
       for (final f in _faces) {
         final quad = f.indices.map((i) => rotated[i]).toList();
         final n = _faceNormal(quad);
         final avgZ = quad.map((v) => v.z).reduce((a, b) => a + b) / quad.length;
         final brightness = 0.55 + 0.45 * n.dot(_lightDir).clamp(0.0, 1.0);
+
         final shaded = Color.lerp(Colors.black, f.color, brightness)!;
 
         final points = quad.map((v) => geometry.project(v, size)).toList();
@@ -70,8 +70,6 @@ class Wood3DPainter extends CustomPainter {
       final path = Path()..addPolygon(face.points, true);
       final bounds = path.getBounds();
 
-      // ✅ ไล่เฉดสีอ่อน->เข้มในแต่ละหน้า แทนสีตันสีเดียว ให้ดูมีมิติ/เป็นเนื้อไม้จริง
-      // ไม่ให้แบนเหมือนกระดาษ (ซึ่งทำให้ตรงกลางดูโบ๋ ๆ ขณะที่ขอบเด่นเพราะเส้นขอบหนา)
       final gradient = ui.Gradient.linear(
         bounds.topLeft,
         bounds.bottomRight,
@@ -84,12 +82,10 @@ class Wood3DPainter extends CustomPainter {
       );
       canvas.drawPath(path, Paint()..shader = gradient);
 
-      // เส้นขอบบางลง สีกลืนไปกับเนื้อไม้แทนที่จะเป็นเส้นดำหนาล้อมกรอบ
       canvas.drawPath(
         path,
         Paint()
-          ..color = Color.lerp(face.color, const Color(0xFF3E2723), 0.6)!
-              .withOpacity(0.45)
+          ..color = Color.lerp(face.color, const Color(0xFF3E2723), 0.6)!.withOpacity(0.45)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.0,
       );

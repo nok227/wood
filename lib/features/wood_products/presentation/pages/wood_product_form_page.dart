@@ -1,31 +1,50 @@
+// lib/features/wood_products/presentation/pages/wood_product_form_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:wood/features/wood_products/presentation/widgets/custom_app_bar.dart';
 import '../controllers/wood_product_controller.dart';
 import 'package:wood/core/util/currency_formatter.dart';
 
-class WoodProductFormPage extends StatelessWidget {
-  WoodProductFormPage({super.key});
+// 🚀 เปลี่ยนเป็น StatefulWidget เพื่อรองรับการ Keep State
+class WoodProductFormPage extends StatefulWidget {
+  final bool isPage;
+  const WoodProductFormPage({super.key, this.isPage = false});
+
+  @override
+  State<WoodProductFormPage> createState() => _WoodProductFormPageState();
+}
+
+class _WoodProductFormPageState extends State<WoodProductFormPage> with AutomaticKeepAliveClientMixin {
   final WoodProductController controller = Get.find<WoodProductController>();
+
+  // 🚀 คืนค่า true เพื่อจำฟอร์มที่กรอกค้างไว้ ไม่ให้รีเซ็ตตอนสไลด์หน้า
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // 🚀 อย่าลืมเรียก super.build
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        title: Obx(
-          () => Text(
-            controller.editingProductId.value == null
-                ? 'ເພີ່ມໄມ້ໃໝ່'
-                : 'ແກ້ໄຂຂໍ້ມູນໄມ້',
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
-          ),
-        ),
-      ),
+      appBar: widget.isPage // 👈 อ้างอิงตัวแปร isPage ผ่าน widget.isPage
+          ? CustomAppBar(
+              titleWidget: Obx(
+                () => Text(
+                  controller.editingProductId.value == null
+                      ? 'ເພີ່ມໄມ້ໃໝ່'
+                      : 'ແກ້ໄຂຂໍ້ມູນໄມ້',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            )
+          : null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -41,8 +60,6 @@ class WoodProductFormPage extends StatelessWidget {
             const SizedBox(height: 8),
             Obx(() => _buildImagesPicker(controller)),
             const SizedBox(height: 16),
-
-            // ✅ เพิ่มช่องกรอก ชนิดไม้
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -56,7 +73,6 @@ class WoodProductFormPage extends StatelessWidget {
               decoration: _minimalInputDecoration('ຊະນິດໄມ້'),
             ),
             const SizedBox(height: 16),
-
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -70,7 +86,6 @@ class WoodProductFormPage extends StatelessWidget {
               decoration: _minimalInputDecoration('ຊື່ໄມ້'),
             ),
             const SizedBox(height: 16),
-
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -126,7 +141,6 @@ class WoodProductFormPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -171,7 +185,6 @@ class WoodProductFormPage extends StatelessWidget {
                   : const SizedBox.shrink(),
             ),
             const SizedBox(height: 16),
-
             TextField(
               controller: controller.priceController,
               keyboardType: const TextInputType.numberWithOptions(
@@ -186,7 +199,6 @@ class WoodProductFormPage extends StatelessWidget {
               ).copyWith(suffixText: 'ກີບ '),
             ),
             const SizedBox(height: 24),
-
             Obx(
               () => controller.isSaving.value
                   ? const Center(child: CircularProgressIndicator())
@@ -203,13 +215,16 @@ class WoodProductFormPage extends StatelessWidget {
                               ),
                             ),
                             onPressed: () async {
-                              final isEditing = controller.editingProductId.value != null;
+                              final isEditing =
+                                  controller.editingProductId.value != null;
                               final isSuccess = await controller.saveProduct();
                               if (isSuccess) {
                                 Get.back();
                                 Get.snackbar(
-                                  'ສຳເລັດ', 
-                                  isEditing ? 'ແກ້ໄຂຂໍ້ມູນແລ້ວ' : 'ບັນທຶກຂໍ້ມູນແລ້ວ',
+                                  'ສຳເລັດ',
+                                  isEditing
+                                      ? 'ແກ້ໄຂຂໍ້ມູນແລ້ວ'
+                                      : 'ບັນທຶກຂໍ້ມູນແລ້ວ',
                                 );
                               }
                             },
@@ -278,6 +293,7 @@ class WoodProductFormPage extends StatelessWidget {
   }
 }
 
+// ฟังก์ชัน Build Image Picker ถูกแยกอยู่นอก Class ใช้งานได้ตามปกติ
 Widget _buildImagesPicker(WoodProductController controller) {
   final totalCount =
       controller.existingImageUrls.length + controller.selectedImages.length;

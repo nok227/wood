@@ -17,8 +17,8 @@ dependencies:
   get: ^4.6.6
   firebase_core: ^4.15.0
   cloud_firestore: ^6.10.0
-  firebase_auth: ^6.7.0      # 👈 เพิ่มใหม่สำหรับระบบ Login/Register
-  google_sign_in: ^6.2.2      # 👈 เพิ่มใหม่สำหรับ Google Sign-In
+  firebase_auth: ^6.7.0      
+  google_sign_in: ^6.2.2      
   http: ^1.6.0
   image_picker: ^1.2.3
   cached_network_image: ^3.4.1
