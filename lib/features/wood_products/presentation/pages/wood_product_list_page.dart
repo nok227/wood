@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:intl/intl.dart';
 import 'package:wood/features/auth/auth_controller.dart';
+import 'package:wood/features/wood_products/presentation/widgets/animated_number.dart';
 import 'package:wood/features/wood_products/presentation/widgets/wood_list_skeleton.dart';
 import '../controllers/wood_product_controller.dart';
 import '../../data/models/wood_product_model.dart';
@@ -22,7 +22,6 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     with AutomaticKeepAliveClientMixin {
   String selectedNameFilter = 'ທັງໝົດ';
 
-  // 🚀 ตัวแปรควบคุมการเลื่อนและจำกัดจำนวนแสดงผล
   final ScrollController _scrollController = ScrollController();
   int _displayLimit = 10;
   bool _isLoadingMore = false;
@@ -30,7 +29,6 @@ class _WoodProductListPageState extends State<WoodProductListPage>
   @override
   void initState() {
     super.initState();
-    // 🚀 ติดตั้ง Listener ตรวจจับการเลื่อน Scroll
     _scrollController.addListener(_onScroll);
   }
 
@@ -40,7 +38,6 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     super.dispose();
   }
 
-  // 🚀 ฟังก์ชันตรวจจับเมื่อเลื่อนลงมาเกือบสุดหน้าจอ
   void _onScroll() {
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent - 50 &&
@@ -49,15 +46,9 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     }
   }
 
-  // 🚀 โหลดข้อมูลเพิ่มทีละ 10 รายการ
   Future<void> _loadMore() async {
-    setState(() {
-      _isLoadingMore = true;
-    });
-
-    // หน่วงเวลาเล็กน้อยเพื่อให้แสดง Layout โหลดได้อย่างสมูธ
+    setState(() => _isLoadingMore = true);
     await Future.delayed(const Duration(milliseconds: 800));
-
     if (mounted) {
       setState(() {
         _displayLimit += 10;
@@ -78,10 +69,10 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     super.build(context);
 
     final controller = Get.find<WoodProductController>();
-    final currencyFormat = NumberFormat('#,###');
     final bool isAdmin = Get.find<AuthController>().isAdmin;
 
     return Scaffold(
+      backgroundColor: Colors.brown[50],
       body: Obx(() {
         if (controller.isLoading.value && controller.products.isEmpty) {
           return const WoodListSkeleton();
@@ -100,52 +91,69 @@ class _WoodProductListPageState extends State<WoodProductListPage>
         final filteredList = selectedNameFilter == 'ທັງໝົດ'
             ? controller.products.toList()
             : controller.products
-                  .where((p) => p.name.trim() == selectedNameFilter)
-                  .toList();
+                .where((p) => p.name.trim() == selectedNameFilter)
+                .toList();
 
+        // ── ຈັດກຸ່ມຕາມ ຊື່ + ຊະນິດໄມ້ ──
         final Map<String, List<WoodProductModel>> groupedProducts = {};
         for (var item in filteredList) {
           final groupKey =
               '${item.name} (ຊະນິດ: ${item.woodType.isEmpty ? "ບໍ່ລະບຸ" : item.woodType})';
-          if (!groupedProducts.containsKey(groupKey)) {
-            groupedProducts[groupKey] = [];
-          }
-          groupedProducts[groupKey]!.add(item);
+          groupedProducts.putIfAbsent(groupKey, () => []).add(item);
         }
 
-        groupedProducts.forEach((key, list) {
+        // ── ຈັດລຳດັບຕາມປະລິມາດ (ນ້ອຍ → ໃຫຍ່) ──
+        groupedProducts.forEach((_, list) {
           list.sort((a, b) {
-            final volumeA = a.width * a.length * a.thickness;
-            final volumeB = b.width * b.length * b.thickness;
-            return volumeA.compareTo(volumeB);
+            final va = a.width * a.length * a.thickness;
+            final vb = b.width * b.length * b.thickness;
+            return va.compareTo(vb);
           });
         });
 
         final groupKeys = groupedProducts.keys.toList();
-        // 🚀 ตัดข้อมูลแสดงผลตาม _displayLimit
         final displayKeys = groupKeys.take(_displayLimit).toList();
 
         return RefreshIndicator(
+          color: Colors.brown,
           onRefresh: () async {
             setState(() => _displayLimit = 10);
             await controller.fetchProducts();
           },
           child: Column(
             children: [
+              // ══════════════════════════════════════════
+              // 🔽 ຕົວກັ່ນກອງ
+              // ══════════════════════════════════════════
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+                    horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.brown.withOpacity(0.08),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                color: Colors.brown.shade50,
                 child: Row(
                   children: [
-                    const Text(
-                      'ກັ່ນກອງຕາມຊື່ໄມ້: ',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.brown.shade700,
+                        borderRadius: BorderRadius.circular(8),
                       ),
+                      child: const Icon(Icons.filter_list,
+                          color: Colors.white, size: 16),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'ກັ່ນກອງ:',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -156,33 +164,37 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                         isExpanded: true,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          fillColor: Colors.white,
+                              horizontal: 12, vertical: 8),
+                          fillColor: Colors.brown.shade50,
                           filled: true,
+                          isDense: true,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                                color: Colors.brown.shade200),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                                color: Colors.brown.shade200),
                           ),
                         ),
                         items: nameOptions
-                            .map(
-                              (name) => DropdownMenuItem(
-                                value: name,
-                                child: Text(
-                                  name == 'ທັງໝົດ'
-                                      ? 'ທັງໝົດ (ສະແດງທັງໝົດ)'
-                                      : name,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            )
+                            .map((name) => DropdownMenuItem(
+                                  value: name,
+                                  child: Text(
+                                    name == 'ທັງໝົດ'
+                                        ? 'ທັງໝົດ'
+                                        : name,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ))
                             .toList(),
                         onChanged: (val) {
                           if (val != null) {
                             setState(() {
                               selectedNameFilter = val;
-                              _displayLimit = 10; // รีเซ็ตจำนวณแสดงเมื่อกรองใหม่
+                              _displayLimit = 10;
                             });
                           }
                         },
@@ -191,24 +203,29 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                   ],
                 ),
               ),
+
+              // ══════════════════════════════════════════
+              // 📋 ລາຍການ
+              // ══════════════════════════════════════════
               Expanded(
                 child: groupKeys.isEmpty
                     ? const Center(child: Text('ບໍ່ພົບຂໍ້ມູນໄມ້ທີ່ເລືອກ'))
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.all(8),
-                        // 🚀 เพิ่ม 1 แถวด้านล่างสุดสำหรับแสดงตัวโหลดกำลังโหลดข้อมูล
                         itemCount: displayKeys.length +
-                            (_isLoadingMore && displayKeys.length < groupKeys.length ? 1 : 0),
+                            (_isLoadingMore &&
+                                    displayKeys.length < groupKeys.length
+                                ? 1
+                                : 0),
                         itemBuilder: (context, gIndex) {
-                          // 🚀 หากเป็นแถบล่างสุดขณะกำลังโหลด ให้แสดง CircularProgressIndicator
+                          // ── ໂຫຼດເພີ່ມ ──
                           if (gIndex == displayKeys.length) {
                             return const Padding(
                               padding: EdgeInsets.symmetric(vertical: 24),
                               child: Center(
                                 child: CircularProgressIndicator(
-                                  color: Colors.brown,
-                                ),
+                                    color: Colors.brown),
                               ),
                             );
                           }
@@ -219,198 +236,59 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // ── ຫົວກຸ່ມ ──
                               Padding(
                                 padding: const EdgeInsets.only(
-                                  left: 8,
-                                  top: 12,
-                                  bottom: 6,
-                                ),
+                                    left: 8, top: 12, bottom: 6),
                                 child: Row(
                                   children: [
-                                    const Icon(
-                                      Icons.category,
-                                      size: 18,
-                                      color: Colors.brown,
+                                    Container(
+                                      padding: const EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                        color: Colors.brown.shade700,
+                                        borderRadius:
+                                            BorderRadius.circular(6),
+                                      ),
+                                      child: const Icon(Icons.category,
+                                          size: 12,
+                                          color: Colors.white),
                                     ),
                                     const SizedBox(width: 6),
-                                    Text(
-                                      groupTitle,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.brown,
+                                    Expanded(
+                                      child: Text(
+                                        groupTitle,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.brown,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                    const Spacer(),
-                                    Text(
-                                      '${items.length} 规格',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.brown.shade100,
+                                        borderRadius:
+                                            BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        '${items.length} ລາຍການ',
+                                        style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.brown.shade800),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
+
+                              // ── ແຕ່ລະໄມ້ ──
                               ...items.map(
-                                (item) => Card(
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                    vertical: 4,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        GestureDetector(
-                                          onTap: item.imageUrls.isEmpty
-                                              ? null
-                                              : () => Get.to(
-                                                  () => WoodGalleryPage(
-                                                    imageUrls: item.imageUrls,
-                                                    title: item.name,
-                                                  ),
-                                                ),
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              6,
-                                            ),
-                                            child: item.imageUrls.isEmpty
-                                                ? Container(
-                                                    width: 65,
-                                                    height: 65,
-                                                    color: Colors.grey[300],
-                                                    child: const Icon(
-                                                      Icons.image_not_supported,
-                                                    ),
-                                                  )
-                                                : CachedNetworkImage(
-                                                    imageUrl:
-                                                        item.imageUrls.first,
-                                                    width: 65,
-                                                    height: 65,
-                                                    fit: BoxFit.cover,
-                                                    placeholder: (c, u) =>
-                                                        const SizedBox(
-                                                          width: 20,
-                                                          height: 20,
-                                                          child: Center(
-                                                            child:
-                                                                CircularProgressIndicator(
-                                                                  strokeWidth:
-                                                                      2,
-                                                                ),
-                                                          ),
-                                                        ),
-                                                    errorWidget: (c, u, e) =>
-                                                        const Icon(
-                                                          Icons.broken_image,
-                                                        ),
-                                                  ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'ຂະໜາດ: ${formatNum(item.width)} × ${formatNum(item.length)} × ${formatNum(item.thickness)} ${item.sizeUnit}',
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                'ຈຳນວນ: ${item.quantity} ${item.unit}',
-                                                style: const TextStyle(
-                                                  fontSize: 13,
-                                                  color: Colors.black54,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                'ລາຄາ: ${currencyFormat.format(item.price)} ກີບ',
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.green,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        if (isAdmin)
-                                          SizedBox(
-                                            width: 32,
-                                            height: 32,
-                                            child: PopupMenuButton<int>(
-                                              padding: EdgeInsets.zero,
-                                              icon: const Icon(
-                                                Icons.more_vert,
-                                                size: 22,
-                                              ),
-                                              onSelected: (value) {
-                                                if (value == 1) {
-                                                  controller.startEdit(item);
-                                                  Get.to(
-                                                    () => WoodProductFormPage(
-                                                      isPage: true,
-                                                    ),
-                                                  );
-                                                } else if (value == 2) {
-                                                  _confirmDelete(
-                                                    context,
-                                                    controller,
-                                                    item,
-                                                  );
-                                                }
-                                              },
-                                              itemBuilder: (context) => [
-                                                const PopupMenuItem(
-                                                  value: 1,
-                                                  child: Row(
-                                                    children: [
-                                                      Icon(
-                                                        Icons.edit,
-                                                        color: Colors.blue,
-                                                        size: 20,
-                                                      ),
-                                                      SizedBox(width: 12),
-                                                      Text('ແກ້ໄຂ'),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const PopupMenuItem(
-                                                  value: 2,
-                                                  child: Row(
-                                                    children: [
-                                                      Icon(
-                                                        Icons.delete,
-                                                        color: Colors.red,
-                                                        size: 20,
-                                                      ),
-                                                      SizedBox(width: 12),
-                                                      Text(
-                                                        'ລົບ',
-                                                        style: TextStyle(
-                                                          color: Colors.red,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                                (item) => _productCard(item, isAdmin, controller),
                               ),
                               const SizedBox(height: 8),
                             ],
@@ -425,6 +303,197 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     );
   }
 
+  // ══════════════════════════════════════════════
+  // 🎴 ກາດສິນຄ້າ
+  // ══════════════════════════════════════════════
+  Widget _productCard(
+    WoodProductModel item,
+    bool isAdmin,
+    WoodProductController controller,
+  ) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: Colors.brown.shade100, width: 1.2),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── ຮູບ ──
+            GestureDetector(
+              onTap: item.imageUrls.isEmpty
+                  ? null
+                  : () => Get.to(() => WoodGalleryPage(
+                        imageUrls: item.imageUrls,
+                        title: item.name,
+                      )),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: item.imageUrls.isEmpty
+                    ? Container(
+                        width: 72,
+                        height: 72,
+                        color: Colors.brown.shade50,
+                        child: Icon(Icons.image_not_supported,
+                            color: Colors.brown.shade300, size: 28),
+                      )
+                    : CachedNetworkImage(
+                        imageUrl: item.imageUrls.first,
+                        width: 72,
+                        height: 72,
+                        fit: BoxFit.cover,
+                        placeholder: (c, u) => Container(
+                          width: 72,
+                          height: 72,
+                          color: Colors.brown.shade50,
+                          child: const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.brown),
+                            ),
+                          ),
+                        ),
+                        errorWidget: (c, u, e) => Container(
+                          width: 72,
+                          height: 72,
+                          color: Colors.brown.shade50,
+                          child: Icon(Icons.broken_image,
+                              color: Colors.brown.shade300, size: 28),
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // ── ຂໍ້ມູນ ──
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ຂະໜາດ
+                  Row(
+                    children: [
+                      Icon(Icons.straighten,
+                          size: 12, color: Colors.brown.shade600),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          '${formatNum(item.width)} × ${formatNum(item.length)} × ${formatNum(item.thickness)} ${item.sizeUnit}',
+                          style: const TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+
+                  // ຈຳນວນ
+                  Row(
+                    children: [
+                      Icon(Icons.inventory_2_outlined,
+                          size: 12, color: Colors.brown.shade600),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${item.quantity} ${item.unit}',
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade700),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+
+                  // 💰 ລາຄາ — ວິ່ງຕົວເລກ
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(6),
+                      border:
+                          Border.all(color: Colors.green.shade200),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.payments_outlined,
+                            size: 12, color: Colors.green.shade700),
+                        const SizedBox(width: 4),
+                        AnimatedNumber(
+                          value: item.price,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.green.shade700,
+                          ),
+                          suffix: ' ກີບ',
+                          duration: 900,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Admin menu ──
+            if (isAdmin)
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: PopupMenuButton<int>(
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.more_vert, size: 22),
+                  onSelected: (value) {
+                    if (value == 1) {
+                      controller.startEdit(item);
+                      Get.to(() => WoodProductFormPage(isPage: true));
+                    } else if (value == 2) {
+                      _confirmDelete(context, controller, item);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 1,
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit,
+                              color: Colors.blue, size: 20),
+                          SizedBox(width: 12),
+                          Text('ແກ້ໄຂ'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 2,
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete,
+                              color: Colors.red, size: 20),
+                          SizedBox(width: 12),
+                          Text('ລຶບ',
+                              style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════
+  // 🗑 ຢືນຢັນລຶບ
+  // ══════════════════════════════════════════════
   void _confirmDelete(
     BuildContext context,
     WoodProductController controller,
@@ -433,8 +502,8 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('ຍືນຍັນການລົບ'),
-        content: const Text('ຕ້ອງການລົບຂໍ້ມູນຂະໜາດນີ້ ແມ່ນຫຼືບໍ່?'),
+        title: const Text('ຢືນຢັນການລຶບ'),
+        content: const Text('ຕ້ອງການລຶບຂໍ້ມູນຂະໜາດນີ້ ແມ່ນຫຼືບໍ່?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -445,7 +514,8 @@ class _WoodProductListPageState extends State<WoodProductListPage>
               Navigator.pop(ctx);
               controller.deleteProduct(item.id);
             },
-            child: const Text('ລົບ', style: TextStyle(color: Colors.red)),
+            child:
+                const Text('ລຶບ', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

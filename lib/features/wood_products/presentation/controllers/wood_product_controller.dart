@@ -10,8 +10,10 @@ class WoodProductController extends GetxController {
 
   var isLoading = false.obs;
   var isSaving = false.obs;
+  var productList = <WoodProductModel>[].obs;
   var products = <WoodProductModel>[].obs;
   var errorMessage = RxnString();
+
 
   // ---------- รูปภาพ (สูงสุด 6 รูปต่อรายการ) ----------
   static const maxImages = 6;
