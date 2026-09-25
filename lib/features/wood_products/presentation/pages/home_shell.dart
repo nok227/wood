@@ -23,10 +23,11 @@ class _HomeShellState extends State<HomeShell> {
   late final List<String> _titles;
   late final List<BottomNavigationBarItem> _navItems;
 
+  /// ✅ Cache ທຸກໜ້າໄວ້ຄັ້ງດຽວ — ບໍ່ rebuild ຕອນປັດ
+  late final List<Widget> _pages;
+
   final ValueNotifier<int> _indexNotifier = ValueNotifier<int>(0);
   final ValueNotifier<bool> _lockSwipe = ValueNotifier<bool>(false);
-
-  bool _wood3dReady = false;
 
   @override
   void initState() {
@@ -70,9 +71,48 @@ class _HomeShellState extends State<HomeShell> {
       ),
     ];
 
+    // ✅ ສ້າງ widget ທຸກໜ້າຄັ້ງດຽວ — ບໍ່ສ້າງຊ້ຳຕອນປັດ
+    _pages = _buildAllPages();
+
+    // ✅ Pre-warm ຫຼັງ frame ທຳອິດ
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _maybePreWarm3D(_indexNotifier.value);
+      _preWarm();
     });
+  }
+
+  /// ສ້າງ widget ທຸກໜ້າຄັ້ງດຽວ
+  List<Widget> _buildAllPages() {
+    if (_isAdmin) {
+      return [
+        const RepaintBoundary(child: WoodProductFormPage()),
+        const RepaintBoundary(child: WoodProductListPage()),
+        const RepaintBoundary(
+            child: _KeepAlivePage(child: SalesListPage())),
+        const RepaintBoundary(
+            child: _KeepAlivePage(child: AccountPage())),
+        _build3DPage(),
+      ];
+    }
+    return [
+      const RepaintBoundary(child: WoodProductListPage()),
+      const RepaintBoundary(
+          child: _KeepAlivePage(child: SalesListPage())),
+      const RepaintBoundary(
+          child: _KeepAlivePage(child: AccountPage())),
+      _build3DPage(),
+    ];
+  }
+
+  Widget _build3DPage() {
+    return RepaintBoundary(
+      child: _Lazy3DWrapper(swipeLock: _lockSwipe),
+    );
+  }
+
+  /// ✅ ບັງຄັບໃຫ້ Flutter pre-mount ທຸກໜ້າໃນ background
+  void _preWarm() {
+    // ບໍ່ຕ້ອງເຮັດຫຍັງ — ປ່ອຍໃຫ້ allowImplicitScrolling ຈັດການ
+    // (ມັນຈະ pre-build ໜ້າ neighbor ອັດຕະໂນມັດ)
   }
 
   @override
@@ -84,64 +124,6 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   int get _pageCount => _isAdmin ? 5 : 4;
-
-  void _maybePreWarm3D(int currentIndex) {
-    if (_wood3dReady) return;
-    if ((currentIndex - _wood3dIndex).abs() <= 1) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_wood3dReady) {
-          setState(() => _wood3dReady = true);
-        }
-      });
-    }
-  }
-
-  Widget _pageAt(int i) {
-    if (_isAdmin) {
-      switch (i) {
-        case 0:
-          return const RepaintBoundary(child: WoodProductFormPage());
-        case 1:
-          return const RepaintBoundary(child: WoodProductListPage());
-        case 2:
-          return RepaintBoundary(
-              child: _KeepAlivePage(child: const SalesListPage()));
-        case 3:
-          return RepaintBoundary(
-              child: _KeepAlivePage(child: const AccountPage()));
-        case 4:
-          return _build3DPage();
-      }
-    } else {
-      switch (i) {
-        case 0:
-          return const RepaintBoundary(child: WoodProductListPage());
-        case 1:
-          return RepaintBoundary(
-              child: _KeepAlivePage(child: const SalesListPage()));
-        case 2:
-          return RepaintBoundary(
-              child: _KeepAlivePage(child: const AccountPage()));
-        case 3:
-          return _build3DPage();
-      }
-    }
-    return const SizedBox.shrink();
-  }
-
-  Widget _build3DPage() {
-    if (!_wood3dReady) {
-      return const RepaintBoundary(
-        child: ColoredBox(
-          color: Color(0xFFEFEBE9),
-          child: Center(
-            child: CircularProgressIndicator(color: Colors.brown),
-          ),
-        ),
-      );
-    }
-    return RepaintBoundary(child: Wood3DPage(swipeLock: _lockSwipe));
-  }
 
   void _onItemTapped(int index) {
     if (_indexNotifier.value == index) return;
@@ -174,19 +156,19 @@ class _HomeShellState extends State<HomeShell> {
         valueListenable: _lockSwipe,
         builder: (context, locked, child) {
           final lockNow = locked && _indexNotifier.value == _wood3dIndex;
-          return PageView.builder(
+          return PageView(
             controller: _pageController,
             physics: lockNow
                 ? const NeverScrollableScrollPhysics()
                 : const ClampingScrollPhysics(),
-            itemCount: _pageCount,
+            // ✅ ສຳຄັນທີ່ສຸດ: pre-build ໜ້າ neighbor ໃນ background
+            allowImplicitScrolling: true,
             onPageChanged: (i) {
               _indexNotifier.value = i;
-              // 🔔 ບອກ notifier ໃຫ້ replay animation ຕອນປ່ຽນແທັບ
               PageRouteNotifier.instance.bump();
-              _maybePreWarm3D(i);
             },
-            itemBuilder: (context, i) => _pageAt(i),
+            // ✅ ໃຊ້ children ແທນ builder — ທຸກໜ້າຖືກສ້າງຄັ້ງດຽວ
+            children: _pages,
           );
         },
       ),
@@ -208,6 +190,48 @@ class _HomeShellState extends State<HomeShell> {
         },
       ),
     );
+  }
+}
+
+// ══════════════════════════════════════════════
+// 🎯 3D Lazy Wrapper — ສ້າງ 3D ຕອນມີຄົນເຂົ້າຄັ້ງທຳອິດ
+// ══════════════════════════════════════════════
+class _Lazy3DWrapper extends StatefulWidget {
+  final ValueNotifier<bool>? swipeLock;
+  const _Lazy3DWrapper({this.swipeLock});
+
+  @override
+  State<_Lazy3DWrapper> createState() => _Lazy3DWrapperState();
+}
+
+class _Lazy3DWrapperState extends State<_Lazy3DWrapper>
+    with AutomaticKeepAliveClientMixin {
+  bool _ready = false;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    // ຫຼັງ frame ທຳອິດ → ສ້າງ 3D
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _ready = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    if (!_ready) {
+      return const ColoredBox(
+        color: Color(0xFFEFEBE9),
+        child: Center(
+          child: CircularProgressIndicator(color: Colors.brown),
+        ),
+      );
+    }
+    return Wood3DPage(swipeLock: widget.swipeLock);
   }
 }
 

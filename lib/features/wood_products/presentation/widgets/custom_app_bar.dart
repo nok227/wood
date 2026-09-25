@@ -7,6 +7,7 @@ import 'package:wood/features/auth/auth_controller.dart';
 import 'package:wood/features/auth/register_page.dart';
 import 'package:wood/features/wood_products/presentation/controllers/notification_controller.dart';
 import 'package:wood/features/wood_products/presentation/pages/notification_page.dart';
+import 'package:wood/features/wood_products/presentation/pages/recipe_library_page.dart';
 import 'package:wood/features/wood_products/presentation/widgets/skeletons.dart';
 import 'package:wood/features/wood_products/presentation/widgets/wave_text.dart';
 
@@ -31,6 +32,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 fontWeight: FontWeight.w600, fontSize: 18),
           ),
       actions: [
+        // 🍜 ຄັງເມນູອາຫານ
+        IconButton(
+          icon: const Icon(Icons.restaurant_menu, size: 24),
+          tooltip: 'ຄັງເມນູອາຫານ',
+          onPressed: () => Get.to(
+            () => const RecipeLibraryPage(),
+            transition: Transition.downToUp,
+            duration: const Duration(milliseconds: 300),
+          ),
+        ),
+        // 🔔 ແຈ້ງເຕືອນ
         Obx(() {
           if (!Get.isRegistered<NotificationController>()) {
             return const SizedBox.shrink();
@@ -58,6 +70,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           );
         }),
+        // 👤 ໂປຣຟາຍ
         IconButton(
           icon: const Icon(Icons.account_circle, size: 28),
           tooltip: 'ໂປຣຟາຍ',

@@ -16,6 +16,11 @@ import 'package:wood/features/wood_products/data/datasources/account_remote_data
 import 'package:wood/features/wood_products/data/repositories/account_repository_impl.dart';
 import 'package:wood/features/wood_products/presentation/controllers/account_controller.dart';
 
+// 🍜 Recipe Library — Clean Architecture
+import 'package:wood/features/wood_products/data/datasources/recipe_remote_data_source.dart';
+import 'package:wood/features/wood_products/data/repositories/recipe_repository_impl.dart';
+import 'package:wood/features/wood_products/presentation/controllers/recipe_controller.dart';
+
 import 'package:wood/firebase_options.dart';
 import 'package:wood/features/wood_products/presentation/pages/home_shell.dart';
 import 'package:wood/features/auth/auth_remote_data_source.dart';
@@ -68,6 +73,14 @@ void main() async {
       AccountRepositoryImpl(remoteDataSource: accountRemoteDataSource);
   Get.put(
     AccountController(repository: accountRepository),
+    permanent: true,
+  );
+
+  // 🍜 Inject Recipe Library
+  final recipeRemote = RecipeRemoteDataSource();
+  final recipeRepo = RecipeRepositoryImpl(remote: recipeRemote);
+  Get.put(
+    RecipeController(repository: recipeRepo),
     permanent: true,
   );
 
