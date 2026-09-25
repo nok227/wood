@@ -11,6 +11,9 @@ class WoodProductModel {
   final String unit;
   final double price;
 
+  // 🆕 ເວລາທີ່ແກ້ໄຂລາຄາລ່າສຸດ (ໃຊ້ສະແດງ Badge "ໃໝ່")
+  final DateTime? priceUpdatedAt;
+
   WoodProductModel({
     required this.id,
     required this.name,
@@ -23,7 +26,21 @@ class WoodProductModel {
     required this.quantity,
     required this.unit,
     required this.price,
+    this.priceUpdatedAt,
   });
+
+  // ✅ ກວດວ່າລາຄາຖືກອັບເດດພາຍໃນ 7 ວັນ
+  bool get isPriceNew {
+    if (priceUpdatedAt == null) return false;
+    final diff = DateTime.now().difference(priceUpdatedAt!);
+    return diff.inDays < 7 && !diff.isNegative;
+  }
+
+  // ✅ ຈຳນວນວັນທີ່ຍັງເຫຼືອ (ສຳລັບ tooltip)
+  int get daysSincePriceUpdate {
+    if (priceUpdatedAt == null) return -1;
+    return DateTime.now().difference(priceUpdatedAt!).inDays;
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -38,6 +55,8 @@ class WoodProductModel {
       'quantity': quantity,
       'unit': unit,
       'price': price,
+      // 🆕 ບັນທຶກເວລາແກ້ລາຄາ (ຖ້າມີ)
+      'priceUpdatedAt': priceUpdatedAt?.toIso8601String(),
       'createdAt': DateTime.now(),
     };
   }
@@ -54,6 +73,8 @@ class WoodProductModel {
       'quantity': quantity,
       'unit': unit,
       'price': price,
+      // 🆕 ອັບເດດທຸກຄັ້ງ (null ກໍ່ຂຽນທັບ — ປ້ອງກັນຄ່າເກົ່າຄ້າງ)
+      'priceUpdatedAt': priceUpdatedAt?.toIso8601String(),
       'updatedAt': DateTime.now(),
     };
   }
@@ -69,6 +90,17 @@ class WoodProductModel {
       if (v == null) return 0;
       if (v is num) return v.toInt();
       return int.tryParse(v.toString()) ?? 0;
+    }
+
+    DateTime? _toDate(dynamic v) {
+      if (v == null) return null;
+      if (v is DateTime) return v;
+      if (v is String) return DateTime.tryParse(v);
+      try {
+        final d = (v as dynamic).toDate();
+        if (d is DateTime) return d;
+      } catch (_) {}
+      return null;
     }
 
     List<String> images = [];
@@ -90,10 +122,10 @@ class WoodProductModel {
       quantity: _toInt(map['quantity']),
       unit: map['unit'] ?? 'ແຜ່ນ',
       price: _toDouble(map['price']),
+      priceUpdatedAt: _toDate(map['priceUpdatedAt']),
     );
   }
 
-  // ✅ เพิ่ม 2 เมธอดนี้ เพื่อให้ Dropdown เปรียบเทียบ Object จาก id
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

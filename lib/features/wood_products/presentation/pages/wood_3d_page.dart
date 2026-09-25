@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:wood/features/auth/auth_controller.dart';
-import 'package:wood/features/auth/register_page.dart';
 import '../controllers/wood_product_controller.dart';
 import '../../data/models/wood_product_model.dart';
 import '../widgets/wood_3d_scene.dart';
 
-
 class Wood3DPage extends StatefulWidget {
-  /// แจ้ง HomeShell ว่ามีการเลือก dropdown / แสดงโมเดลอยู่ไหม (true = ล็อกการปัดเปลี่ยนหน้า)
   final ValueNotifier<bool>? swipeLock;
-
   const Wood3DPage({super.key, this.swipeLock});
 
   @override
@@ -24,31 +19,108 @@ class _Wood3DPageState extends State<Wood3DPage> {
   String? selectedName;
   WoodProductModel? selectedVariant;
   String? focusedDimension;
-  bool showColor = false; // เริ่มต้น: ไม่มีสี กดปุ่ม "ສີ" ถึงจะใส่สีไม้
+  bool showColor = false;
 
-  String _fmt(num v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
+  // ══════════════════════════════════════════════
+  // ✅ Memoization cache
+  // ══════════════════════════════════════════════
+  List<WoodProductModel> _cachedProducts = const [];
+  String _cachedWoodType = '__none__';
+  List<WoodProductModel> _cachedFiltered = const [];
+  List<String> _cachedWoodTypeOptions = const ['ທັງໝົດ'];
+  List<String> _cachedNames = const [];
+  List<WoodProductModel> _cachedVariants = const [];
 
-  // มีการเลือก dropdown ตัวใดตัวหนึ่งอยู่ไหม (ค่าเริ่มต้น 'ທັງໝົດ' ไม่นับ)
+  // ✅ ປ້ອງກັນ _syncSwipeLock schedule ຊ້ຳ
+  bool? _lastLockValue;
+
+  String _fmt(num v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
+
   bool get _hasAnyChoice =>
-      selectedWoodType != 'ທັງໝົດ' || selectedName != null || selectedVariant != null;
+      selectedWoodType != 'ທັງໝົດ' ||
+      selectedName != null ||
+      selectedVariant != null;
 
-  // ส่งสถานะล็อกการปัดไปให้ HomeShell (ทำหลังเฟรมนี้เสร็จ กันไม่ให้ set ค่าระหว่าง build)
   void _syncSwipeLock(bool locked) {
     final lock = widget.swipeLock;
-    if (lock == null || lock.value == locked) return;
+    if (lock == null) return;
+    if (lock.value == locked) {
+      _lastLockValue = locked;
+      return;
+    }
+    if (_lastLockValue == locked) return;
+    _lastLockValue = locked;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) lock.value = locked;
+      if (!mounted) return;
+      final l = widget.swipeLock;
+      if (l != null && l.value != locked) l.value = locked;
     });
   }
 
-  // 🧹 ล้าง dropdown ทั้งหมด และล้างโมเดล 3D
   void _clearAll() {
     setState(() {
       selectedWoodType = 'ທັງໝົດ';
       selectedName = null;
       selectedVariant = null;
       focusedDimension = null;
+      _cachedWoodType = '__none__'; // ✅ invalidate
     });
+  }
+
+  // ══════════════════════════════════════════════
+  // ✅ ຄຳນວນໃໝ່ສະເພາະເວລາຂໍ້ມູນ ຫຼື filter ປ່ຽນ
+  // ══════════════════════════════════════════════
+  void _recomputeIfNeeded(List<WoodProductModel> products) {
+    final sourceChanged = !identical(_cachedProducts, products);
+    final filterChanged = _cachedWoodType != selectedWoodType;
+
+    if (sourceChanged || filterChanged) {
+      _cachedProducts = products;
+      _cachedWoodType = selectedWoodType;
+
+      // Wood types
+      final types = products
+          .map((p) => p.woodType.trim())
+          .where((t) => t.isNotEmpty)
+          .toSet()
+          .toList();
+      _cachedWoodTypeOptions = ['ທັງໝົດ', ...types];
+
+      // Filtered products
+      _cachedFiltered = selectedWoodType == 'ທັງໝົດ'
+          ? products
+          : products
+              .where((p) => p.woodType.trim() == selectedWoodType)
+              .toList();
+
+      // Names
+      _cachedNames = _cachedFiltered.map((p) => p.name).toSet().toList();
+
+      // Validate selectedName
+      if (selectedName != null && !_cachedNames.contains(selectedName)) {
+        selectedName = null;
+        selectedVariant = null;
+      }
+    }
+
+    // Variants — ຄຳນວນທຸກຄັ້ງທີ່ selectedName ປ່ຽນ (ໄວ ເພາະ _cachedFiltered ຖືກ cache)
+    if (selectedName == null) {
+      _cachedVariants = const [];
+      selectedVariant = null;
+    } else {
+      _cachedVariants =
+          _cachedFiltered.where((p) => p.name == selectedName).toList();
+
+      if (_cachedVariants.isEmpty) {
+        selectedVariant = null;
+      } else {
+        final matched =
+            _cachedVariants.where((v) => v.id == selectedVariant?.id);
+        selectedVariant =
+            matched.isNotEmpty ? matched.first : _cachedVariants.first;
+      }
+    }
   }
 
   @override
@@ -56,43 +128,13 @@ class _Wood3DPageState extends State<Wood3DPage> {
     return Scaffold(
       body: Obx(() {
         final allProducts = controller.products;
-
-        // 1. รายการชนิดไม้ทั้งหมด
-        final woodTypeOptions = ['ທັງໝົດ', ...controller.uniqueWoodTypes];
-
-        // 2. กรองตามชนิดไม้
-        final filteredProducts = selectedWoodType == 'ທັງໝົດ'
-            ? allProducts
-            : allProducts.where((p) => p.woodType.trim() == selectedWoodType).toList();
-
-        // 3. ชื่อไม้ที่ไม่ซ้ำกัน
-        final names = filteredProducts.map((p) => p.name).toSet().toList();
-
-        if (selectedName != null && !names.contains(selectedName)) {
-          selectedName = null;
-          selectedVariant = null;
-        }
-
-        // 4. รายการขนาดไม้
-        final variants = selectedName == null
-            ? <WoodProductModel>[]
-            : filteredProducts.where((p) => p.name == selectedName).toList();
-
-        if (variants.isEmpty) {
-          selectedVariant = null;
-        } else {
-          final matched = variants.where((v) => v.id == selectedVariant?.id).toList();
-          selectedVariant = matched.isNotEmpty ? matched.first : variants.first;
-        }
+        _recomputeIfNeeded(allProducts);
 
         final hasSelection = selectedVariant != null;
-
-        // 🔒 ถ้ามีการเลือก dropdown หรือแสดงโมเดลอยู่ -> ล็อกการปัดเปลี่ยนหน้า
         _syncSwipeLock(_hasAnyChoice);
 
         return Column(
           children: [
-            // 🎨 ปุ่ม "สี" ด้านบน (เปิด/ปิดสีไม้)
             if (hasSelection)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -101,19 +143,20 @@ class _Wood3DPageState extends State<Wood3DPage> {
                   child: _colorButton(),
                 ),
               ),
-
             Expanded(
               child: hasSelection
-                  ? Wood3DScene(
-                      key: ValueKey(selectedName),
-                      productName: selectedVariant!.name,
-                      width: selectedVariant!.width,
-                      length: selectedVariant!.length,
-                      thickness: selectedVariant!.thickness,
-                      sizeUnit: selectedVariant!.sizeUnit,
-                      unit: selectedVariant!.unit,
-                      focusedDimension: focusedDimension,
-                      showColor: showColor,
+                  ? RepaintBoundary(
+                      child: Wood3DScene(
+                        key: ValueKey(selectedVariant!.id),
+                        productName: selectedVariant!.name,
+                        width: selectedVariant!.width,
+                        length: selectedVariant!.length,
+                        thickness: selectedVariant!.thickness,
+                        sizeUnit: selectedVariant!.sizeUnit,
+                        unit: selectedVariant!.unit,
+                        focusedDimension: focusedDimension,
+                        showColor: showColor,
+                      ),
                     )
                   : Container(
                       width: double.infinity,
@@ -121,15 +164,16 @@ class _Wood3DPageState extends State<Wood3DPage> {
                       child: const Center(
                         child: Text(
                           'ພື້ນທີ່ສະແດງໂມເດວໄມ້ 3D',
-                          style: TextStyle(color: Colors.black45, fontSize: 15),
+                          style:
+                              TextStyle(color: Colors.black45, fontSize: 15),
                         ),
                       ),
                     ),
             ),
-
             if (hasSelection)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
                     Expanded(child: _dimButton('ກວ້າງ', 'width')),
@@ -140,9 +184,7 @@ class _Wood3DPageState extends State<Wood3DPage> {
                   ],
                 ),
               ),
-
             const Divider(height: 1),
-
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: allProducts.isEmpty
@@ -152,7 +194,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
                     )
                   : Column(
                       children: [
-                        // Dropdown ชนิดไม้ + ปุ่มล้าง
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -163,13 +204,16 @@ class _Wood3DPageState extends State<Wood3DPage> {
                                 decoration: const InputDecoration(
                                   labelText: 'ຊະນິດໄມ້',
                                   border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 10),
                                 ),
-                                items: woodTypeOptions
+                                items: _cachedWoodTypeOptions
                                     .map((type) => DropdownMenuItem(
                                           value: type,
                                           child: Text(
-                                            type == 'ທັງໝົດ' ? 'ທັງໝົດ (ສະແດງທັງໝົດ)' : type,
+                                            type == 'ທັງໝົດ'
+                                                ? 'ທັງໝົດ (ສະແດງທັງໝົດ)'
+                                                : type,
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ))
@@ -187,11 +231,9 @@ class _Wood3DPageState extends State<Wood3DPage> {
                           ],
                         ),
                         const SizedBox(height: 10),
-
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Dropdown ชื่อไม้
                             Expanded(
                               child: DropdownButtonFormField<String>(
                                 value: selectedName,
@@ -199,40 +241,41 @@ class _Wood3DPageState extends State<Wood3DPage> {
                                 decoration: const InputDecoration(
                                   labelText: 'ຊື່ໄມ້',
                                   border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 10),
                                 ),
                                 hint: const Text('ເລືອກຊື່ໄມ້'),
-                                items: names
+                                items: _cachedNames
                                     .map((n) => DropdownMenuItem(
                                           value: n,
-                                          child: Text(n, overflow: TextOverflow.ellipsis),
+                                          child: Text(n,
+                                              overflow:
+                                                  TextOverflow.ellipsis),
                                         ))
                                     .toList(),
                                 onChanged: (v) => setState(() {
                                   selectedName = v;
                                   focusedDimension = null;
-                                  final vs = v == null
-                                      ? <WoodProductModel>[]
-                                      : filteredProducts.where((p) => p.name == v).toList();
-                                  selectedVariant = vs.isNotEmpty ? vs.first : null;
+                                  // selectedVariant ຈະຖືກອັບເດດໃນ _recomputeIfNeeded
                                 }),
                               ),
                             ),
                             const SizedBox(width: 8),
-
-                            // Dropdown ขนาดไม้
                             Expanded(
-                              child: DropdownButtonFormField<WoodProductModel>(
+                              child:
+                                  DropdownButtonFormField<WoodProductModel>(
                                 value: selectedVariant,
                                 isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'ຂະໜາດ',
                                   border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 10),
                                 ),
                                 hint: const Text('ເລືອກຂະໜາດ'),
-                                items: variants
-                                    .map((v) => DropdownMenuItem<WoodProductModel>(
+                                items: _cachedVariants
+                                    .map((v) =>
+                                        DropdownMenuItem<WoodProductModel>(
                                           value: v,
                                           child: Text(
                                             '${_fmt(v.width)}×${_fmt(v.length)}×${_fmt(v.thickness)} ${v.sizeUnit}',
@@ -259,7 +302,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
     );
   }
 
-  // 🧹 ปุ่มล้าง (กดได้เฉพาะตอนมีการเลือก dropdown อยู่)
   Widget _clearButton() {
     final enabled = _hasAnyChoice;
     return SizedBox(
@@ -276,7 +318,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
     );
   }
 
-  // 🎨 ปุ่มเปิด/ปิดสีไม้
   Widget _colorButton() {
     return OutlinedButton.icon(
       style: OutlinedButton.styleFrom(
@@ -302,27 +343,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
         focusedDimension = active ? null : value;
       }),
       child: Text(label),
-    );
-  }
-
-  // 🔴 ฟังก์ชันยืนยันและดำเนินการ Logout
-  void _confirmLogout(BuildContext context) {
-    Get.defaultDialog(
-      title: 'ຍືນຍັນການອອກຈາກລະບົບ',
-      middleText: 'ທ່ານຕ້ອງການອອກຈາກລະບົບ ແມ່ນຫຼືບໍ່?',
-      textConfirm: 'ອອກຈາກລະບົບ',
-      textCancel: 'ຍົກເລີກ',
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.red,
-      onConfirm: () async {
-        Get.back(); // ปิด Dialog
-        try {
-          await Get.find<AuthController>().logout();
-          Get.offAll(() => const RegisterPage());
-        } catch (e) {
-          Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດອອກຈາກລະບົບໄດ້: $e');
-        }
-      },
     );
   }
 }

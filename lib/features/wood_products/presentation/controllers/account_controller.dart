@@ -1,16 +1,18 @@
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:wood/features/wood_products/domain/entities/app_notification.dart';
+import 'package:wood/features/wood_products/presentation/controllers/notification_controller.dart';
 import '../../domain/entities/account_transaction.dart';
 import '../../domain/repositories/account_repository.dart';
 
 class SessionGroup {
   final String key;
   final DateTime date;
-  final String session; // morning | afternoon | evening
+  final String session;
   final List<AccountTransaction> transactions;
   final double income;
   final double expense;
-  final double endingBalance; // ຍອດຄົງເຫຼືອຫຼັງ session ນີ້
+  final double endingBalance;
 
   SessionGroup({
     required this.key,
@@ -71,6 +73,27 @@ class AccountController extends GetxController {
     fetchTransactions();
   }
 
+  // ─────────────────────────────────────────────
+  // 🔔 Helper
+  // ─────────────────────────────────────────────
+  Future<void> _notify({
+    required AppNotificationType type,
+    required String title,
+    required String message,
+    String? targetId,
+  }) async {
+    if (!Get.isRegistered<NotificationController>()) return;
+    try {
+      await Get.find<NotificationController>().push(
+        type: type,
+        title: title,
+        message: message,
+        audience: NotificationAudience.admin,
+        targetId: targetId,
+      );
+    } catch (_) {}
+  }
+
   Future<void> fetchTransactions() async {
     isLoading.value = true;
     try {
@@ -87,6 +110,18 @@ class AccountController extends GetxController {
     try {
       await repository.addTransaction(tx);
       await fetchTransactions();
+
+      // 🔔 ແຈ້ງເຕືອນ
+      final names = tx.items.map((i) => i.name).join(', ');
+      await _notify(
+        type: AppNotificationType.accountAdd,
+        title: tx.isIncome ? 'ຮັບເງິນເຂົ້າ' : 'ຈ່າຍເງິນອອກ',
+        message: '$names · '
+            '${NumberFormat('#,###').format(tx.totalAmount)} ກີບ '
+            '(${tx.isCash ? "ສົດ" : "ໂອນ"})',
+        targetId: tx.id,
+      );
+
       Get.snackbar('ສຳເລັດ', 'ບັນທຶກຮຽບຮ້ອຍແລ້ວ',
           snackPosition: SnackPosition.BOTTOM,
           duration: const Duration(seconds: 2));
@@ -97,8 +132,20 @@ class AccountController extends GetxController {
 
   Future<void> deleteTransaction(String id) async {
     try {
+      final tx = allTransactions.firstWhereOrNull((t) => t.id == id);
       await repository.deleteTransaction(id);
       allTransactions.removeWhere((t) => t.id == id);
+
+      // 🔔 ແຈ້ງເຕືອນ
+      final names = tx?.items.map((i) => i.name).join(', ') ?? 'ລາຍການ';
+      await _notify(
+        type: AppNotificationType.accountDelete,
+        title: 'ລຶບລາຍການບັນຊີ',
+        message: 'ລຶບ "$names" '
+            '${NumberFormat('#,###').format(tx?.totalAmount ?? 0)} ກີບ',
+        targetId: id,
+      );
+
       Get.snackbar('ສຳເລັດ', 'ລຶບຮຽບຮ້ອຍແລ້ວ',
           snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
@@ -107,7 +154,7 @@ class AccountController extends GetxController {
   }
 
   // ══════════════════════════════════════════════
-  // ຍອດລວມທັງໝົດ
+  // ຍອດລວມ
   // ══════════════════════════════════════════════
   double get totalIn => allTransactions
       .where((t) => t.isIncome)
@@ -129,20 +176,14 @@ class AccountController extends GetxController {
           .fold<double>(0,
               (s, t) => s + (t.isIncome ? t.totalAmount : -t.totalAmount));
 
-  // ══════════════════════════════════════════════
-  // ຈັດກຸ່ມຕາມ ວັນ + ເຊົ້າ/ບ່າຍ/ແລງ
-  // ພ້ອມຄຳນວນ ending balance ສະສົມ
-  // ══════════════════════════════════════════════
   List<SessionGroup> get sessionGroups {
     if (allTransactions.isEmpty) return [];
 
-    // 1. ຈັດກຸ່ມ
     final Map<String, List<AccountTransaction>> groups = {};
     for (final t in allTransactions) {
       groups.putIfAbsent(t.sessionKey, () => []).add(t);
     }
 
-    // 2. ຮຽງຈາກເກົ່າ → ໃໝ່ ເພື່ອຄຳນວນ ending balance
     final sortedKeys = groups.keys.toList()..sort();
 
     double running = 0;
@@ -158,7 +199,6 @@ class AccountController extends GetxController {
           .fold<double>(0, (s, t) => s + t.totalAmount);
       running += income - expense;
 
-      // ຮຽງພາຍໃນກຸ່ມ: ໃໝ່ → ເກົ່າ
       list.sort((a, b) => b.date.compareTo(a.date));
 
       result.add(SessionGroup(
@@ -172,13 +212,9 @@ class AccountController extends GetxController {
       ));
     }
 
-    // 3. ສະແດງ ໃໝ່ → ເກົ່າ
     return result.reversed.toList();
   }
 
-  // ══════════════════════════════════════════════
-  // Format ວັນທີ / ເວລາ
-  // ══════════════════════════════════════════════
   String formatDateHeader(DateTime d) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);

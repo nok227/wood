@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:wood/features/auth/auth_controller.dart';
 import 'package:wood/features/auth/register_page.dart';
+import 'package:wood/features/wood_products/presentation/controllers/notification_controller.dart';
+import 'package:wood/features/wood_products/presentation/pages/notification_page.dart';
+import 'package:wood/features/wood_products/presentation/widgets/skeletons.dart';
 import 'package:wood/features/wood_products/presentation/widgets/wave_text.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -19,7 +23,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = Get.find<AuthController>();
     return AppBar(
       title: titleWidget ??
           WaveText(
@@ -28,6 +31,33 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 fontWeight: FontWeight.w600, fontSize: 18),
           ),
       actions: [
+        Obx(() {
+          if (!Get.isRegistered<NotificationController>()) {
+            return const SizedBox.shrink();
+          }
+          final ctrl = Get.find<NotificationController>();
+          final unread = ctrl.unreadCount;
+          return IconButton(
+            icon: Badge(
+              isLabelVisible: unread > 0,
+              backgroundColor: Colors.red.shade700,
+              label: Text(
+                unread > 99 ? '99+' : '$unread',
+                style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold),
+              ),
+              child: const Icon(Icons.notifications_outlined, size: 26),
+            ),
+            tooltip: 'ແຈ້ງເຕືອນ',
+            onPressed: () => Get.to(
+              () => const NotificationPage(),
+              transition: Transition.downToUp,
+              duration: const Duration(milliseconds: 300),
+            ),
+          );
+        }),
         IconButton(
           icon: const Icon(Icons.account_circle, size: 28),
           tooltip: 'ໂປຣຟາຍ',
@@ -128,12 +158,11 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
             const SizedBox(height: 20),
             _usersHeader(),
             const SizedBox(height: 8),
-            if (_loading)
-              const Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(
-                  child: CircularProgressIndicator(color: Colors.brown),
-                ),
+            // ✅ ໃຊ້ ProfileSkeleton ແທນ CircularProgressIndicator
+            if (_loading && _users.isEmpty)
+              const SizedBox(
+                height: 400,
+                child: ProfileSkeleton(),
               )
             else if (_users.isEmpty)
               _emptyCard()
@@ -146,9 +175,6 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
     );
   }
 
-  // ══════════════════════════════════════════════
-  // 🎴 ກາດຕົນເອງ
-  // ══════════════════════════════════════════════
   Widget _myCard(User? user, bool isAdmin) {
     return Container(
       padding: const EdgeInsets.all(18),
@@ -169,7 +195,6 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
       ),
       child: Row(
         children: [
-          // Avatar
           CircleAvatar(
             radius: 32,
             backgroundColor: Colors.white.withOpacity(0.2),
@@ -180,8 +205,6 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
             ),
           ),
           const SizedBox(width: 14),
-
-          // Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,9 +268,6 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
     );
   }
 
-  // ══════════════════════════════════════════════
-  // 👥 Header ລາຍຊື່ຜູ້ໃຊ້
-  // ══════════════════════════════════════════════
   Widget _usersHeader() {
     return Row(
       children: [
@@ -280,9 +300,6 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
     );
   }
 
-  // ══════════════════════════════════════════════
-  // 👤 ແຖວຜູ້ໃຊ້ — ຈັດກາງສະເໝີ
-  // ══════════════════════════════════════════════
   Widget _userTile(_UserInfo u) {
     final isAdmin = u.role.toLowerCase() == 'admin';
     final color = isAdmin ? Colors.amber.shade800 : Colors.brown;
@@ -309,7 +326,6 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── Avatar ──
             Container(
               width: 42,
               height: 42,
@@ -325,8 +341,6 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
               ),
             ),
             const SizedBox(width: 12),
-
-            // ── ຊື່ + ອີເມວ ──
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -374,8 +388,6 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
               ),
             ),
             const SizedBox(width: 8),
-
-            // ── Role badge (ຂວາສຸດ) ──
             Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -422,9 +434,6 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
     );
   }
 
-  // ══════════════════════════════════════════════
-  // 🚪 Logout
-  // ══════════════════════════════════════════════
   void _logout(AuthController auth) {
     Get.defaultDialog(
       title: 'ຍືນຍັນການອອກຈາກລະບົບ',

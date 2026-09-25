@@ -9,17 +9,17 @@ class SaleEntity {
   final double discountPerUnit;
 
   // 💵 ຈຳນວນເງິນທີ່ຈ່າຍຕົວຈິງ (ແບ່ງໄດ້)
-  final double cashPaidAmount;      // ສົດທີ່ຈ່າຍ
-  final double transferPaidAmount;  // ໂອນທີ່ຈ່າຍ
-  final double debtAmount;          // ຕິດໜີ້ (0 = ຈ່າຍເຕັມ)
+  final double cashPaidAmount;
+  final double transferPaidAmount;
+  final double debtAmount;
 
-  // ສົດທີ່ຮັບມາ (ສຳລັບຄິດເງິນທອນ)
+  // ສົດທີ່ຮັບມາ
   final double receivedAmount;
 
   // 🖼️ ຮູບພາບ
-  final List<String> paymentImageUrls; // ຮູບສົດ / ສະລິບ
-  final List<String> billImageUrls;    // ຮູບໃບບິນ
-  final List<String> topUpImageUrls;   // ຮູບເງິນເຕີມ (ສົດ/ສະລິບ)
+  final List<String> paymentImageUrls;
+  final List<String> billImageUrls;
+  final List<String> topUpImageUrls;
 
   // 👤 ຂໍ້ມູນລູກຄ້າ (ຕິດໜີ້)
   final String? customerName;
@@ -27,6 +27,9 @@ class SaleEntity {
   final String? customerPhone;
   final DateTime? debtDate;
   final String? debtNote;
+
+  // 🆕 ນັດວັນຈ່າຍໜີ້
+  final DateTime? appointmentDate;
 
   final String? note;
   final DateTime date;
@@ -55,6 +58,7 @@ class SaleEntity {
     this.customerPhone,
     this.debtDate,
     this.debtNote,
+    this.appointmentDate,
     this.note,
     required this.date,
     this.isConfirmed = false,
@@ -63,15 +67,34 @@ class SaleEntity {
     this.cashDenominations,
   });
 
-  double get changeAmount =>
-      receivedAmount > totalAmount ? receivedAmount - totalAmount : 0;
+  /// 💰 ເງິນທອນ — ຄຳນວນຈາກ receivedAmount ກ່ອນ
+  /// ຖ້າບໍ່ມີ → fallback ຄຳນວນຈາກ cashPaid + transferPaid
+  ///
+  /// ເຫດຜົນ: ໃນການຂາຍສົດ ຖ້າລູກຄ້າຈ່າຍເກີນ
+  ///   - receivedAmount = 100000 (ຮັບມາຕອນຂາຍ)
+  ///   - cashPaidAmount  = 80000  (ຍອດທີ່ຫັກຈາກສິນຄ້າ — capped ບໍ່ໃຫ້ເກີນ total)
+  /// ສະນັ້ນ ຕ້ອງໃຊ້ receivedAmount ເປັນຫຼັກ
+  double get changeAmount {
+    // ── ກໍລະນີມີ receivedAmount → ໃຊ້ອັນນີ້ກ່ອນ ──
+    if (receivedAmount > totalAmount) {
+      return receivedAmount - totalAmount;
+    }
+    // ── Fallback: ຄຳນວນຈາກ cashPaid + transferPaid ລວມ ──
+    // (ກໍລະນີເກົ່າທີ່ບໍ່ມີ receivedAmount ຫຼື ຖືກ 0)
+    if (debtAmount <= 0) {
+      final applied = cashPaidAmount + transferPaidAmount;
+      if (applied > totalAmount) return applied - totalAmount;
+    }
+    return 0;
+  }
 
   bool get hasDebt => debtAmount > 0;
   bool get hasTopUp => topUpImageUrls.isNotEmpty;
   bool get isMixed => cashPaidAmount > 0 && transferPaidAmount > 0;
-
-  /// ✅ ຈ່າຍເຕັມຈຳນວນແລ້ວ (ບໍ່ມີໜີ້)
   bool get isFullyPaid => debtAmount <= 0;
+
+  /// 🆕 ມີນັດວັນຈ່າຍບໍ
+  bool get hasAppointment => appointmentDate != null;
 
   String? get slipImageUrl {
     if (paymentImageUrls.isEmpty) return null;

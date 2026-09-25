@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wood/core/util/page_route_notifier.dart';
 
 class WaveText extends StatefulWidget {
   final String text;
@@ -14,18 +15,21 @@ class WaveText extends StatefulWidget {
   State<WaveText> createState() => _WaveTextState();
 }
 
-class _WaveTextState extends State<WaveText> with SingleTickerProviderStateMixin {
+class _WaveTextState extends State<WaveText>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    // ⚡ ปรับเวลาลงเหลือ 700ms เพื่อความรวดเร็วและกระฉับกระเฉง ไม่ดียเลย์
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
     _controller.forward();
+
+    // 🔔 replay ຕອນ route/tab ປ່ຽນ
+    PageRouteNotifier.instance.tick.addListener(_onRouteTick);
   }
 
   @override
@@ -39,8 +43,19 @@ class _WaveTextState extends State<WaveText> with SingleTickerProviderStateMixin
 
   @override
   void dispose() {
+    PageRouteNotifier.instance.tick.removeListener(_onRouteTick);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onRouteTick() {
+    if (!mounted) return;
+    if (!TickerMode.of(context)) return;
+    final route = ModalRoute.of(context);
+    if (route != null && !route.isCurrent) return;
+
+    _controller.reset();
+    _controller.forward();
   }
 
   @override
@@ -51,20 +66,22 @@ class _WaveTextState extends State<WaveText> with SingleTickerProviderStateMixin
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: List.generate(count, (index) {
-        // 🌊 คำนวณ Delay แบบกระจายตามความยาวข้อความจริง เพื่อไม่ให้ตัวท้ายๆ หลุดขอบเวลา
-        final double maxDelay = 0.3; 
-        final double delay = count > 1 ? (index / (count - 1)) * maxDelay : 0.0;
-        final double durationRatio = 0.7; // ระยะเวลาเคลื่อนไหวต่อตัวอักษร
+        final double maxDelay = 0.3;
+        final double delay =
+            count > 1 ? (index / (count - 1)) * maxDelay : 0.0;
+        const double durationRatio = 0.7;
 
-        // 🚀 TweenSequence ปรับความสูงการเด้งแรงขึ้นเป็น -14.0 (สูงสะใจ เต้น 2 รอบ)
         final Animation<double> animation = TweenSequence<double>([
-          // --- รอบที่ 1 (เด้งขึ้น-ลง แรงๆ) ---
-          TweenSequenceItem(tween: Tween(begin: 0.0, end: -14.0).chain(CurveTween(curve: Curves.easeOut)), weight: 25),
-          TweenSequenceItem(tween: Tween(begin: -14.0, end: 0.0).chain(CurveTween(curve: Curves.easeIn)), weight: 25),
-          // --- รอบที่ 2 (เด้งขึ้น-ลง แรงๆ) ---
-          // TweenSequenceItem(tween: Tween(begin: 0.0, end: -14.0).chain(CurveTween(curve: Curves.easeOut)), weight: 25),
-          // TweenSequenceItem(tween: Tween(begin: -14.0, end: 0.0).chain(CurveTween(curve: Curves.easeIn)), weight: 25),
-
+          TweenSequenceItem(
+            tween: Tween(begin: 0.0, end: -14.0)
+                .chain(CurveTween(curve: Curves.easeOut)),
+            weight: 25,
+          ),
+          TweenSequenceItem(
+            tween: Tween(begin: -14.0, end: 0.0)
+                .chain(CurveTween(curve: Curves.easeIn)),
+            weight: 25,
+          ),
         ]).animate(
           CurvedAnimation(
             parent: _controller,
@@ -80,12 +97,10 @@ class _WaveTextState extends State<WaveText> with SingleTickerProviderStateMixin
           builder: (context, child) {
             return Transform.translate(
               offset: Offset(0, animation.value),
-              child: Text(
-                characters[index],
-                style: widget.style,
-              ),
+              child: child,
             );
           },
+          child: Text(characters[index], style: widget.style),
         );
       }),
     );

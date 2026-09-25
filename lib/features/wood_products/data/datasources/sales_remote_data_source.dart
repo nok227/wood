@@ -44,13 +44,36 @@ class SalesRemoteDataSource {
     });
   }
 
-  /// 🆕 ປິດໜີ້ — ຕັ້ງຍອດໜີ້ = 0 ແລະ ສະຖານະ = ຢືນຢັນ
   Future<void> markDebtAsPaid(String id) async {
     await _firestore.collection(_collection).doc(id).update({
       'debtAmount': 0,
       'isConfirmed': true,
       'isMismatch': false,
       'mismatchNote': null,
+    });
+  }
+
+  /// 🆕 ຈ່າຍໜີ້ + ເພີ່ມຮູບ
+  ///
+  /// ⚠️ ບໍ່ overwrite 'receivedAmount' ເພາະມັນເປັນຄ່າ
+  /// ສົດທີ່ຮັບມາຕອນຂາຍ — ໃຊ້ຄຳນວນເງິນທອນ.
+  /// ການຈ່າຍໜີ້ → increment ໃສ່ cashPaidAmount / transferPaidAmount ຢ່າງດຽວ
+  Future<void> payDebt(
+    String id, {
+    required String paymentType,
+    required String imageUrl,
+    required double paidAmount,
+  }) async {
+    await _firestore.collection(_collection).doc(id).update({
+      'debtAmount': 0,
+      'isConfirmed': true,
+      'isMismatch': false,
+      'mismatchNote': null,
+      'paymentImageUrls': FieldValue.arrayUnion([imageUrl]),
+      if (paymentType == 'cash')
+        'cashPaidAmount': FieldValue.increment(paidAmount),
+      if (paymentType == 'transfer')
+        'transferPaidAmount': FieldValue.increment(paidAmount),
     });
   }
 }

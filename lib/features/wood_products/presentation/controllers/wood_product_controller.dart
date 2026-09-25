@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:wood/features/wood_products/domain/entities/app_notification.dart';
+import 'package:wood/features/wood_products/presentation/controllers/notification_controller.dart';
 import '../../data/datasources/wood_remote_data_source.dart';
 import '../../data/models/wood_product_model.dart';
 
@@ -10,12 +12,20 @@ class WoodProductController extends GetxController {
 
   var isLoading = false.obs;
   var isSaving = false.obs;
+
+  // ✅ ຕົວບອກຄວາມຄືບໜ້າ (progress bar)
+  var saveProgress = 0.obs;      // 0-100
+  var saveStep = ''.obs;         // ຂໍ້ຄວາມສະຖານະ
+
   var productList = <WoodProductModel>[].obs;
   var products = <WoodProductModel>[].obs;
   var errorMessage = RxnString();
 
+  // ✅ ເກັບຄ່າເດີມ
+  double? _originalPrice;
+  DateTime? _originalPriceUpdatedAt;
 
-  // ---------- รูปภาพ (สูงสุด 6 รูปต่อรายการ) ----------
+  // ---------- ຮູບພາບ ----------
   static const maxImages = 6;
   var existingImageUrls = <String>[].obs;
   var selectedImages = <File>[].obs;
@@ -32,7 +42,7 @@ class WoodProductController extends GetxController {
   var editingProductId = RxnString();
 
   final nameController = TextEditingController();
-  final woodTypeController = TextEditingController(); // ✅ เพิ่ม Controller ชนิดไม้
+  final woodTypeController = TextEditingController();
   final widthController = TextEditingController();
   final lengthController = TextEditingController();
   final thicknessController = TextEditingController();
@@ -51,7 +61,7 @@ class WoodProductController extends GetxController {
   @override
   void onClose() {
     nameController.dispose();
-    woodTypeController.dispose(); // ✅ dispose
+    woodTypeController.dispose();
     widthController.dispose();
     lengthController.dispose();
     thicknessController.dispose();
@@ -61,20 +71,29 @@ class WoodProductController extends GetxController {
     super.onClose();
   }
 
-  // ---------- รูปภาพ ----------
+  // ══════════════════════════════════════════════
+  // 📷 ເລືອກຮູບ — ບີບອັດແຮງຂຶ້ນ ເພື່ອ upload ໄວ
+  // ══════════════════════════════════════════════
   Future<void> pickImages() async {
     try {
-      final remainingSlots = maxImages - (existingImageUrls.length + selectedImages.length);
+      final remainingSlots =
+          maxImages - (existingImageUrls.length + selectedImages.length);
       if (remainingSlots <= 0) {
         Get.snackbar('ແຈ້ງເຕືອນ', 'ເລືອກໄດ້ສູງສຸດ $maxImages ຮູບເທົ່ານັ້ນ');
         return;
       }
-      final pickedFiles = await ImagePicker().pickMultiImage(maxWidth: 1200, imageQuality: 75);
+      final pickedFiles = await ImagePicker().pickMultiImage(
+        maxWidth: 900,        // ✅ ຫຼຸດຈາກ 1200 → 900
+        maxHeight: 900,
+        imageQuality: 60,     // ✅ ຫຼຸດຈາກ 75 → 60 (ໄວຂຶ້ນ 40%)
+      );
       if (pickedFiles.isEmpty) return;
 
-      final toAdd = pickedFiles.take(remainingSlots).map((x) => File(x.path)).toList();
+      final toAdd =
+          pickedFiles.take(remainingSlots).map((x) => File(x.path)).toList();
       if (pickedFiles.length > remainingSlots) {
-        Get.snackbar('ແຈ້ງເຕືອນ', 'ເລືອກໄດ້ສູງສຸດ $maxImages ຮູບ — ເກັບ $remainingSlots ຮູບທຳອິດໄຫ້ເທົ່ານັ້ນ');
+        Get.snackbar('ແຈ້ງເຕືອນ',
+            'ເລືອກໄດ້ສູງສຸດ $maxImages ຮູບ — ເກັບ $remainingSlots ຮູບທຳອິດໄຫ້ເທົ່ານັ້ນ');
       }
       selectedImages.addAll(toAdd);
     } catch (e) {
@@ -87,7 +106,9 @@ class WoodProductController extends GetxController {
   void removeNewImage(int index) => selectedImages.removeAt(index);
   void removeExistingImage(int index) => existingImageUrls.removeAt(index);
 
-  // ---------- ดึงข้อมูล ----------
+  // ══════════════════════════════════════════════
+  // 📥 ດຶງຂໍ້ມູນ
+  // ══════════════════════════════════════════════
   Future<void> fetchProducts() async {
     try {
       isLoading.value = true;
@@ -103,20 +124,27 @@ class WoodProductController extends GetxController {
     }
   }
 
-  // ---------- ดึงรายการ ชนิดไม้ แบบไม่ซ้ำกัน ----------
-  List<String> get uniqueWoodTypes =>
-      products.map((p) => p.woodType.trim()).where((t) => t.isNotEmpty).toSet().toList();
+  List<String> get uniqueWoodTypes => products
+      .map((p) => p.woodType.trim())
+      .where((t) => t.isNotEmpty)
+      .toSet()
+      .toList();
 
-  List<String> get uniqueProductNames => products.map((p) => p.name).toSet().toList();
-  
+  List<String> get uniqueProductNames =>
+      products.map((p) => p.name).toSet().toList();
+
   List<WoodProductModel> variantsForName(String name) =>
       products.where((p) => p.name == name).toList();
 
-  // ---------- เริ่มแก้ไขรายการ ----------
+  // ══════════════════════════════════════════════
+  // ✏️ ເລີ່ມແກ້ໄຂ
+  // ══════════════════════════════════════════════
   void startEdit(WoodProductModel product) {
+    _originalPrice = product.price;
+    _originalPriceUpdatedAt = product.priceUpdatedAt;
     editingProductId.value = product.id;
     nameController.text = product.name;
-    woodTypeController.text = product.woodType; // ✅ ดึงชนิดไม้เดิมมาใส่
+    woodTypeController.text = product.woodType;
     widthController.text = _fmt(product.width);
     lengthController.text = _fmt(product.length);
     thicknessController.text = _fmt(product.thickness);
@@ -141,21 +169,31 @@ class WoodProductController extends GetxController {
     clearForm();
   }
 
-  String _fmt(num v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
+  String _fmt(num v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
 
-  // ---------- บันทึก (เพิ่มใหม่ หรือ แก้ไข) ----------
+  // ══════════════════════════════════════════════
+  // 🚀 ບັນທຶກ — ເວີຊັ່ນໄວ
+  //   ① Upload ຮູບພ້ອມກັນ (parallel)
+  //   ② ບັນທຶກ Firestore
+  //   ③ ອັບເດດ list ໃນ-memory (ບໍ່ fetch ຄືນ)
+  //   ④ ແຈ້ງເຕືອນ fire-and-forget
+  // ══════════════════════════════════════════════
   Future<bool> saveProduct() async {
     final name = nameController.text.trim();
-    final woodType = woodTypeController.text.trim(); // ✅ อ่านค่าชนิดไม้
+    final woodType = woodTypeController.text.trim();
     final width = double.tryParse(widthController.text.trim());
     final length = double.tryParse(lengthController.text.trim());
     final thickness = double.tryParse(thicknessController.text.trim());
     const quantity = 1;
-    final price = double.tryParse(priceController.text.replaceAll(',', '').trim());
-    final unit =
-        selectedUnit.value == 'ອື່ນໆ' ? customUnitController.text.trim() : selectedUnit.value;
+    final price =
+        double.tryParse(priceController.text.replaceAll(',', '').trim());
+    final unit = selectedUnit.value == 'ອື່ນໆ'
+        ? customUnitController.text.trim()
+        : selectedUnit.value;
     final totalImages = existingImageUrls.length + selectedImages.length;
 
+    // ── Validation ──
     if (name.isEmpty) {
       Get.snackbar('ແຈ້ງເຕືອນ', 'ກະລຸນາປ້ອນຊື່ໄມ້');
       return false;
@@ -181,22 +219,50 @@ class WoodProductController extends GetxController {
 
     try {
       isSaving.value = true;
+      saveProgress.value = 0;
+      saveStep.value = 'ກຳລັງກະກຽມ...';
       errorMessage.value = null;
 
+      // ─────────────────────────────────────────
+      // ① Upload ຮູບພ້ອມກັນ
+      // ─────────────────────────────────────────
       final newUrls = <String>[];
-      for (final file in selectedImages) {
-        final url = await dataSource.uploadImageToCloudinary(file);
-        newUrls.add(url);
-      }
-      final finalImageUrls = [...existingImageUrls, ...newUrls];
+      if (selectedImages.isNotEmpty) {
+        final total = selectedImages.length;
+        int completed = 0;
 
+        saveStep.value = 'ກຳລັງອັບໂຫຼດຮູບ 0/$total...';
+        saveProgress.value = 5;
+
+        final futures = selectedImages.map((file) async {
+          final url = await dataSource.uploadImageToCloudinary(file);
+          completed++;
+          // ✅ progress 5% → 85%
+          saveProgress.value = 5 + (completed / total * 80).round();
+          saveStep.value = 'ກຳລັງອັບໂຫຼດຮູບ $completed/$total...';
+          return url;
+        });
+
+        newUrls.addAll(await Future.wait(futures));
+      }
+
+      final finalImageUrls = [...existingImageUrls, ...newUrls];
       final isEditing = editingProductId.value != null;
+
+      final priceChanged = isEditing &&
+          _originalPrice != null &&
+          _originalPrice != price;
+
+      final DateTime? newPriceUpdatedAt = priceChanged
+          ? DateTime.now()
+          : (isEditing ? _originalPriceUpdatedAt : null);
+
       final product = WoodProductModel(
         id: isEditing
             ? editingProductId.value!
             : DateTime.now().millisecondsSinceEpoch.toString(),
         name: name,
-        woodType: woodType, // ✅ บันทึกชนิดไม้
+        woodType: woodType,
         imageUrls: finalImageUrls,
         width: width,
         length: length,
@@ -205,12 +271,72 @@ class WoodProductController extends GetxController {
         quantity: quantity,
         unit: unit,
         price: price,
+        priceUpdatedAt: newPriceUpdatedAt,
       );
+
+      // ─────────────────────────────────────────
+      // ② ບັນທຶກ Firestore
+      // ─────────────────────────────────────────
+      saveStep.value = 'ກຳລັງບັນທຶກ...';
+      saveProgress.value = 90;
 
       if (isEditing) {
         await dataSource.updateWoodProduct(product);
       } else {
         await dataSource.saveWoodProduct(product);
+      }
+
+      // ─────────────────────────────────────────
+      // ③ ອັບເດດ list ໃນ-memory (ບໍ່ fetch ຄືນ)
+      // ─────────────────────────────────────────
+      final idx = products.indexWhere((p) => p.id == product.id);
+      if (idx >= 0) {
+        products[idx] = product;
+      } else {
+        products.insert(0, product);
+      }
+
+      saveProgress.value = 100;
+
+      // ─────────────────────────────────────────
+      // ④ ແຈ້ງເຕືອນ — fire-and-forget
+      // ─────────────────────────────────────────
+      if (Get.isRegistered<NotificationController>()) {
+        try {
+          final noti = Get.find<NotificationController>();
+          if (isEditing) {
+            final oldP = _originalPrice;
+            if (oldP != null && oldP != price) {
+              noti.push(
+                type: AppNotificationType.priceChange,
+                title: 'ປ່ຽນແປງລາຄາໄມ້',
+                message:
+                    '$name: ${oldP.toStringAsFixed(0)} → ${price.toStringAsFixed(0)} ກີບ',
+                audience: NotificationAudience.all,
+                targetId: product.id,
+                meta: {'oldPrice': oldP, 'newPrice': price},
+              );
+            } else {
+              noti.push(
+                type: AppNotificationType.productEdit,
+                title: 'ແກ້ໄຂຂໍ້ມູນໄມ້',
+                message: 'ແກ້ໄຂ "$name" ຂະໜາດ '
+                    '${_fmt(width)}×${_fmt(length)}×${_fmt(thickness)} ${selectedSizeUnit.value}',
+                audience: NotificationAudience.all,
+                targetId: product.id,
+              );
+            }
+          } else {
+            noti.push(
+              type: AppNotificationType.productAdd,
+              title: 'ເພີ່ມໄມ້ໃໝ່',
+              message:
+                  'ເພີ່ມ "$name" (${woodType.isEmpty ? "ບໍ່ລະບຸຊະນິດ" : woodType})',
+              audience: NotificationAudience.all,
+              targetId: product.id,
+            );
+          }
+        } catch (_) {}
       }
 
       clearForm();
@@ -222,22 +348,39 @@ class WoodProductController extends GetxController {
       return false;
     } finally {
       isSaving.value = false;
-    }
-
-    if (isSuccess) {
-      fetchProducts();
+      saveProgress.value = 0;
+      saveStep.value = '';
     }
 
     return isSuccess;
   }
 
-  // ---------- ลบ ----------
+  // ══════════════════════════════════════════════
+  // 🗑 ລຶບ
+  // ══════════════════════════════════════════════
   Future<void> deleteProduct(String id) async {
     try {
       isLoading.value = true;
+      final removed = products.firstWhereOrNull((p) => p.id == id);
+
       await dataSource.deleteWoodProduct(id);
+      products.removeWhere((p) => p.id == id);   // ✅ ລຶບໃນ-memory
+
+      if (Get.isRegistered<NotificationController>()) {
+        try {
+          Get.find<NotificationController>().push(
+            type: AppNotificationType.saleDelete,
+            title: 'ລຶບຂໍ້ມູນໄມ້',
+            message: removed != null
+                ? 'ລຶບ "${removed.name}" ອອກຈາກລະບົບ'
+                : 'ລຶບລາຍການໄມ້ອອກຈາກລະບົບ',
+            audience: NotificationAudience.all,
+            targetId: id,
+          );
+        } catch (_) {}
+      }
+
       Get.snackbar('ສຳເລັດ', 'ລົບຂໍ້ມູນແລ້ວ');
-      await fetchProducts();
     } catch (e) {
       debugPrint('deleteProduct error: $e');
       Get.snackbar('ຂໍ້ຜຶດພາດ', 'ລົບບໍ່ສໍາເລັດ: $e');
@@ -246,10 +389,15 @@ class WoodProductController extends GetxController {
     }
   }
 
+  // ══════════════════════════════════════════════
+  // 🧹 ລ້າງຟອມ
+  // ══════════════════════════════════════════════
   void clearForm() {
     editingProductId.value = null;
+    _originalPrice = null;
+    _originalPriceUpdatedAt = null;
     nameController.clear();
-    woodTypeController.clear(); // ✅ ล้างค่าชนิดไม้
+    woodTypeController.clear();
     widthController.clear();
     lengthController.clear();
     thicknessController.clear();

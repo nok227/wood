@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:wood/core/util/page_route_notifier.dart';
+import 'package:wood/features/wood_products/data/datasources/notification_remote_data_source.dart';
 import 'package:wood/features/wood_products/data/datasources/sales_remote_data_source.dart';
+import 'package:wood/features/wood_products/data/repositories/notification_repository_impl.dart';
 import 'package:wood/features/wood_products/data/repositories/sales_repository_impl.dart';
+import 'package:wood/features/wood_products/presentation/controllers/notification_controller.dart';
 import 'package:wood/features/wood_products/presentation/controllers/sales_controller.dart';
 import 'package:wood/features/wood_products/presentation/controllers/wood_product_controller.dart';
 
@@ -43,7 +47,7 @@ void main() async {
     firebaseInitError = e;
   }
 
-  // ✅ Inject Controllers เดิม
+  // ✅ Inject Controllers ເດີມ
   Get.put(WoodProductController());
 
   // ✅ Inject Auth Clean Architecture
@@ -58,13 +62,21 @@ void main() async {
       SalesRepositoryImpl(remoteDataSource: salesRemoteDataSource);
   Get.put(SalesController(repository: salesRepository));
 
-  // 🆕 💰 Inject Account (ບັນຊີ ຮັບ-ຈ່າຍ)
+  // 🆕 💰 Inject Account
   final accountRemoteDataSource = AccountRemoteDataSource();
   final accountRepository =
       AccountRepositoryImpl(remoteDataSource: accountRemoteDataSource);
   Get.put(
     AccountController(repository: accountRepository),
-    permanent: true, // ✅ ບໍ່ dispose — ປ້ອງກັນ error '_dependents.isEmpty'
+    permanent: true,
+  );
+
+  // 🔔 Inject Notifications
+  final notiRemote = NotificationRemoteDataSource();
+  final notiRepo = NotificationRepositoryImpl(remote: notiRemote);
+  Get.put(
+    NotificationController(repository: notiRepo),
+    permanent: true,
   );
 
   runApp(MyApp(firebaseInitError: firebaseInitError));
@@ -83,6 +95,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.brown,
       ),
+      // 🔔 Wave text / AnimatedNumber replay ຕອນ route ປ່ຽນ
+      routingCallback: (routing) {
+        PageRouteNotifier.instance.bump();
+      },
       home: firebaseInitError != null
           ? FirebaseErrorPage(error: firebaseInitError!)
           : (FirebaseAuth.instance.currentUser != null
@@ -108,19 +124,16 @@ class FirebaseErrorPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.error_outline,
-                  color: Colors.red, size: 48),
+              const Icon(Icons.error_outline, color: Colors.red, size: 48),
               const SizedBox(height: 16),
               const Text(
                 'Firebase initialization failed',
-                style:
-                    TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Text(
                 error.toString(),
-                style: const TextStyle(
-                    fontSize: 14, color: Colors.black87),
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
             ],
           ),

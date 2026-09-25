@@ -20,6 +20,7 @@ class SaleModel {
   final String? customerPhone;
   final DateTime? debtDate;
   final String? debtNote;
+  final DateTime? appointmentDate; // 🆕
   final String? note;
   final DateTime date;
   final bool isConfirmed;
@@ -47,6 +48,7 @@ class SaleModel {
     this.customerPhone,
     this.debtDate,
     this.debtNote,
+    this.appointmentDate, // 🆕
     this.note,
     required this.date,
     this.isConfirmed = false,
@@ -55,7 +57,9 @@ class SaleModel {
     this.cashDenominations,
   });
 
-  // ── Safe parsers ──
+  // ══════════════════════════════════════════════
+  // 🛡️ Safe parsers
+  // ══════════════════════════════════════════════
   static String _str(dynamic v, [String def = '']) =>
       v == null ? def : v.toString();
 
@@ -94,14 +98,25 @@ class SaleModel {
     if (v == null) return DateTime.now();
     if (v is DateTime) return v;
     if (v is String) return DateTime.tryParse(v) ?? DateTime.now();
-    if (v is int) {
-      return DateTime.fromMillisecondsSinceEpoch(v);
-    }
+    if (v is int) return DateTime.fromMillisecondsSinceEpoch(v);
     try {
       final d = (v as dynamic).toDate();
       if (d is DateTime) return d;
     } catch (_) {}
     return DateTime.now();
+  }
+
+  /// 🆕 ອ່ານວັນທີແບບ nullable (ຄືນ null ຖ້າບໍ່ມີ)
+  static DateTime? _dateOrNull(dynamic v) {
+    if (v == null) return null;
+    if (v is DateTime) return v;
+    if (v is String) return DateTime.tryParse(v);
+    if (v is int) return DateTime.fromMillisecondsSinceEpoch(v);
+    try {
+      final d = (v as dynamic).toDate();
+      if (d is DateTime) return d;
+    } catch (_) {}
+    return null;
   }
 
   static Map<int, int>? _cashDenoms(dynamic v) {
@@ -121,7 +136,7 @@ class SaleModel {
   }
 
   // ══════════════════════════════════════════════
-  // Map → Model (super safe ສຳລັບຂໍ້ມູນເກົ່າ/ໃໝ່)
+  // Map → Model (backward compatible)
   // ══════════════════════════════════════════════
   factory SaleModel.fromMap(Map<String, dynamic> map, String docId) {
     final totalAmount = _dbl(map['totalAmount']);
@@ -131,7 +146,7 @@ class SaleModel {
     double transferPaid = _dbl(map['transferPaidAmount']);
     final debtAmount = _dbl(map['debtAmount']);
 
-    // Backward-compatible: ຂໍ້ມູນເກົ່າທີ່ບໍ່ມີຟິວໃໝ່
+    // ✅ ຂໍ້ມູນເກົ່າທີ່ບໍ່ມີຟິວໃໝ່ → ຄຳນວນຈາກ paymentType
     if (cashPaid == 0 && transferPaid == 0 && debtAmount == 0) {
       if (paymentType == 'cash') {
         cashPaid = totalAmount;
@@ -158,10 +173,10 @@ class SaleModel {
       customerName: _strOrNull(map['customerName']),
       customerAddress: _strOrNull(map['customerAddress']),
       customerPhone: _strOrNull(map['customerPhone']),
-      debtDate: map['debtDate'] != null
-          ? DateTime.tryParse(map['debtDate'].toString())
-          : null,
+      debtDate: _dateOrNull(map['debtDate']),
       debtNote: _strOrNull(map['debtNote']),
+      // ✅ ອ່ານ appointmentDate ຢ່າງປອດໄພ
+      appointmentDate: _dateOrNull(map['appointmentDate']),
       note: _strOrNull(map['note']),
       date: _date(map['date']),
       isConfirmed: _bool(map['isConfirmed']),
@@ -193,14 +208,16 @@ class SaleModel {
         'customerPhone': customerPhone,
         'debtDate': debtDate?.toIso8601String(),
         'debtNote': debtNote,
+        // ✅ ບັນທຶກ appointmentDate
+        'appointmentDate': appointmentDate?.toIso8601String(),
         'note': note,
         'date': date.toIso8601String(),
         'isConfirmed': isConfirmed,
         'isMismatch': isMismatch,
         'mismatchNote': mismatchNote,
-        // ✅ ປ່ຽນ key ເປັນ String ກັນ Firebase error
-        'cashDenominations': cashDenominations
-            ?.map((k, v) => MapEntry(k.toString(), v)),
+        'cashDenominations': cashDenominations?.map(
+          (k, v) => MapEntry(k.toString(), v),
+        ),
       };
 
   // ══════════════════════════════════════════════
@@ -226,6 +243,8 @@ class SaleModel {
         customerPhone: customerPhone,
         debtDate: debtDate,
         debtNote: debtNote,
+        // ✅ ສົ່ງ appointmentDate ກັບໄປ
+        appointmentDate: appointmentDate,
         note: note,
         date: date,
         isConfirmed: isConfirmed,

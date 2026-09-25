@@ -7,47 +7,86 @@ import '../models/wood_product_model.dart';
 class WoodRemoteDataSource {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  // ⚠️ เปลี่ยนเป็นข้อมูล Cloudinary ของคุณ
+  // ⚠️ ຂໍ້ມູນ Cloudinary
   final String cloudName = 'onvap9ey';
   final String uploadPreset = 'wood_preset';
 
-  // 1. อัปโหลดรูปไป Cloudinary
+  // ══════════════════════════════════════════════
+  // 1. ອັບໂຫຼດຮູບ → Cloudinary (ມີ timeout ປ້ອງກັນຄ້າງ)
+  // ══════════════════════════════════════════════
   Future<String> uploadImageToCloudinary(File imageFile) async {
-    final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
-    final request = http.MultipartRequest('POST', url)
-      ..fields['upload_preset'] = uploadPreset
-      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+    try {
+      final url = Uri.parse(
+        'https://api.cloudinary.com/v1_1/$cloudName/image/upload',
+      );
+      final request = http.MultipartRequest('POST', url)
+        ..fields['upload_preset'] = uploadPreset
+        ..files.add(
+          await http.MultipartFile.fromPath('file', imageFile.path),
+        );
 
-    final response = await request.send();
-    final responseData = await response.stream.toBytes();
-    final responseString = String.fromCharCodes(responseData);
-    final jsonMap = jsonDecode(responseString);
+      // ✅ Timeout 45 ວິ ປ້ອງກັນຄ້າງຕະຫຼອດ
+      final streamedResponse =
+          await request.send().timeout(const Duration(seconds: 45));
 
-    if (response.statusCode == 200) {
-      return jsonMap['secure_url'] as String;
-    } else {
-      throw Exception('Upload image failed: ${jsonMap['error']?['message'] ?? 'Unknown'}');
+      final responseData = await streamedResponse.stream.toBytes();
+      final responseString = String.fromCharCodes(responseData);
+      final jsonMap = jsonDecode(responseString);
+
+      if (streamedResponse.statusCode == 200 &&
+          jsonMap['secure_url'] != null) {
+        return jsonMap['secure_url'] as String;
+      } else {
+        throw Exception(
+          'Upload failed: ${jsonMap['error']?['message'] ?? 'Unknown'}',
+        );
+      }
+    } on Exception catch (e) {
+      throw Exception('Upload image error: $e');
     }
   }
 
-  // 2. บันทึกลง Firestore (สร้างใหม่)
+  // ══════════════════════════════════════════════
+  // 2. ບັນທຶກ Firestore (ສ້າງໃໝ່)
+  // ══════════════════════════════════════════════
   Future<void> saveWoodProduct(WoodProductModel product) async {
-    await firestore.collection('wood_products').doc(product.id).set(product.toMap());
+    await firestore
+        .collection('wood_products')
+        .doc(product.id)
+        .set(product.toMap())
+        .timeout(const Duration(seconds: 20));
   }
 
-  // 3. ✅ เพิ่มฟังก์ชัน อัปเดตข้อมูล ใน Firestore
+  // ══════════════════════════════════════════════
+  // 3. ອັບເດດຂໍ້ມູນ
+  // ══════════════════════════════════════════════
   Future<void> updateWoodProduct(WoodProductModel product) async {
-    await firestore.collection('wood_products').doc(product.id).update(product.toUpdateMap());
+    await firestore
+        .collection('wood_products')
+        .doc(product.id)
+        .update(product.toUpdateMap())
+        .timeout(const Duration(seconds: 20));
   }
 
-  // 4. ✅ เพิ่มฟังก์ชัน ลบข้อมูล จาก Firestore
+  // ══════════════════════════════════════════════
+  // 4. ລຶບຂໍ້ມູນ
+  // ══════════════════════════════════════════════
   Future<void> deleteWoodProduct(String id) async {
-    await firestore.collection('wood_products').doc(id).delete();
+    await firestore
+        .collection('wood_products')
+        .doc(id)
+        .delete()
+        .timeout(const Duration(seconds: 20));
   }
 
-  // 5. ดึงรายการทั้งหมดจาก Firestore
+  // ══════════════════════════════════════════════
+  // 5. ດຶງລາຍການທັງໝົດ
+  // ══════════════════════════════════════════════
   Future<List<WoodProductModel>> getWoodProducts() async {
-    final snapshot = await firestore.collection('wood_products').get();
+    final snapshot = await firestore
+        .collection('wood_products')
+        .get()
+        .timeout(const Duration(seconds: 30));
     return snapshot.docs
         .map((doc) => WoodProductModel.fromMap(doc.data(), doc.id))
         .toList();

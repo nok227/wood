@@ -90,7 +90,7 @@ class SalesSummaryDetailPage extends StatelessWidget {
   }
 
   // ══════════════════════════════════════════════
-  // 📋 ລາຍການ + ຈັດກຸ່ມຕາມວັນທີ (ແບບ sales_list_page ເປະໆ)
+  // 📋 ລາຍການ + ຈັດກຸ່ມຕາມວັນທີ
   // ══════════════════════════════════════════════
   Widget _listWithDateGroup() {
     // ກັ່ນຕອງຕາມປະເພດ
@@ -105,7 +105,7 @@ class SalesSummaryDetailPage extends StatelessWidget {
       return const Center(child: Text('ບໍ່ມີລາຍການ'));
     }
 
-    // ຈັດກຸ່ມຕາມວັນທີ (ແບບດຽວກັບ sales_list_page)
+    // ຈັດກຸ່ມຕາມວັນທີ
     final Map<String, List<SaleEntity>> grouped = {};
     for (final s in filtered) {
       final key =
@@ -126,7 +126,7 @@ class SalesSummaryDetailPage extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ═══ 📌 ກາດຫົວວັນທີ (ແບບດຽວກັບ sales_list_page) ═══
+            // ═══ 📌 ກາດຫົວວັນທີ ═══
             Card(
               color: Colors.brown[100],
               elevation: 1,
@@ -140,26 +140,32 @@ class SalesSummaryDetailPage extends StatelessWidget {
                   vertical: 10.0,
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 18,
-                          color: Colors.brown[800],
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          headerTitle,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: Colors.brown[900],
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            size: 18,
+                            color: Colors.brown[800],
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              headerTitle,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Colors.brown[900],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
@@ -183,9 +189,10 @@ class SalesSummaryDetailPage extends StatelessWidget {
               ),
             ),
 
-            // ═══ 🔑 SaleCard ແບບປົກກະຕິ ═══
+            // ✅ Key ບັງຄັບ — ປ້ອງກັນ state ວຸ່ນວາຍ
             ...salesInGroup.map(
               (s) => SaleCard(
+                key: ValueKey('sale-${s.id}'),
                 sale: s,
                 isAdmin: Get.find<AuthController>().isAdmin,
               ),

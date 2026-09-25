@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import 'package:wood/features/wood_products/presentation/widgets/animated_number.dart';
+import 'package:wood/features/wood_products/presentation/widgets/skeletons.dart';
+
 import '../../domain/entities/sale_entity.dart';
 import '../controllers/sales_controller.dart';
 import 'sales_summary_detail_page.dart';
@@ -23,7 +26,6 @@ class SalesSummaryPage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // ── ຕົວກອງວັນທີ ──
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -37,11 +39,12 @@ class SalesSummaryPage extends StatelessWidget {
                   ],
                 )),
           ),
-
           Expanded(
             child: Obx(() {
-              if (controller.isLoading.value) {
-                return const Center(child: CircularProgressIndicator());
+              // ✅ Skeleton ແທນ spinner
+              if (controller.isLoading.value &&
+                  controller.allSalesList.isEmpty) {
+                return const SalesSummarySkeleton();
               }
               final sales = controller.filteredSalesList.toList();
               if (sales.isEmpty) {
@@ -52,7 +55,6 @@ class SalesSummaryPage extends StatelessWidget {
               return ListView(
                 padding: const EdgeInsets.all(12),
                 children: [
-                  // ══ ຍອດລວມ ══
                   _tapCard(
                     onTap: () => _open(
                       'ລາຍການທັງໝົດ',
@@ -64,8 +66,6 @@ class SalesSummaryPage extends StatelessWidget {
                     child: _totalCard(s, fmt),
                   ),
                   const SizedBox(height: 10),
-
-                  // ══ ສົດ / ໂອນ ══
                   Row(
                     children: [
                       Expanded(
@@ -83,7 +83,7 @@ class SalesSummaryPage extends StatelessWidget {
                           ),
                           child: _statTile(
                             '💵 ເງິນສົດ',
-                            '${fmt.format(s.cashTotal)} ກີບ',
+                            s.cashTotal,
                             '${s.cashCount} ລາຍການ',
                             Colors.green.shade700,
                           ),
@@ -105,7 +105,7 @@ class SalesSummaryPage extends StatelessWidget {
                           ),
                           child: _statTile(
                             '🏦 ເງິນໂອນ',
-                            '${fmt.format(s.transferTotal)} ກີບ',
+                            s.transferTotal,
                             '${s.transferCount} ລາຍການ',
                             Colors.blue.shade700,
                           ),
@@ -114,8 +114,6 @@ class SalesSummaryPage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-
-                  // ══ ຢືນຢັນ / ລໍຖ້າ ══
                   Row(
                     children: [
                       Expanded(
@@ -129,7 +127,7 @@ class SalesSummaryPage extends StatelessWidget {
                           ),
                           child: _statTile(
                             '✓ ເງິນເຂົ້າແລ້ວ',
-                            '${fmt.format(s.confirmedTotal)} ກີບ',
+                            s.confirmedTotal,
                             '${s.confirmedCount} ລາຍການ',
                             Colors.green.shade800,
                           ),
@@ -150,7 +148,7 @@ class SalesSummaryPage extends StatelessWidget {
                           ),
                           child: _statTile(
                             '⏳ ລໍຖ້າກວດສອບ',
-                            '${fmt.format(s.pendingTotal)} ກີບ',
+                            s.pendingTotal,
                             '${s.count - s.confirmedCount} ລາຍການ',
                             Colors.amber.shade900,
                           ),
@@ -159,8 +157,6 @@ class SalesSummaryPage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-
-                  // ══ ບໍ່ຕົງ / ຕິດໜີ້ ══
                   Row(
                     children: [
                       Expanded(
@@ -174,7 +170,7 @@ class SalesSummaryPage extends StatelessWidget {
                           ),
                           child: _statTile(
                             '⚠ ບັນຊີບໍ່ຕົງ',
-                            '${fmt.format(s.mismatchTotal)} ກີບ',
+                            s.mismatchTotal,
                             '${s.mismatchCount} ລາຍການ',
                             const Color(0xFFB71C1C),
                           ),
@@ -192,7 +188,7 @@ class SalesSummaryPage extends StatelessWidget {
                           ),
                           child: _statTile(
                             '📝 ຕິດໜີ້',
-                            '${fmt.format(s.debtTotal)} ກີບ',
+                            s.debtTotal,
                             '${s.debtCount} ລາຍການ',
                             Colors.orange.shade800,
                           ),
@@ -201,8 +197,6 @@ class SalesSummaryPage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-
-                  // ══ ສ່ວນລົດ / ເງິນທອນ ══
                   Row(
                     children: [
                       Expanded(
@@ -218,7 +212,7 @@ class SalesSummaryPage extends StatelessWidget {
                           ),
                           child: _statTile(
                             '🏷 ສ່ວນລົດລວມ',
-                            '${fmt.format(s.discountTotal)} ກີບ',
+                            s.discountTotal,
                             '${s.discountCount} ລາຍການ',
                             Colors.red,
                           ),
@@ -238,7 +232,7 @@ class SalesSummaryPage extends StatelessWidget {
                           ),
                           child: _statTile(
                             '💰 ເງິນທອນລວມ',
-                            '${fmt.format(s.changeTotal)} ກີບ',
+                            s.changeTotal,
                             '${s.changeCount} ລາຍການ',
                             Colors.black87,
                           ),
@@ -246,8 +240,6 @@ class SalesSummaryPage extends StatelessWidget {
                       ),
                     ],
                   ),
-
-                  // ══ 💰 ສະຫຼຸບໃບເງິນສົດ — ກົດໄດ້ ══
                   const SizedBox(height: 16),
                   _sectionTitle('💰 ສະຫຼຸບໃບເງິນທີ່ໄດ້ຮັບ'),
                   _tapCard(
@@ -260,8 +252,6 @@ class SalesSummaryPage extends StatelessWidget {
                     ),
                     child: _cashBillsPreview(s, fmt),
                   ),
-
-                  // ══ ສະຫຼຸບຕາມລາຍການໄມ້ ══
                   const SizedBox(height: 16),
                   _sectionTitle('📦 ສະຫຼຸບຕາມລາຍການໄມ້ (ຫຼາຍ → ໜ້ອຍ)'),
                   ...s.sortedProducts.asMap().entries.map((entry) {
@@ -273,16 +263,13 @@ class SalesSummaryPage extends StatelessWidget {
                       fmt: fmt,
                       onTap: () => _open(
                         '📦 ${e.key}',
-                        sales
-                            .where((x) => x.productName == e.key)
-                            .toList(),
+                        sales.where((x) => x.productName == e.key).toList(),
                         Icons.inventory_2_outlined,
                         Colors.brown,
                         SummaryDetailType.list,
                       ),
                     );
                   }),
-
                   const SizedBox(height: 24),
                 ],
               );
@@ -293,7 +280,6 @@ class SalesSummaryPage extends StatelessWidget {
     );
   }
 
-  // ── ເປີດໜ້າລາຍລະອຽດ ──
   void _open(
     String title,
     List<SaleEntity> sales,
@@ -353,8 +339,10 @@ class SalesSummaryPage extends StatelessWidget {
           const SizedBox(height: 4),
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(
-              '${fmt.format(s.total)} ກີບ',
+            child: AnimatedNumber(
+              value: s.total,
+              suffix: ' ກີບ',
+              duration: 1400,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 30,
@@ -372,7 +360,7 @@ class SalesSummaryPage extends StatelessWidget {
     );
   }
 
-  Widget _statTile(String title, String value, String sub, Color color) {
+  Widget _statTile(String title, double value, String sub, Color color) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -398,8 +386,10 @@ class SalesSummaryPage extends StatelessWidget {
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text(
-              value,
+            child: AnimatedNumber(
+              value: value,
+              suffix: ' ກີບ',
+              duration: 1200,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -430,9 +420,6 @@ class SalesSummaryPage extends StatelessWidget {
     );
   }
 
-  // ══════════════════════════════════════════════
-  // 💰 Preview ສະຫຼຸບໃບເງິນ (ຢູ່ໜ້າສະຫຼຸບ)
-  // ══════════════════════════════════════════════
   Widget _cashBillsPreview(_Summary s, NumberFormat fmt) {
     final denoms = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500];
     final total = denoms.fold<double>(
@@ -449,7 +436,6 @@ class SalesSummaryPage extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // ── ລາຍການໃບເງິນ ──
           Wrap(
             spacing: 6,
             runSpacing: 6,
@@ -510,7 +496,6 @@ class SalesSummaryPage extends StatelessWidget {
             }).toList(),
           ),
           const Divider(height: 18),
-          // ── ລວມ ──
           Row(
             children: [
               Expanded(
@@ -534,8 +519,10 @@ class SalesSummaryPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                '${fmt.format(total)} ກີບ',
+              AnimatedNumber(
+                value: total,
+                suffix: ' ກີບ',
+                duration: 1200,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
@@ -552,16 +539,12 @@ class SalesSummaryPage extends StatelessWidget {
     );
   }
 
-  // ══════════════════════════════════════════════
-  // 📦 ແຖວສິນຄ້າ — ພ້ອມອັນດັບທີ
-  // ══════════════════════════════════════════════
   Widget _productRow({
     required int idx,
     required MapEntry<String, _ProductStat> e,
     required NumberFormat fmt,
     required VoidCallback onTap,
   }) {
-    // ສີອັນດັບທີ 1-3
     final Color medal = idx == 0
         ? Colors.amber.shade700
         : idx == 1
@@ -600,8 +583,10 @@ class SalesSummaryPage extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              '${fmt.format(e.value.total)} ກີບ',
+            AnimatedNumber(
+              value: e.value.total,
+              suffix: ' ກີບ',
+              duration: 1200,
               style: const TextStyle(
                   fontWeight: FontWeight.bold, color: Colors.brown),
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:wood/core/util/page_route_notifier.dart';
 import 'package:wood/features/auth/auth_controller.dart';
 import '../widgets/custom_app_bar.dart';
 import 'wood_product_form_page.dart';
@@ -17,33 +18,25 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   late final PageController _pageController;
-  int _index = 1;
   late final bool _isAdmin;
-
-  final ValueNotifier<bool> _lockSwipe = ValueNotifier<bool>(false);
   late final int _wood3dIndex;
-
-  late final List<Widget> _pages;
   late final List<String> _titles;
   late final List<BottomNavigationBarItem> _navItems;
+
+  final ValueNotifier<int> _indexNotifier = ValueNotifier<int>(0);
+  final ValueNotifier<bool> _lockSwipe = ValueNotifier<bool>(false);
+
+  bool _wood3dReady = false;
 
   @override
   void initState() {
     super.initState();
     _isAdmin = Get.find<AuthController>().isAdmin;
+    _wood3dIndex = _isAdmin ? 4 : 3;
 
-    _index = _isAdmin ? 1 : 0;
-    _pageController = PageController(initialPage: _index);
-
-    // ✅ ແຕ່ລະໜ້າຫໍ່ RepaintBoundary — ແຍກ layer ຂອງຕົນເອງ
-    _pages = [
-      if (_isAdmin) RepaintBoundary(child: WoodProductFormPage()),
-      const RepaintBoundary(child: WoodProductListPage()),
-      RepaintBoundary(child: SalesListPage()),
-      RepaintBoundary(child: AccountPage()),
-      RepaintBoundary(child: Wood3DPage(swipeLock: _lockSwipe)),
-    ];
-    _wood3dIndex = _pages.length - 1;
+    final initial = _isAdmin ? 1 : 0;
+    _indexNotifier.value = initial;
+    _pageController = PageController(initialPage: initial);
 
     _titles = [
       if (_isAdmin) 'ເພີ່ມໄມ້ໃໝ່',
@@ -76,67 +69,173 @@ class _HomeShellState extends State<HomeShell> {
         label: 'ໂມເດວ 3D',
       ),
     ];
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybePreWarm3D(_indexNotifier.value);
+    });
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _indexNotifier.dispose();
     _lockSwipe.dispose();
     super.dispose();
   }
 
+  int get _pageCount => _isAdmin ? 5 : 4;
+
+  void _maybePreWarm3D(int currentIndex) {
+    if (_wood3dReady) return;
+    if ((currentIndex - _wood3dIndex).abs() <= 1) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_wood3dReady) {
+          setState(() => _wood3dReady = true);
+        }
+      });
+    }
+  }
+
+  Widget _pageAt(int i) {
+    if (_isAdmin) {
+      switch (i) {
+        case 0:
+          return const RepaintBoundary(child: WoodProductFormPage());
+        case 1:
+          return const RepaintBoundary(child: WoodProductListPage());
+        case 2:
+          return RepaintBoundary(
+              child: _KeepAlivePage(child: const SalesListPage()));
+        case 3:
+          return RepaintBoundary(
+              child: _KeepAlivePage(child: const AccountPage()));
+        case 4:
+          return _build3DPage();
+      }
+    } else {
+      switch (i) {
+        case 0:
+          return const RepaintBoundary(child: WoodProductListPage());
+        case 1:
+          return RepaintBoundary(
+              child: _KeepAlivePage(child: const SalesListPage()));
+        case 2:
+          return RepaintBoundary(
+              child: _KeepAlivePage(child: const AccountPage()));
+        case 3:
+          return _build3DPage();
+      }
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _build3DPage() {
+    if (!_wood3dReady) {
+      return const RepaintBoundary(
+        child: ColoredBox(
+          color: Color(0xFFEFEBE9),
+          child: Center(
+            child: CircularProgressIndicator(color: Colors.brown),
+          ),
+        ),
+      );
+    }
+    return RepaintBoundary(child: Wood3DPage(swipeLock: _lockSwipe));
+  }
+
   void _onItemTapped(int index) {
-    if (_index == index) return;
-    // ✅ ໃຊ້ jumpToPage ຖ້າຢາກໄວສຸດ (ບໍ່ມີ animation)
-    // ຫຼື ໃຊ້ animateToPage ກັບເວລາສັ້ນ
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 180), // ✅ ຫຼຸດ 250 → 180
-      curve: Curves.easeOutCubic, // ✅ ເບົາກວ່າ fastOutSlowIn
-    );
+    if (_indexNotifier.value == index) return;
+    final distance = (index - _indexNotifier.value).abs();
+
+    if (distance == 1) {
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+      );
+    } else {
+      _pageController.jumpToPage(index);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ✅ AppBar ແຍກ widget ຕ່າງຫາກ — ບໍ່ rebuild ທັງ tree
-      appBar: _HomeAppBar(title: _titles[_index]),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: ValueListenableBuilder<int>(
+          valueListenable: _indexNotifier,
+          builder: (context, idx, child) {
+            return _HomeAppBar(title: _titles[idx]);
+          },
+        ),
+      ),
       body: ValueListenableBuilder<bool>(
         valueListenable: _lockSwipe,
-        builder: (context, locked, _) {
-          final lockNow = locked && _index == _wood3dIndex;
-          // ✅ ໃຊ້ PageView.builder ແທນ PageView(children:) → lazy build
+        builder: (context, locked, child) {
+          final lockNow = locked && _indexNotifier.value == _wood3dIndex;
           return PageView.builder(
             controller: _pageController,
             physics: lockNow
                 ? const NeverScrollableScrollPhysics()
                 : const ClampingScrollPhysics(),
-            itemCount: _pages.length,
+            itemCount: _pageCount,
             onPageChanged: (i) {
-              if (_index != i) setState(() => _index = i);
+              _indexNotifier.value = i;
+              // 🔔 ບອກ notifier ໃຫ້ replay animation ຕອນປ່ຽນແທັບ
+              PageRouteNotifier.instance.bump();
+              _maybePreWarm3D(i);
             },
-            itemBuilder: (context, i) => _pages[i],
+            itemBuilder: (context, i) => _pageAt(i),
           );
         },
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _index,
-        selectedItemColor: Colors.brown,
-        unselectedItemColor: Colors.grey,
-        selectedIconTheme: const IconThemeData(size: 26),
-        unselectedIconTheme: const IconThemeData(size: 22),
-        selectedFontSize: 12,
-        unselectedFontSize: 11,
-        type: BottomNavigationBarType.fixed,
-        onTap: _onItemTapped,
-        items: _navItems,
+      bottomNavigationBar: ValueListenableBuilder<int>(
+        valueListenable: _indexNotifier,
+        builder: (context, idx, child) {
+          return BottomNavigationBar(
+            currentIndex: idx,
+            selectedItemColor: Colors.brown,
+            unselectedItemColor: Colors.grey,
+            selectedIconTheme: const IconThemeData(size: 26),
+            unselectedIconTheme: const IconThemeData(size: 22),
+            selectedFontSize: 12,
+            unselectedFontSize: 11,
+            type: BottomNavigationBarType.fixed,
+            onTap: _onItemTapped,
+            items: _navItems,
+          );
+        },
       ),
     );
   }
 }
 
 // ══════════════════════════════════════════════
-// ✅ ແຍກ AppBar ຕ່າງຫາກ — ບໍ່ rebuild ຕອນ setState
+// KeepAlive
+// ══════════════════════════════════════════════
+class _KeepAlivePage extends StatefulWidget {
+  final Widget child;
+  const _KeepAlivePage({required this.child});
+
+  @override
+  State<_KeepAlivePage> createState() => _KeepAlivePageState();
+}
+
+class _KeepAlivePageState extends State<_KeepAlivePage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
+  }
+}
+
+// ══════════════════════════════════════════════
+// AppBar
 // ══════════════════════════════════════════════
 class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -147,9 +246,6 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomAppBar(
-      key: ValueKey(title), // ✅ ບັງຄັບ recreate ຕອນ title ປ່ຽນ
-      title: title,
-    );
+    return CustomAppBar(title: title);
   }
 }

@@ -12,6 +12,13 @@ abstract class SalesRepository {
     String? mismatchNote,
   });
 
-  /// 🆕 ປິດໜີ້ — ຕັ້ງ debtAmount = 0 + isConfirmed = true
   Future<void> markDebtAsPaid(String id);
+
+  /// 🆕 ຈ່າຍໜີ້ + ເພີ່ມຮູບ
+  Future<void> payDebt(
+    String id, {
+    required String paymentType,
+    required String imageUrl,
+    required double paidAmount,
+  });
 }

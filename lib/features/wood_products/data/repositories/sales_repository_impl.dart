@@ -5,17 +5,14 @@ import '../models/sale_model.dart';
 
 class SalesRepositoryImpl implements SalesRepository {
   final SalesRemoteDataSource remoteDataSource;
-
   SalesRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<List<SaleEntity>> getSales() async {
-    return await remoteDataSource.getSales();
-  }
+  Future<List<SaleEntity>> getSales() => remoteDataSource.getSales();
 
   @override
   Future<void> addSale(SaleEntity sale) async {
-    final saleModel = SaleModel(
+    final m = SaleModel(
       id: sale.id,
       productId: sale.productId,
       productName: sale.productName,
@@ -42,34 +39,43 @@ class SalesRepositoryImpl implements SalesRepository {
       mismatchNote: sale.mismatchNote,
       cashDenominations: sale.cashDenominations,
     );
-    await remoteDataSource.addSale(saleModel);
+    await remoteDataSource.addSale(m);
   }
 
   @override
-  Future<void> updateSaleStatus(String id, bool isConfirmed) async {
-    await remoteDataSource.updateSaleStatus(id, isConfirmed);
-  }
+  Future<void> updateSaleStatus(String id, bool isConfirmed) =>
+      remoteDataSource.updateSaleStatus(id, isConfirmed);
 
   @override
-  Future<void> deleteSale(String id) async {
-    await remoteDataSource.deleteSale(id);
-  }
+  Future<void> deleteSale(String id) => remoteDataSource.deleteSale(id);
 
   @override
   Future<void> updateMismatchStatus(
     String id, {
     required bool isMismatch,
     String? mismatchNote,
-  }) async {
-    await remoteDataSource.updateMismatchStatus(
-      id,
-      isMismatch: isMismatch,
-      mismatchNote: mismatchNote,
-    );
-  }
+  }) =>
+      remoteDataSource.updateMismatchStatus(
+        id,
+        isMismatch: isMismatch,
+        mismatchNote: mismatchNote,
+      );
 
   @override
-  Future<void> markDebtAsPaid(String id) async {
-    await remoteDataSource.markDebtAsPaid(id);
-  }
+  Future<void> markDebtAsPaid(String id) =>
+      remoteDataSource.markDebtAsPaid(id);
+
+  @override
+  Future<void> payDebt(
+    String id, {
+    required String paymentType,
+    required String imageUrl,
+    required double paidAmount,
+  }) =>
+      remoteDataSource.payDebt(
+        id,
+        paymentType: paymentType,
+        imageUrl: imageUrl,
+        paidAmount: paidAmount,
+      );
 }

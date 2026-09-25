@@ -8,7 +8,6 @@ import 'package:wood/features/wood_products/presentation/widgets/custom_app_bar.
 import '../controllers/wood_product_controller.dart';
 import 'package:wood/core/util/currency_formatter.dart';
 
-// 🚀 เปลี่ยนเป็น StatefulWidget เพื่อรองรับการ Keep State
 class WoodProductFormPage extends StatefulWidget {
   final bool isPage;
   const WoodProductFormPage({super.key, this.isPage = false});
@@ -17,20 +16,20 @@ class WoodProductFormPage extends StatefulWidget {
   State<WoodProductFormPage> createState() => _WoodProductFormPageState();
 }
 
-class _WoodProductFormPageState extends State<WoodProductFormPage> with AutomaticKeepAliveClientMixin {
+class _WoodProductFormPageState extends State<WoodProductFormPage>
+    with AutomaticKeepAliveClientMixin {
   final WoodProductController controller = Get.find<WoodProductController>();
 
-  // 🚀 คืนค่า true เพื่อจำฟอร์มที่กรอกค้างไว้ ไม่ให้รีเซ็ตตอนสไลด์หน้า
   @override
   bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // 🚀 อย่าลืมเรียก super.build
+    super.build(context);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: widget.isPage // 👈 อ้างอิงตัวแปร isPage ผ่าน widget.isPage
+      appBar: widget.isPage
           ? CustomAppBar(
               titleWidget: Obx(
                 () => Text(
@@ -199,75 +198,147 @@ class _WoodProductFormPageState extends State<WoodProductFormPage> with Automati
               ).copyWith(suffixText: 'ກີບ '),
             ),
             const SizedBox(height: 24),
-            Obx(
-              () => controller.isSaving.value
-                  ? const Center(child: CircularProgressIndicator())
-                  : Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(48),
-                              elevation: 0,
-                              backgroundColor: Colors.blueAccent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () async {
-                              final isEditing =
-                                  controller.editingProductId.value != null;
-                              final isSuccess = await controller.saveProduct();
-                              if (isSuccess) {
-                                Get.back();
-                                Get.snackbar(
-                                  'ສຳເລັດ',
-                                  isEditing
-                                      ? 'ແກ້ໄຂຂໍ້ມູນແລ້ວ'
-                                      : 'ບັນທຶກຂໍ້ມູນແລ້ວ',
-                                );
-                              }
-                            },
-                            child: Text(
-                              controller.editingProductId.value == null
-                                  ? 'ບັນທຶກ'
-                                  : 'ບັນທຶກແກ້ໄຂ',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                              ),
+
+            // ══════════════════════════════════════════════
+            // 🚀 ປຸ່ມ ບັນທຶກ/ຍົກເລີກ + Progress Bar
+            // ══════════════════════════════════════════════
+            Obx(() {
+              // ── ກຳລັງບັນທຶກ: ສະແດງ Progress Bar ──
+              if (controller.isSaving.value) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.brown.shade200),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.brown.withOpacity(0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Progress bar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: controller.saveProgress.value > 0
+                              ? controller.saveProgress.value / 100
+                              : null,
+                          backgroundColor: Colors.brown.shade50,
+                          color: Colors.brown,
+                          minHeight: 8,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                              color: Colors.brown,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(48),
-                              side: BorderSide(color: Colors.grey.shade300),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              backgroundColor: Colors.white,
-                            ),
-                            onPressed: () {
-                              controller.cancelEdit();
-                              Get.back();
-                            },
+                          const SizedBox(width: 10),
+                          Expanded(
                             child: Text(
-                              'ຍົກເລີກ',
+                              controller.saveStep.value.isEmpty
+                                  ? 'ກຳລັງບັນທຶກ...'
+                                  : controller.saveStep.value,
                               style: TextStyle(
-                                color: Colors.grey.shade700,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.brown.shade800,
                               ),
                             ),
                           ),
+                          Text(
+                            '${controller.saveProgress.value}%',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.brown.shade800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // ── ປົກກະຕິ: ສະແດງປຸ່ມ ບັນທຶກ/ຍົກເລີກ ──
+              return Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        elevation: 0,
+                        backgroundColor: Colors.blueAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ],
+                      ),
+                      onPressed: () async {
+                        final isEditing =
+                            controller.editingProductId.value != null;
+                        final isSuccess = await controller.saveProduct();
+                        if (isSuccess) {
+                          Get.back();
+                          Get.snackbar(
+                            'ສຳເລັດ',
+                            isEditing
+                                ? 'ແກ້ໄຂຂໍ້ມູນແລ້ວ'
+                                : 'ບັນທຶກຂໍ້ມູນແລ້ວ',
+                          );
+                        }
+                      },
+                      child: Text(
+                        controller.editingProductId.value == null
+                            ? 'ບັນທຶກ'
+                            : 'ບັນທຶກແກ້ໄຂ',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
-            ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        backgroundColor: Colors.white,
+                      ),
+                      onPressed: () {
+                        controller.cancelEdit();
+                        Get.back();
+                      },
+                      child: Text(
+                        'ຍົກເລີກ',
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }),
           ],
         ),
       ),
@@ -293,7 +364,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage> with Automati
   }
 }
 
-// ฟังก์ชัน Build Image Picker ถูกแยกอยู่นอก Class ใช้งานได้ตามปกติ
+// ══════════════════════════════════════════════
+// 📷 Image Picker
+// ══════════════════════════════════════════════
 Widget _buildImagesPicker(WoodProductController controller) {
   final totalCount =
       controller.existingImageUrls.length + controller.selectedImages.length;
