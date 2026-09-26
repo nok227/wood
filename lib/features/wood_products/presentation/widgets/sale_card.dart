@@ -12,7 +12,7 @@ import '../pages/sale_detail_page.dart';
 import 'sale_image_viewer.dart';
 
 // ✅ Global: ມີພຽງ 1 ອັນທີ່ເປີດຢູ່
-final ValueNotifier<String?> _openDeleteId = ValueNotifier<String?>(null);
+final ValueNotifier<String?> _openMenuId = ValueNotifier<String?>(null);
 
 class SaleCard extends StatelessWidget {
   final SaleEntity sale;
@@ -106,7 +106,6 @@ class SaleCard extends StatelessWidget {
                       ]),
                     ],
                     const SizedBox(height: 2),
-                    // ✅ AnimatedNumber ແທນ Text
                     AnimatedNumber(
                       value: sale.totalAmount,
                       suffix: ' ກີບ',
@@ -162,17 +161,32 @@ class SaleCard extends StatelessWidget {
                 ),
               ),
 
-              if (isAdmin)
-                _FloatingDeleteButton(
-                  key: ValueKey('del-${sale.id}'),
-                  saleId: sale.id,
-                  onDelete: () => _deleteDialog(ctrl),
-                ),
+              // ✅ ປຸ່ມ ⋮ → ✏️ ແກ້ໄຂ + 🗑 ລຶບ
+              _FloatingActionsButton(
+                key: ValueKey('act-${sale.id}'),
+                saleId: sale.id,
+                isAdmin: isAdmin,
+                onEdit: () => _editAction(ctrl),
+                onDelete: () => _deleteDialog(ctrl),
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  // ══════════════════════════════════════════════
+  // ✏️ ແກ້ໄຂ
+  // ══════════════════════════════════════════════
+  void _editAction(SalesController c) {
+    if (sale.hasDebt) {
+      // ມີໜີ້ → ໄປໜ້າຢືນຢັນຮັບເງິນ (ປິດໜີ້)
+      _confirmReceiveDebt(c);
+    } else {
+      // ບໍ່ມີໜີ້ → ໄປໜ້າລາຍລະອຽດ (ສາມາດແກ້ໄຂຕໍ່)
+      Get.to(() => SaleDetailPage(sale: sale));
+    }
   }
 
   Widget _paymentBadge(NumberFormat fmt) {
@@ -321,14 +335,14 @@ class SaleCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
         child: Container(
-          width: 76,           // ← 70 → 84
-          height: 76,          // ← 70 → 84
+          width: 76,
+          height: 76,
           color: Colors.grey.shade100,
           child: url != null
               ? CachedNetworkImage(
                   imageUrl: url,
                   fit: BoxFit.cover,
-                  memCacheWidth: 168,   // ← 140 → 168 (ຄຸນນະພາບດີ)
+                  memCacheWidth: 168,
                   placeholder: (c, u) =>
                       Container(color: Colors.grey.shade100),
                   errorWidget: (_, __, ___) =>
@@ -756,23 +770,28 @@ class SaleCard extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════
-// ⋮ → 🗑 — ປິດອັດຕະໂນມັດຜ່ານ Global
+// ⋮ → ✏️ + 🗑 — ປິດອັດຕະໂນມັດຜ່ານ Global
 // ══════════════════════════════════════════════
-class _FloatingDeleteButton extends StatefulWidget {
+class _FloatingActionsButton extends StatefulWidget {
   final String saleId;
+  final bool isAdmin;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const _FloatingDeleteButton({
+  const _FloatingActionsButton({
     Key? key,
     required this.saleId,
+    required this.isAdmin,
+    required this.onEdit,
     required this.onDelete,
   }) : super(key: key);
 
   @override
-  State<_FloatingDeleteButton> createState() => _FloatingDeleteButtonState();
+  State<_FloatingActionsButton> createState() =>
+      _FloatingActionsButtonState();
 }
 
-class _FloatingDeleteButtonState extends State<_FloatingDeleteButton>
+class _FloatingActionsButtonState extends State<_FloatingActionsButton>
     with SingleTickerProviderStateMixin {
   bool _open = false;
   late final AnimationController _ctrl = AnimationController(
@@ -783,19 +802,19 @@ class _FloatingDeleteButtonState extends State<_FloatingDeleteButton>
   @override
   void initState() {
     super.initState();
-    _openDeleteId.addListener(_onGlobalChange);
+    _openMenuId.addListener(_onGlobalChange);
   }
 
   @override
   void dispose() {
-    _openDeleteId.removeListener(_onGlobalChange);
+    _openMenuId.removeListener(_onGlobalChange);
     _ctrl.dispose();
     super.dispose();
   }
 
   void _onGlobalChange() {
     if (!mounted) return;
-    if (_open && _openDeleteId.value != widget.saleId) {
+    if (_open && _openMenuId.value != widget.saleId) {
       _closeLocal();
     }
   }
@@ -808,8 +827,8 @@ class _FloatingDeleteButtonState extends State<_FloatingDeleteButton>
 
   void _close() {
     _closeLocal();
-    if (_openDeleteId.value == widget.saleId) {
-      _openDeleteId.value = null;
+    if (_openMenuId.value == widget.saleId) {
+      _openMenuId.value = null;
     }
   }
 
@@ -817,7 +836,7 @@ class _FloatingDeleteButtonState extends State<_FloatingDeleteButton>
     if (_open) {
       _close();
     } else {
-      _openDeleteId.value = widget.saleId;
+      _openMenuId.value = widget.saleId;
       setState(() => _open = true);
       _ctrl.forward(from: 0);
     }
@@ -825,9 +844,39 @@ class _FloatingDeleteButtonState extends State<_FloatingDeleteButton>
 
   @override
   Widget build(BuildContext context) {
+    // ຖ້າບໍ່ແມ່ນແອດມິນ ໃຫ້ສະແດງແຕ່ Edit
+    final actions = <_ActionItem>[
+      _ActionItem(
+        icon: Icons.edit_outlined,
+        color: Colors.blue.shade700,
+        shadow: Colors.blue.shade200,
+        onTap: () {
+          _close();
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (mounted) widget.onEdit();
+          });
+        },
+      ),
+      if (widget.isAdmin)
+        _ActionItem(
+          icon: Icons.delete,
+          color: const Color(0xFFB71C1C),
+          shadow: Colors.red.shade200,
+          onTap: () {
+            _close();
+            Future.delayed(const Duration(milliseconds: 200), () {
+              if (mounted) widget.onDelete();
+            });
+          },
+        ),
+    ];
+
+    final totalHeight = 40.0 + (actions.length * 52.0);
+    final width = 60.0;
+
     return SizedBox(
-      width: 60,
-      height: 130,
+      width: width,
+      height: totalHeight,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -838,71 +887,81 @@ class _FloatingDeleteButtonState extends State<_FloatingDeleteButton>
                 onTap: _close,
               ),
             ),
+          // ⋮
           Positioned(
             right: 0,
             top: 0,
             child: IconButton(
-              icon: const Icon(Icons.more_vert,
-                  color: Colors.black54, size: 22),
+              icon: Icon(
+                _open ? Icons.close : Icons.more_vert,
+                color: _open ? Colors.brown : Colors.black54,
+                size: 22,
+              ),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
               splashRadius: 20,
               onPressed: _toggle,
             ),
           ),
-          Positioned(
-            right: 0,
-            top: 60,
-            child: AnimatedBuilder(
-              animation: _ctrl,
-              builder: (_, child) => IgnorePointer(
-                ignoring: !_open,
-                child: Opacity(
-                  opacity: _ctrl.value,
-                  child: Transform.translate(
-                    offset: Offset(0, -20 * (1 - _ctrl.value)),
-                    child: Transform.scale(
-                      scale: 0.7 + 0.3 * _ctrl.value,
-                      child: child,
+          // ປຸ່ມຕ່າງໆ
+          for (int i = 0; i < actions.length; i++)
+            Positioned(
+              right: 0,
+              top: 42 + (i * 52.0),
+              child: AnimatedBuilder(
+                animation: _ctrl,
+                builder: (_, child) => IgnorePointer(
+                  ignoring: !_open,
+                  child: Opacity(
+                    opacity: _ctrl.value,
+                    child: Transform.translate(
+                      offset: Offset(0, -18 * (1 - _ctrl.value)),
+                      child: Transform.scale(
+                        scale: 0.7 + 0.3 * _ctrl.value,
+                        child: child,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              child: GestureDetector(
-                onTap: () {
-                  if (!_open) return;
-                  _close();
-                  Future.delayed(
-                    const Duration(milliseconds: 200),
-                    () {
-                      if (mounted) widget.onDelete();
-                    },
-                  );
-                },
-                child: Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.red.withOpacity(0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                child: GestureDetector(
+                  onTap: _open ? actions[i].onTap : null,
+                  child: Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: actions[i].shadow.withOpacity(0.6),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(actions[i].icon,
+                        color: actions[i].color, size: 24),
                   ),
-                  child: const Icon(Icons.delete,
-                      color: Color(0xFFB71C1C), size: 26),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
   }
+}
+
+class _ActionItem {
+  final IconData icon;
+  final Color color;
+  final Color shadow;
+  final VoidCallback onTap;
+  const _ActionItem({
+    required this.icon,
+    required this.color,
+    required this.shadow,
+    required this.onTap,
+  });
 }
 
 class _Waiting extends StatelessWidget {

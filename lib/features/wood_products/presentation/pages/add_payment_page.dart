@@ -63,6 +63,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   String? _choice;
   String _debtType = 'none';
   File? _payImg, _billImg, _topUpSlip, _topUpCash, _debtImg;
+  File? _debtBillImg; // ✅ ໃໝ່ — ຮູບໃບບິນໜີ້
   DateTime? _apptDate;
   TimeOfDay? _apptTime;
   final Map<int, int> _bills = {};
@@ -89,6 +90,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       nameC.text.trim().isEmpty ||
       phoneC.text.trim().isEmpty ||
       addrC.text.trim().isEmpty;
+  bool get _missDebtBill => _debtBillImg == null;
 
   @override
   void initState() {
@@ -161,6 +163,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     setState(() {
       _wood = _type = _choice = null;
       _payImg = _billImg = _topUpSlip = _topUpCash = _debtImg = null;
+      _debtBillImg = null; // ✅
       _qty = 1;
       _disc = _paid = _debtPaid = 0;
       _debtType = 'none';
@@ -215,6 +218,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
             break;
           case 'debt':
             _debtImg = f;
+            break;
+          case 'debtBill': // ✅ ໃໝ່
+            _debtBillImg = f;
             break;
           default:
             _payImg = f;
@@ -478,7 +484,6 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Header ──
           Container(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             decoration: BoxDecoration(
@@ -489,7 +494,6 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
             ),
             child: Row(
               children: [
-                // ເລກ
                 Container(
                   width: 26,
                   height: 26,
@@ -525,7 +529,6 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               ],
             ),
           ),
-          // ── Body ──
           Padding(
             padding: const EdgeInsets.all(12),
             child: child,
@@ -595,7 +598,6 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── 1. ຊື່ໄມ້ ──
           DropdownButtonFormField<String>(
             value: _wood,
             isExpanded: true,
@@ -627,7 +629,6 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           ),
           if (_wood != null) ...[
             const SizedBox(height: 12),
-            // ── 2. ຊະນິດໄມ້ ──
             DropdownButtonFormField<String>(
               value: _type,
               isExpanded: true,
@@ -660,7 +661,6 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           ],
           if (_type != null && list.isNotEmpty) ...[
             const SizedBox(height: 12),
-            // ── 3. ຂະໜາດ / ລາຄາ ──
             DropdownButtonFormField<String>(
               value: c.selectedProduct.value?.id,
               isExpanded: true,
@@ -691,7 +691,6 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               },
             ),
           ],
-          // ── Preview ສິນຄ້າທີ່ເລືອກ ──
           if (c.selectedProduct.value != null) ...[
             const SizedBox(height: 12),
             _selectedProductPreview(c.selectedProduct.value!),
@@ -701,7 +700,6 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     });
   }
 
-  // ── Preview ສິນຄ້າ ──
   Widget _selectedProductPreview(WoodProductModel p) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -1749,6 +1747,31 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           Icons.sticky_note_2_outlined,
           lines: 2,
         ),
+
+        // ✅ ໃໝ່ — ຮູບໃບບິນໜີ້ (ບັງຄັບ)
+        const SizedBox(height: 16),
+        const _RowLabel(
+          Icons.receipt_long_outlined,
+          'ຮູບໃບບິນໜີ້ *',
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'ຖ່າຍຮູບໃບບິນທີ່ລູກຄ້າຢືນຢັນການຕິດໜີ້',
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey.shade600,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _subImg(
+          'ແນບຮູບໃບບິນໜີ້',
+          _debtBillImg,
+          Icons.receipt_long_outlined,
+          () => _pick(which: 'debtBill'),
+          () => setState(() => _debtBillImg = null),
+        ),
+
         const SizedBox(height: 16),
         // ── ສະຫຼຸບໜີ້ ──
         Container(
@@ -2109,6 +2132,11 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         _warn('ຂາດຂໍ້ມູນ', 'ກະລຸນາປ້ອນ ຊື່ · ເບີໂທ · ທີ່ຢູ່');
         return;
       }
+      // ✅ ບັງຄັບຮູບໃບບິນໜີ້
+      if (_missDebtBill) {
+        _warn('ຂາດຂໍ້ມູນ', 'ກະລຸນາແນບຮູບໃບບິນໜີ້ *');
+        return;
+      }
       final canPay = _debtType == 'cash' || _debtType == 'transfer';
       if (canPay && _debtPaid <= 0) {
         _warn('ຂາດຂໍ້ມູນ', 'ກະລຸນາໃສ່ ຈຳນວນທີ່ຈ່າຍກ່ອນ');
@@ -2177,6 +2205,11 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           _warn('ຂາດຂໍ້ມູນ', 'ກະລຸນາປ້ອນຂໍ້ມູນລູກຄ້າ');
           return;
         }
+        // ✅ ບັງຄັບຮູບໃບບິນໜີ້
+        if (_missDebtBill) {
+          _warn('ຂາດຂໍ້ມູນ', 'ກະລຸນາແນບຮູບໃບບິນໜີ້ *');
+          return;
+        }
         debt = _short;
       }
     }
@@ -2184,6 +2217,11 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     if (_noPay && _choice == 'debt') {
       if (_missDebt) {
         _warn('ຂາດຂໍ້ມູນ', 'ກະລຸນາປ້ອນຂໍ້ມູນລູກຄ້າ');
+        return;
+      }
+      // ✅ ບັງຄັບຮູບໃບບິນໜີ້
+      if (_missDebtBill) {
+        _warn('ຂາດຂໍ້ມູນ', 'ກະລຸນາແນບຮູບໃບບິນໜີ້ *');
         return;
       }
       debt = total;
@@ -2221,6 +2259,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         _upload(_topUpSlip, 'sales/topup_transfer', 'ສະລິບເຕີມ'),
         _upload(_topUpCash, 'sales/topup_cash', 'ຮູບສົດເຕີມ'),
         _upload(_debtImg, 'sales/debt_payments', 'ຮູບຈ່າຍກ່ອນ'),
+        _upload(_debtBillImg, 'sales/debt_bills', 'ຮູບໃບບິນໜີ້'), // ✅ index 5
       ]);
 
       final topUp = <String>[
@@ -2230,6 +2269,11 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       final payImgs = <String>[
         if (res[0] != null) res[0]!,
         if (res[4] != null) res[4]!,
+      ];
+      // ✅ ໃບບິນ: ທັງໃບບິນຮ້ານ ແລະ ໃບບິນໜີ້
+      final billImgs = <String>[
+        if (res[1] != null) res[1]!,
+        if (res[5] != null) res[5]!,
       ];
 
       Map<int, int>? bills;
@@ -2262,7 +2306,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         debtAmount: debt,
         receivedAmount: received,
         paymentImageUrls: payImgs,
-        billImageUrls: res[1] != null ? [res[1]!] : const [],
+        billImageUrls: billImgs,
         topUpImageUrls: topUp,
         customerName: debt > 0 ? nameC.text.trim() : null,
         customerAddress: debt > 0 ? addrC.text.trim() : null,

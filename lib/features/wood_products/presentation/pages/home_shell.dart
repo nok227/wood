@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:wood/core/util/page_route_notifier.dart';
@@ -23,11 +24,13 @@ class _HomeShellState extends State<HomeShell> {
   late final List<String> _titles;
   late final List<BottomNavigationBarItem> _navItems;
 
-  /// ✅ Cache ທຸກໜ້າໄວ້ຄັ້ງດຽວ — ບໍ່ rebuild ຕອນປັດ
+  /// ✅ Cache ทุกหน้าไว้ครั้งเดียว — ไม่ rebuild ตอนปัด
   late final List<Widget> _pages;
 
   final ValueNotifier<int> _indexNotifier = ValueNotifier<int>(0);
   final ValueNotifier<bool> _lockSwipe = ValueNotifier<bool>(false);
+
+  Timer? _bumpTimer;   // ✅ ตัวใหม่ — หน่วง bump
 
   @override
   void initState() {
@@ -71,16 +74,13 @@ class _HomeShellState extends State<HomeShell> {
       ),
     ];
 
-    // ✅ ສ້າງ widget ທຸກໜ້າຄັ້ງດຽວ — ບໍ່ສ້າງຊ້ຳຕອນປັດ
     _pages = _buildAllPages();
 
-    // ✅ Pre-warm ຫຼັງ frame ທຳອິດ
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _preWarm();
     });
   }
 
-  /// ສ້າງ widget ທຸກໜ້າຄັ້ງດຽວ
   List<Widget> _buildAllPages() {
     if (_isAdmin) {
       return [
@@ -109,14 +109,11 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
-  /// ✅ ບັງຄັບໃຫ້ Flutter pre-mount ທຸກໜ້າໃນ background
-  void _preWarm() {
-    // ບໍ່ຕ້ອງເຮັດຫຍັງ — ປ່ອຍໃຫ້ allowImplicitScrolling ຈັດການ
-    // (ມັນຈະ pre-build ໜ້າ neighbor ອັດຕະໂນມັດ)
-  }
+  void _preWarm() {}
 
   @override
   void dispose() {
+    _bumpTimer?.cancel();   // ✅ ยกเลิก timer
     _pageController.dispose();
     _indexNotifier.dispose();
     _lockSwipe.dispose();
@@ -124,6 +121,14 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   int get _pageCount => _isAdmin ? 5 : 4;
+
+  // ✅ bump หลังหน้าเลื่อนเสร็จ — ไม่ให้ชนกับอนิเมชั่น PageView
+  void _scheduleBump() {
+    _bumpTimer?.cancel();
+    _bumpTimer = Timer(const Duration(milliseconds: 280), () {
+      PageRouteNotifier.instance.bump();
+    });
+  }
 
   void _onItemTapped(int index) {
     if (_indexNotifier.value == index) return;
@@ -161,13 +166,11 @@ class _HomeShellState extends State<HomeShell> {
             physics: lockNow
                 ? const NeverScrollableScrollPhysics()
                 : const ClampingScrollPhysics(),
-            // ✅ ສຳຄັນທີ່ສຸດ: pre-build ໜ້າ neighbor ໃນ background
             allowImplicitScrolling: true,
             onPageChanged: (i) {
               _indexNotifier.value = i;
-              PageRouteNotifier.instance.bump();
+              _scheduleBump();   // ✅ หน่วง bump
             },
-            // ✅ ໃຊ້ children ແທນ builder — ທຸກໜ້າຖືກສ້າງຄັ້ງດຽວ
             children: _pages,
           );
         },
@@ -194,7 +197,7 @@ class _HomeShellState extends State<HomeShell> {
 }
 
 // ══════════════════════════════════════════════
-// 🎯 3D Lazy Wrapper — ສ້າງ 3D ຕອນມີຄົນເຂົ້າຄັ້ງທຳອິດ
+// 🎯 3D Lazy Wrapper — คงเดิม
 // ══════════════════════════════════════════════
 class _Lazy3DWrapper extends StatefulWidget {
   final ValueNotifier<bool>? swipeLock;
@@ -214,7 +217,6 @@ class _Lazy3DWrapperState extends State<_Lazy3DWrapper>
   @override
   void initState() {
     super.initState();
-    // ຫຼັງ frame ທຳອິດ → ສ້າງ 3D
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() => _ready = true);
     });
@@ -236,7 +238,7 @@ class _Lazy3DWrapperState extends State<_Lazy3DWrapper>
 }
 
 // ══════════════════════════════════════════════
-// KeepAlive
+// KeepAlive — คงเดิม
 // ══════════════════════════════════════════════
 class _KeepAlivePage extends StatefulWidget {
   final Widget child;
@@ -259,7 +261,7 @@ class _KeepAlivePageState extends State<_KeepAlivePage>
 }
 
 // ══════════════════════════════════════════════
-// AppBar
+// AppBar — คงเดิม
 // ══════════════════════════════════════════════
 class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
