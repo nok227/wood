@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wood/features/auth/auth_controller.dart';
 import 'package:wood/features/wood_products/presentation/widgets/animated_number.dart';
 import 'package:wood/features/wood_products/presentation/widgets/wood_list_skeleton.dart';
+import 'package:wood/core/util/dimension_utils.dart';
 import '../controllers/wood_product_controller.dart';
 import '../../data/models/wood_product_model.dart';
 import 'wood_product_form_page.dart';
@@ -91,28 +92,49 @@ class _WoodProductListPageState extends State<WoodProductListPage>
         final filteredList = selectedNameFilter == 'ທັງໝົດ'
             ? controller.products.toList()
             : controller.products
-                .where((p) => p.name.trim() == selectedNameFilter)
-                .toList();
+                  .where((p) => p.name.trim() == selectedNameFilter)
+                  .toList();
 
-        // ── ຈັດກຸ່ມຕາມ ຊື່ + ຊະນິດໄມ້ ──
-        final Map<String, List<WoodProductModel>> groupedProducts = {};
-        for (var item in filteredList) {
-          final groupKey =
-              '${item.name} (ຊະນິດ: ${item.woodType.isEmpty ? "ບໍ່ລະບຸ" : item.woodType})';
-          groupedProducts.putIfAbsent(groupKey, () => []).add(item);
+        // ══════════════════════════════════════════════
+        // ✅ Nested grouping: ຊື່ → ຊະນິດ → List ຂະໜາດ
+        // ══════════════════════════════════════════════
+        final Map<String, Map<String, List<WoodProductModel>>> nested = {};
+
+        for (final item in filteredList) {
+          final nameKey = item.name.trim().isEmpty
+              ? 'ບໍ່ລະບຸຊື່'
+              : item.name.trim();
+          final typeKey = item.woodType.trim().isEmpty
+              ? 'ບໍ່ລະບຸຊະນິດ'
+              : item.woodType.trim();
+
+          nested.putIfAbsent(nameKey, () => {});
+          nested[nameKey]!.putIfAbsent(typeKey, () => []);
+          nested[nameKey]![typeKey]!.add(item);
         }
 
-        // ── ຈັດລຳດັບຕາມປະລິມາດ (ນ້ອຍ → ໃຫຍ່) ──
-        groupedProducts.forEach((_, list) {
-          list.sort((a, b) {
-            final va = a.width * a.length * a.thickness;
-            final vb = b.width * b.length * b.thickness;
-            return va.compareTo(vb);
+        // ✅ ຈັດລຳດັບ ຂະໜາດ (ນ້ອຍ → ໃຫຍ່) ໃນແຕ່ລະຊະນິດ
+        nested.forEach((_, typeMap) {
+          typeMap.forEach((_, list) {
+            list.sort((a, b) {
+              final va = a.width * a.length * a.thickness;
+              final vb = b.width * b.length * b.thickness;
+              return va.compareTo(vb);
+            });
           });
         });
 
-        final groupKeys = groupedProducts.keys.toList();
-        final displayKeys = groupKeys.take(_displayLimit).toList();
+        // ✅ ຈັດລຳດັບ ຊື່ — ຕາມຈຳນວນລວມ (ຫຼາຍ → ນ້ອຍ)
+        final nameKeys = nested.keys.toList()
+          ..sort((a, b) {
+            int totalA = 0;
+            int totalB = 0;
+            nested[a]!.forEach((_, l) => totalA += l.length);
+            nested[b]!.forEach((_, l) => totalB += l.length);
+            return totalB.compareTo(totalA);
+          });
+
+        final displayKeys = nameKeys.take(_displayLimit).toList();
 
         return RefreshIndicator(
           color: Colors.brown,
@@ -127,7 +149,9 @@ class _WoodProductListPageState extends State<WoodProductListPage>
               // ══════════════════════════════════════════
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 8),
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   boxShadow: [
@@ -146,14 +170,19 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                         color: Colors.brown.shade700,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.filter_list,
-                          color: Colors.white, size: 16),
+                      child: const Icon(
+                        Icons.filter_list,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     const Text(
                       'ກັ່ນກອງ:',
                       style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 13),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -164,31 +193,35 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                         isExpanded: true,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           fillColor: Colors.brown.shade50,
                           filled: true,
                           isDense: true,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                                color: Colors.brown.shade200),
+                              color: Colors.brown.shade200,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                                color: Colors.brown.shade200),
+                              color: Colors.brown.shade200,
+                            ),
                           ),
                         ),
                         items: nameOptions
-                            .map((name) => DropdownMenuItem(
-                                  value: name,
-                                  child: Text(
-                                    name == 'ທັງໝົດ'
-                                        ? 'ທັງໝົດ'
-                                        : name,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ))
+                            .map(
+                              (name) => DropdownMenuItem(
+                                value: name,
+                                child: Text(
+                                  name == 'ທັງໝົດ' ? 'ທັງໝົດ' : name,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            )
                             .toList(),
                         onChanged: (val) {
                           if (val != null) {
@@ -208,89 +241,36 @@ class _WoodProductListPageState extends State<WoodProductListPage>
               // 📋 ລາຍການ
               // ══════════════════════════════════════════
               Expanded(
-                child: groupKeys.isEmpty
+                child: nameKeys.isEmpty
                     ? const Center(child: Text('ບໍ່ພົບຂໍ້ມູນໄມ້ທີ່ເລືອກ'))
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.all(8),
-                        itemCount: displayKeys.length +
+                        itemCount:
+                            displayKeys.length +
                             (_isLoadingMore &&
-                                    displayKeys.length < groupKeys.length
+                                    displayKeys.length < nameKeys.length
                                 ? 1
                                 : 0),
-                        itemBuilder: (context, gIndex) {
-                          if (gIndex == displayKeys.length) {
+                        itemBuilder: (context, idx) {
+                          if (idx == displayKeys.length) {
                             return const Padding(
                               padding: EdgeInsets.symmetric(vertical: 24),
                               child: Center(
                                 child: CircularProgressIndicator(
-                                    color: Colors.brown),
+                                  color: Colors.brown,
+                                ),
                               ),
                             );
                           }
 
-                          final groupTitle = displayKeys[gIndex];
-                          final items = groupedProducts[groupTitle]!;
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // ── ຫົວກຸ່ມ ──
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 8, top: 12, bottom: 6),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(5),
-                                      decoration: BoxDecoration(
-                                        color: Colors.brown.shade700,
-                                        borderRadius:
-                                            BorderRadius.circular(6),
-                                      ),
-                                      child: const Icon(Icons.category,
-                                          size: 12,
-                                          color: Colors.white),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        groupTitle,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.brown,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: Colors.brown.shade100,
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        '${items.length} ລາຍການ',
-                                        style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.brown.shade800),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              // ── ແຕ່ລະໄມ້ ──
-                              ...items.map(
-                                (item) => _productCard(item, isAdmin, controller),
-                              ),
-                              const SizedBox(height: 8),
-                            ],
+                          final nameKey = displayKeys[idx];
+                          final typeMap = nested[nameKey]!;
+                          return _nameGroup(
+                            nameKey,
+                            typeMap,
+                            isAdmin,
+                            controller,
                           );
                         },
                       ),
@@ -303,18 +283,208 @@ class _WoodProductListPageState extends State<WoodProductListPage>
   }
 
   // ══════════════════════════════════════════════
-  // 🎴 ກາດສິນຄ້າ
+  // 📦 Group ຊື່ (Level 1)
+  // ══════════════════════════════════════════════
+  Widget _nameGroup(
+    String nameKey,
+    Map<String, List<WoodProductModel>> typeMap,
+    bool isAdmin,
+    WoodProductController controller,
+  ) {
+    int totalItems = 0;
+    int totalTypes = typeMap.length;
+    typeMap.forEach((_, l) => totalItems += l.length);
+
+    final typeKeys = typeMap.keys.toList()
+      ..sort((a, b) {
+        final c = typeMap[b]!.length.compareTo(typeMap[a]!.length);
+        return c != 0 ? c : a.compareTo(b);
+      });
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.brown.shade200, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.brown.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ── Header ຊື່ ──
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.brown.shade700, Colors.brown.shade600],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12.5),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.inventory_2,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        nameKey,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 0.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$totalTypes ຊະນິດ · $totalItems ລາຍການ',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withOpacity(0.85),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$totalItems',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── ແຕ່ລະຊະນິດ (Level 2) ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (int i = 0; i < typeKeys.length; i++) ...[
+                  _typeSubHeader(typeKeys[i], typeMap[typeKeys[i]]!.length),
+                  const SizedBox(height: 6),
+                  ...typeMap[typeKeys[i]]!.map(
+                    (item) => _productCard(item, isAdmin, controller),
+                  ),
+                  if (i < typeKeys.length - 1) const SizedBox(height: 12),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Subheader ຊະນິດ (Level 2) ──
+  Widget _typeSubHeader(String typeKey, int count) {
+    final isUnknown = typeKey == 'ບໍ່ລະບຸຊະນິດ';
+    final color = isUnknown ? Colors.grey.shade600 : Colors.brown.shade700;
+    final bgColor = isUnknown ? Colors.grey.shade100 : Colors.brown.shade50;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.35), width: 1.2),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isUnknown ? Icons.help_outline : Icons.local_florist,
+            size: 13,
+            color: color,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              isUnknown ? typeKey : 'ຊະນິດ: $typeKey',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w900,
+                color: color,
+                letterSpacing: 0.2,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              '$count ຂະໜາດ',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════
+  // 🎴 ກາດສິນຄ້າ (Level 3) — ✅ ມີ 3 ໜ່ວຍ
   // ══════════════════════════════════════════════
   Widget _productCard(
     WoodProductModel item,
     bool isAdmin,
     WoodProductController controller,
   ) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      shape: RoundedRectangleBorder(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: Colors.brown.shade100, width: 1.2),
+        border: Border.all(color: Colors.brown.shade100, width: 1.2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(8),
@@ -325,90 +495,129 @@ class _WoodProductListPageState extends State<WoodProductListPage>
             GestureDetector(
               onTap: item.imageUrls.isEmpty
                   ? null
-                  : () => Get.to(() => WoodGalleryPage(
+                  : () => Get.to(
+                      () => WoodGalleryPage(
                         imageUrls: item.imageUrls,
                         title: item.name,
-                      )),
+                      ),
+                    ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: item.imageUrls.isEmpty
                     ? Container(
-                        width: 76,
-                        height: 76,
+                        width: 82,
+                        height: 82,
                         color: Colors.brown.shade50,
-                        child: Icon(Icons.image_not_supported,
-                            color: Colors.brown.shade300, size: 28),
+                        child: Icon(
+                          Icons.image_not_supported,
+                          color: Colors.brown.shade300,
+                          size: 26,
+                        ),
                       )
                     : CachedNetworkImage(
                         imageUrl: item.imageUrls.first,
-                        width: 76,
-                        height: 76,
+                        width: 82,
+                        height: 82,
                         fit: BoxFit.cover,
+                        memCacheWidth: 136,
                         placeholder: (c, u) => Container(
-                          width: 76,
-                          height: 76,
+                          width: 82,
+                          height: 82,
                           color: Colors.brown.shade50,
                           child: const Center(
                             child: SizedBox(
-                              width: 20,
-                              height: 20,
+                              width: 18,
+                              height: 18,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.brown),
+                                strokeWidth: 2,
+                                color: Colors.brown,
+                              ),
                             ),
                           ),
                         ),
                         errorWidget: (c, u, e) => Container(
-                          width: 76,
-                          height: 76,
+                          width: 82,
+                          height: 82,
                           color: Colors.brown.shade50,
-                          child: Icon(Icons.broken_image,
-                              color: Colors.brown.shade300, size: 28),
+                          child: Icon(
+                            Icons.broken_image,
+                            color: Colors.brown.shade300,
+                            size: 26,
+                          ),
                         ),
                       ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
 
             // ── ຂໍ້ມູນ ──
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ຂະໜາດ
+                  // ═══════════════════════════════════
+                  // ✅ ຂະໜາດ — ບັນທຶກຕົ້ນສະບັບ + ແປງ 3 ໜ່ວຍ
+                  // ═══════════════════════════════════
                   Row(
                     children: [
-                      Icon(Icons.straighten,
-                          size: 12, color: Colors.brown.shade600),
+                      Icon(
+                        Icons.straighten,
+                        size: 12,
+                        color: Colors.brown.shade600,
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           '${formatNum(item.width)} × ${formatNum(item.length)} × ${formatNum(item.thickness)} ${item.sizeUnit}',
                           style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  // ✅ ແປງໜ່ວຍ — mm → cm · m  /  cm → mm · m  /  m → mm · cm
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, top: 2),
+                    child: Text(
+                      dimConversions(
+                        item.width,
+                        item.length,
+                        item.thickness,
+                        item.sizeUnit,
+                      ),
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: Colors.brown.shade500,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
 
-                  // ຈຳນວນ
+                  const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.inventory_2_outlined,
-                          size: 12, color: Colors.brown.shade600),
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 12,
+                        color: Colors.brown.shade600,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${item.quantity} ${item.unit}',
                         style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade700),
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 6),
-
-                  // 💰 ລາຄາຂາຍ — ✅ ປັບ UI ໃໝ່ + Badge "ໃໝ່"
                   _priceBox(item),
                 ],
               ),
@@ -421,7 +630,7 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                 height: 32,
                 child: PopupMenuButton<int>(
                   padding: EdgeInsets.zero,
-                  icon: const Icon(Icons.more_vert, size: 22),
+                  icon: const Icon(Icons.more_vert, size: 20),
                   onSelected: (value) {
                     if (value == 1) {
                       controller.startEdit(item);
@@ -435,8 +644,7 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                       value: 1,
                       child: Row(
                         children: [
-                          Icon(Icons.edit,
-                              color: Colors.blue, size: 20),
+                          Icon(Icons.edit, color: Colors.blue, size: 20),
                           SizedBox(width: 12),
                           Text('ແກ້ໄຂ'),
                         ],
@@ -446,11 +654,9 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                       value: 2,
                       child: Row(
                         children: [
-                          Icon(Icons.delete,
-                              color: Colors.red, size: 20),
+                          Icon(Icons.delete, color: Colors.red, size: 20),
                           SizedBox(width: 12),
-                          Text('ລຶບ',
-                              style: TextStyle(color: Colors.red)),
+                          Text('ລຶບ', style: TextStyle(color: Colors.red)),
                         ],
                       ),
                     ),
@@ -468,7 +674,7 @@ class _WoodProductListPageState extends State<WoodProductListPage>
   // ══════════════════════════════════════════════
   Widget _priceBox(WoodProductModel item) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Colors.green.shade50, Colors.green.shade100],
@@ -481,39 +687,36 @@ class _WoodProductListPageState extends State<WoodProductListPage>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.sell_outlined,
-              size: 14, color: Colors.green.shade800),
+          Icon(Icons.sell_outlined, size: 13, color: Colors.green.shade800),
           const SizedBox(width: 5),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Label "ລາຄາຂາຍ"
               Text(
                 'ລາຄາຂາຍ',
                 style: TextStyle(
-                  fontSize: 9,
+                  fontSize: 8.5,
                   fontWeight: FontWeight.bold,
                   color: Colors.green.shade700,
                   letterSpacing: 0.3,
                 ),
               ),
-              // ตัวเลขราคา
               AnimatedNumber(
                 value: item.price,
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.w900,
                   color: Colors.green.shade800,
                 ),
                 suffix: ' ກີບ',
                 duration: 900,
+                replayOnRouteChange: true,
               ),
             ],
           ),
-          // 🆕 Badge "ໃໝ່" — ສະແດງພາຍໃນ 7 ວັນຫຼັງແກ້ລາຄາ
           if (item.isPriceNew) ...[
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             _newBadge(item.daysSincePriceUpdate),
           ],
         ],
@@ -521,13 +724,12 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     );
   }
 
-  // 🆕 Badge "ໃໝ່" — ສີແດງ ເດັ່ນ ພ້ອມ tooltip
   Widget _newBadge(int days) {
     final remain = 7 - days;
     return Tooltip(
       message: 'ອັບເດດລາຄາ $days ວັນກ່ອນ · ອີກ $remain ວັນຈະຫາຍ',
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Colors.red.shade600, Colors.red.shade800],
@@ -544,14 +746,13 @@ class _WoodProductListPageState extends State<WoodProductListPage>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.fiber_new,
-                color: Colors.white, size: 12),
+            const Icon(Icons.fiber_new, color: Colors.white, size: 11),
             const SizedBox(width: 2),
             const Text(
               'ໃໝ່',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 10,
+                fontSize: 9.5,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.5,
                 height: 1.2,
@@ -586,8 +787,7 @@ class _WoodProductListPageState extends State<WoodProductListPage>
               Navigator.pop(ctx);
               controller.deleteProduct(item.id);
             },
-            child:
-                const Text('ລຶບ', style: TextStyle(color: Colors.red)),
+            child: const Text('ລຶບ', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

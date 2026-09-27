@@ -14,10 +14,14 @@ class SalesController extends GetxController {
   final SalesRepository repository;
   SalesController({required this.repository});
 
+  final fmt = NumberFormat('#,###');
+
   var allSalesList = <SaleEntity>[].obs;
   var filteredSalesList = <SaleEntity>[].obs;
   var isLoading = false.obs;
   var selectedFilter = DateFilter.today.obs;
+
+  final salesRevision = 0.obs;
 
   var selectedProduct = Rxn<WoodProductModel>();
   var paymentType = 'cash'.obs;
@@ -39,9 +43,9 @@ class SalesController extends GetxController {
     fetchSales();
   }
 
-  // ─────────────────────────────────────────────
-  // 🔔 Helper — push notification ຢ່າງປອດໄພ
-  // ─────────────────────────────────────────────
+  // ══════════════════════════════════════════════
+  // 🔔 Helper
+  // ══════════════════════════════════════════════
   Future<void> _notify({
     required AppNotificationType type,
     required String title,
@@ -59,6 +63,29 @@ class SalesController extends GetxController {
         targetId: targetId,
       );
     } catch (_) {}
+  }
+
+  String _productLabel(SaleEntity sale) =>
+      sale.productName.trim().isNotEmpty ? sale.productName : 'ລາຍການໄມ້';
+
+  String _customerLabel(SaleEntity sale) {
+    final c = (sale.customerName ?? '').trim();
+    return c.isEmpty ? 'ລູກຄ້າ' : c;
+  }
+
+  String _paymentLabel(String type) {
+    switch (type) {
+      case 'cash':
+        return 'ສົດ';
+      case 'transfer':
+        return 'ໂອນ';
+      case 'mixed':
+        return 'ປະສົມ';
+      case 'debt':
+        return 'ຕິດໜີ້';
+      default:
+        return type;
+    }
   }
 
   Future<void> fetchSales() async {
@@ -94,6 +121,8 @@ class SalesController extends GetxController {
           return true;
       }
     }).toList());
+
+    salesRevision.value++;
   }
 
   double get totalCashAmount {
@@ -112,15 +141,61 @@ class SalesController extends GetxController {
   }
 
   // ══════════════════════════════════════════════
-  // 🔔 ເອີ້ນຈາກ add_payment_page ຫຼັງບັນທຶກການຂາຍສຳເລັດ
+  // 🔔 ແຈ້ງເຕືອນ — ບັນທຶກການຂາຍໃໝ່
   // ══════════════════════════════════════════════
   Future<void> notifyNewSale(SaleEntity sale) async {
+    final name = _productLabel(sale);
+
+    if (sale.hasDebt) {
+      final customer = _customerLabel(sale);
+      final paidBefore = sale.receivedAmount;
+
+      if (paidBefore > 0) {
+        await _notify(
+          type: AppNotificationType.saleDebtAdd,
+          title: 'ຂາຍຕິດໜີ້ · ຈ່າຍກ່ອນ',
+          message: '"$name" ລວມ ${fmt.format(sale.totalAmount)} ກີບ\n'
+              'ຈ່າຍກ່ອນ ${fmt.format(paidBefore)} · ຕິດໜີ້ ${fmt.format(sale.debtAmount)} ກີບ\n'
+              'ລູກຄ້າ: $customer',
+          targetId: sale.id,
+        );
+      } else {
+        await _notify(
+          type: AppNotificationType.saleDebtAdd,
+          title: 'ຂາຍຕິດໜີ້',
+          message: '"$name" ຍອດ ${fmt.format(sale.debtAmount)} ກີບ\n'
+              'ລູກຄ້າ: $customer',
+          targetId: sale.id,
+        );
+      }
+      return;
+    }
+
+    if (sale.isMixed) {
+      await _notify(
+        type: AppNotificationType.saleAdd,
+        title: 'ຂາຍປະສົມ',
+        message: '"$name" ລວມ ${fmt.format(sale.totalAmount)} ກີບ\n'
+            'ສົດ ${fmt.format(sale.cashPaidAmount)} + ໂອນ ${fmt.format(sale.transferPaidAmount)}'
+            '${sale.changeAmount > 0 ? " · ທອນ ${fmt.format(sale.changeAmount)} ກີບ" : ""}',
+        targetId: sale.id,
+      );
+      return;
+    }
+
+    final isCash = sale.paymentType == 'cash';
+    final extra = StringBuffer();
+    if (sale.changeAmount > 0) {
+      extra.write(' · ທອນ ${fmt.format(sale.changeAmount)} ກີບ');
+    }
+    if (sale.quantity > 1) {
+      extra.write(' · ${sale.quantity} ຊິ້ນ');
+    }
+
     await _notify(
       type: AppNotificationType.saleAdd,
-      title: 'ບັນທຶກການຂາຍໃໝ່',
-      message: '"${sale.productName}" '
-          '${NumberFormat('#,###').format(sale.totalAmount)} ກີບ'
-          '${sale.hasDebt ? " (ຕິດໜີ້ ${NumberFormat('#,###').format(sale.debtAmount)})" : ""}',
+      title: isCash ? 'ຂາຍເງິນສົດ' : 'ຂາຍເງິນໂອນ',
+      message: '"$name" ${fmt.format(sale.totalAmount)} ກີບ$extra',
       targetId: sale.id,
     );
   }
@@ -141,12 +216,30 @@ class SalesController extends GetxController {
       allSalesList.removeWhere((s) => s.id == id);
       applyDateFilter(selectedFilter.value);
 
-      // 🔔 ແຈ້ງເຕືອນ
+      final name = sale == null
+          ? 'ລາຍການ'
+          : (sale.productName.trim().isNotEmpty
+              ? sale.productName
+              : 'ລາຍການໄມ້');
+
+      String status = '';
+      if (sale != null) {
+        if (sale.isMismatch) {
+          status = ' (ບັນຊີບໍ່ຕົງ)';
+        } else if (sale.hasDebt) {
+          status = ' (ຕິດໜີ້ ${fmt.format(sale.debtAmount)} ກີບ)';
+        } else if (sale.isConfirmed) {
+          status = ' (ເງິນເຂົ້າແລ້ວ)';
+        } else {
+          status = ' (ລໍຖ້າກວດສອບ)';
+        }
+      }
+
       await _notify(
         type: AppNotificationType.saleDelete,
         title: 'ລຶບລາຍການຂາຍ',
-        message: 'ລຶບ "${sale?.productName ?? "ລາຍການ"}" '
-            '${NumberFormat('#,###').format(sale?.totalAmount ?? 0)} ກີບ',
+        message: '"$name" '
+            '${fmt.format(sale?.totalAmount ?? 0)} ກີບ$status',
         targetId: id,
       );
 
@@ -159,25 +252,31 @@ class SalesController extends GetxController {
       }
 
       Get.snackbar('ສຳເລັດ', 'ລຶບລາຍການແລ້ວ',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } catch (e) {
       debugPrint('deleteSale error: $e');
       Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດລຶບໄດ້: $e');
     }
   }
 
+  // ══════════════════════════════════════════════
+  // ✅ ຢືນຢັນເງິນເຂົ້າ
+  // ══════════════════════════════════════════════
   Future<void> confirmPaymentStatus(String id, bool cur) async {
     try {
       await repository.updateSaleStatus(id, !cur);
       await fetchSales();
 
-      // 🔔 ແຈ້ງເຕືອນ
       final s = allSalesList.firstWhereOrNull((x) => x.id == id);
+      final name = s == null ? 'ລາຍການ' : _productLabel(s);
+      final payment = s == null ? '' : _paymentLabel(s.paymentType);
+
       await _notify(
         type: AppNotificationType.saleConfirm,
         title: 'ຢືນຢັນເງິນເຂົ້າ',
-        message: '"${s?.productName ?? "ລາຍການ"}" '
-            '${NumberFormat('#,###').format(s?.totalAmount ?? 0)} ກີບ',
+        message: '"$name" '
+            '${fmt.format(s?.totalAmount ?? 0)} ກີບ'
+            '${payment.isNotEmpty ? " · $payment" : ""}',
         targetId: id,
       );
     } catch (e) {
@@ -185,17 +284,23 @@ class SalesController extends GetxController {
     }
   }
 
+  // ══════════════════════════════════════════════
+  // ⚠ ບັນຊີບໍ່ຕົງ
+  // ══════════════════════════════════════════════
   Future<void> markAsMismatch(String id, String note) async {
     try {
       await repository.updateMismatchStatus(id,
           isMismatch: true, mismatchNote: note);
       await fetchSales();
 
-      // 🔔 ແຈ້ງເຕືອນ
+      final s = allSalesList.firstWhereOrNull((x) => x.id == id);
+      final name = s == null ? 'ລາຍການ' : _productLabel(s);
+
       await _notify(
         type: AppNotificationType.saleMismatch,
         title: 'ບັນຊີບໍ່ຕົງ',
-        message: 'ເຫດຜົນ: $note',
+        message: '"$name" · ${fmt.format(s?.totalAmount ?? 0)} ກີບ\n'
+            'ເຫດຜົນ: $note',
         targetId: id,
       );
 
@@ -210,11 +315,13 @@ class SalesController extends GetxController {
       await repository.updateMismatchStatus(id, isMismatch: false);
       await fetchSales();
 
-      // 🔔 ແຈ້ງເຕືອນ
+      final s = allSalesList.firstWhereOrNull((x) => x.id == id);
+      final name = s == null ? 'ລາຍການ' : _productLabel(s);
+
       await _notify(
         type: AppNotificationType.saleMismatchClear,
-        title: 'ຍົກເລີກບັນຊີບໍ່ຕົງ',
-        message: 'ກັບສູ່ສະຖານະປົກກະຕິ',
+        title: 'ແກ້ໄຂບັນຊີບໍ່ຕົງ',
+        message: '"$name" ກັບສູ່ສະຖານະປົກກະຕິ',
         targetId: id,
       );
 
@@ -235,6 +342,9 @@ class SalesController extends GetxController {
     }
   }
 
+  // ══════════════════════════════════════════════
+  // 💰 ປິດໜີ້
+  // ══════════════════════════════════════════════
   Future<void> payDebt(
     String id, {
     required String paymentType,
@@ -243,6 +353,7 @@ class SalesController extends GetxController {
   }) async {
     try {
       final s = allSalesList.firstWhereOrNull((x) => x.id == id);
+      final customer = s == null ? 'ລູກຄ້າ' : _customerLabel(s);
 
       await repository.payDebt(
         id,
@@ -252,20 +363,66 @@ class SalesController extends GetxController {
       );
       await fetchSales();
 
-      // 🔔 ແຈ້ງເຕືອນ
-      await _notify(
-        type: AppNotificationType.debtPaid,
-        title: 'ປິດໜີ້ສຳເລັດ',
-        message: '"${s?.customerName ?? "ລູກຄ້າ"}" ຈ່າຍ '
-            '${NumberFormat('#,###').format(paidAmount)} ກີບ',
-        targetId: id,
-      );
+      final updated = allSalesList.firstWhereOrNull((x) => x.id == id);
+      final remaining = updated?.debtAmount ?? 0;
+      final payment = _paymentLabel(paymentType);
+
+      if (remaining > 0) {
+        await _notify(
+          type: AppNotificationType.debtPartial,
+          title: 'ຈ່າຍໜີ້ບາງສ່ວນ',
+          message:
+              '$customer ຈ່າຍ ${fmt.format(paidAmount)} ກີບ ($payment)\n'
+              'ຍັງເຫຼືອ ${fmt.format(remaining)} ກີບ',
+          targetId: id,
+        );
+      } else {
+        await _notify(
+          type: AppNotificationType.debtPaid,
+          title: 'ປິດໜີ້ສຳເລັດ',
+          message: '$customer ຈ່າຍ ${fmt.format(paidAmount)} ກີບ ($payment)',
+          targetId: id,
+        );
+      }
 
       Get.snackbar('ສຳເລັດ', 'ປິດໜີ້ · ຮັບເງິນແລ້ວ',
           backgroundColor: Colors.green.shade100,
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } catch (e) {
       Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດປິດໜີ້ໄດ້: $e');
+      rethrow;
+    }
+  }
+
+  // ══════════════════════════════════════════════
+  // 🖼️ ອັບເດດຮູບພາບ — ແກ້ໄຂສະເພາະຮູບ
+  // ══════════════════════════════════════════════
+  Future<void> updateSaleImages(
+    String id, {
+    required List<String> paymentImageUrls,
+    required List<String> billImageUrls,
+    required List<String> topUpImageUrls,
+  }) async {
+    try {
+      await repository.updateSaleImages(
+        id,
+        paymentImageUrls: paymentImageUrls,
+        billImageUrls: billImageUrls,
+        topUpImageUrls: topUpImageUrls,
+      );
+      await fetchSales();
+
+      final s = allSalesList.firstWhereOrNull((x) => x.id == id);
+      final name = s == null ? 'ລາຍການ' : _productLabel(s);
+
+      await _notify(
+        type: AppNotificationType.saleConfirm,
+        title: 'ແກ້ໄຂຮູບພາບ',
+        message: '"$name" · ອັບເດດຮູບຮຽບຮ້ອຍ',
+        targetId: id,
+      );
+    } catch (e) {
+      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດແກ້ໄຂຮູບໄດ້: $e');
       rethrow;
     }
   }

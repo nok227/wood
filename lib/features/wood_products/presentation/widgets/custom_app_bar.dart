@@ -16,8 +16,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? titleWidget;
 
   const CustomAppBar({super.key, this.title, this.titleWidget})
-      : assert(title != null || titleWidget != null,
-            'ต้องระบุ title หรือ titleWidget อย่างใดอย่างหนึ่ง');
+    : assert(
+        title != null || titleWidget != null,
+        'ต้องระบุ title หรือ titleWidget อย่างใดอย่างหนึ่ง',
+      );
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -25,11 +27,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: titleWidget ??
+      title:
+          titleWidget ??
           WaveText(
             text: title!,
-            style: const TextStyle(
-                fontWeight: FontWeight.w600, fontSize: 18),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+            replayOnRouteChange: false, // ✅ ບໍ່ replay ຕາມ route — ກັນກະຕຸກ
           ),
       actions: [
         // 🍜 ຄັງເມນູອາຫານ
@@ -56,9 +59,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               label: Text(
                 unread > 99 ? '99+' : '$unread',
                 style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold),
+                  fontSize: 10,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               child: const Icon(Icons.notifications_outlined, size: 26),
             ),
@@ -114,21 +118,21 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
           .get();
       final me = FirebaseAuth.instance.currentUser?.uid;
 
-      final list = snap.docs.map((d) {
-        final m = d.data();
-        return _UserInfo(
-          name: (m['name'] ?? m['displayName'] ?? m['username'] ?? '-')
-              .toString(),
-          email: (m['email'] ?? '-').toString(),
-          role: (m['role'] ?? 'user').toString(),
-          isMe: d.id == me,
-        );
-      }).toList()
-        ..sort((a, b) {
-          final aA = a.role.toLowerCase() == 'admin' ? 0 : 1;
-          final bA = b.role.toLowerCase() == 'admin' ? 0 : 1;
-          return aA != bA ? aA - bA : a.email.compareTo(b.email);
-        });
+      final list =
+          snap.docs.map((d) {
+            final m = d.data();
+            return _UserInfo(
+              name: (m['name'] ?? m['displayName'] ?? m['username'] ?? '-')
+                  .toString(),
+              email: (m['email'] ?? '-').toString(),
+              role: (m['role'] ?? 'user').toString(),
+              isMe: d.id == me,
+            );
+          }).toList()..sort((a, b) {
+            final aA = a.role.toLowerCase() == 'admin' ? 0 : 1;
+            final bA = b.role.toLowerCase() == 'admin' ? 0 : 1;
+            return aA != bA ? aA - bA : a.email.compareTo(b.email);
+          });
 
       if (mounted) setState(() => _users = list);
     } catch (e) {
@@ -173,10 +177,7 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
             const SizedBox(height: 8),
             // ✅ ໃຊ້ ProfileSkeleton ແທນ CircularProgressIndicator
             if (_loading && _users.isEmpty)
-              const SizedBox(
-                height: 400,
-                child: ProfileSkeleton(),
-              )
+              const SizedBox(height: 400, child: ProfileSkeleton())
             else if (_users.isEmpty)
               _emptyCard()
             else
@@ -237,8 +238,7 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
                 const SizedBox(height: 3),
                 Text(
                   user?.email ?? '-',
-                  style: const TextStyle(
-                      color: Colors.white70, fontSize: 12),
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -290,17 +290,17 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
             color: Colors.brown.shade700,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.people,
-              color: Colors.white, size: 15),
+          child: const Icon(Icons.people, color: Colors.white, size: 15),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             'ລາຍຊື່ຜູ້ໃຊ້ (${_users.length})',
             style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Colors.brown),
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Colors.brown,
+            ),
           ),
         ),
         IconButton(
@@ -316,8 +316,7 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
   Widget _userTile(_UserInfo u) {
     final isAdmin = u.role.toLowerCase() == 'admin';
     final color = isAdmin ? Colors.amber.shade800 : Colors.brown;
-    final bgColor =
-        isAdmin ? Colors.amber.shade50 : Colors.brown.shade50;
+    final bgColor = isAdmin ? Colors.amber.shade50 : Colors.brown.shade50;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -334,8 +333,7 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
         ],
       ),
       child: Padding(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -365,8 +363,9 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
                         child: Text(
                           u.name,
                           style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold),
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -375,16 +374,21 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
                         const SizedBox(width: 5),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 1),
+                            horizontal: 6,
+                            vertical: 1,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.green.shade100,
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: Text('ຂ້ອຍ',
-                              style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green.shade800)),
+                          child: Text(
+                            'ຂ້ອຍ',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green.shade800,
+                            ),
+                          ),
                         ),
                       ],
                     ],
@@ -393,7 +397,9 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
                   Text(
                     u.email,
                     style: TextStyle(
-                        fontSize: 11.5, color: Colors.grey.shade600),
+                      fontSize: 11.5,
+                      color: Colors.grey.shade600,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -402,12 +408,9 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
             ),
             const SizedBox(width: 8),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: isAdmin
-                    ? Colors.amber.shade200
-                    : Colors.grey.shade200,
+                color: isAdmin ? Colors.amber.shade200 : Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -415,9 +418,7 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
                 style: TextStyle(
                   fontSize: 10.5,
                   fontWeight: FontWeight.bold,
-                  color: isAdmin
-                      ? Colors.amber.shade900
-                      : Colors.grey.shade700,
+                  color: isAdmin ? Colors.amber.shade900 : Colors.grey.shade700,
                 ),
               ),
             ),
@@ -437,11 +438,9 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
       ),
       child: Column(
         children: [
-          Icon(Icons.people_outline,
-              size: 40, color: Colors.grey.shade400),
+          Icon(Icons.people_outline, size: 40, color: Colors.grey.shade400),
           const SizedBox(height: 8),
-          Text('ບໍ່ມີຜູ້ໃຊ້',
-              style: TextStyle(color: Colors.grey.shade600)),
+          Text('ບໍ່ມີຜູ້ໃຊ້', style: TextStyle(color: Colors.grey.shade600)),
         ],
       ),
     );

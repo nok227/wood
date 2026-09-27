@@ -175,7 +175,23 @@ class AccountPageSkeleton extends StatelessWidget {
           children: [
             Row(
               children: [
-                ShimmerBox(width: 62, height: 34, progress: p, radius: 6),
+                // ✅ badge ວັນທີ ສີນ້ຳຕານ ຄ້າຍຂອງຈິງ
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.brown.shade800,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ShimmerBox(width: 50, height: 10, progress: p, radius: 3),
+                      const SizedBox(height: 3),
+                      ShimmerBox(width: 40, height: 8, progress: p, radius: 3),
+                    ],
+                  ),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
@@ -402,6 +418,176 @@ class ProfileSkeleton extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════
+// 🍜 RecipeListSkeleton — ຕົງກັບ RecipeCard
+// ══════════════════════════════════════════════
+class RecipeListSkeleton extends StatelessWidget {
+  const RecipeListSkeleton({super.key, this.count = 6});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return ShimmerHost(
+      builder: (context, p) => ListView.builder(
+        padding: const EdgeInsets.fromLTRB(8, 4, 8, 24),
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: count,
+        itemBuilder: (_, __) => Card(
+          margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.grey.shade300, width: 1.2),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ✅ thumb 84×84 ຕົງກັບ RecipeCard._thumb
+                ShimmerBox(width: 84, height: 84, progress: p, radius: 10),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ຊື່ + ⋮
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ShimmerBox(
+                                width: double.infinity,
+                                height: 15,
+                                progress: p),
+                          ),
+                          const SizedBox(width: 8),
+                          ShimmerBox(
+                              width: 20,
+                              height: 20,
+                              progress: p,
+                              shape: BoxShape.circle),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // badges (category + status + rating)
+                      Wrap(
+                        spacing: 5,
+                        runSpacing: 4,
+                        children: [
+                          ShimmerBox(
+                              width: 60, height: 14, progress: p, radius: 5),
+                          ShimmerBox(
+                              width: 50, height: 14, progress: p, radius: 5),
+                          ShimmerBox(
+                              width: 55, height: 14, progress: p, radius: 5),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // ສ່ວນປະກອບ
+                      ShimmerBox(
+                          width: double.infinity, height: 11, progress: p),
+                      const SizedBox(height: 4),
+                      ShimmerBox(width: 140, height: 11, progress: p),
+                      const SizedBox(height: 8),
+                      // ແຖວລຸ່ມ: ເວລາ + ປຸ່ມກິນແລ້ວ
+                      Row(
+                        children: [
+                          ShimmerBox(width: 100, height: 11, progress: p),
+                          const Spacer(),
+                          ShimmerBox(
+                              width: 60, height: 20, progress: p, radius: 6),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════
+// 🎯 Wood3DSkeleton — ຕົງກັບ Wood3DPage
+// ══════════════════════════════════════════════
+class Wood3DSkeleton extends StatelessWidget {
+  const Wood3DSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ShimmerHost(
+      builder: (context, p) => Container(
+        color: const Color(0xFFEFEBE9),
+        child: Column(
+          children: [
+            // ພື້ນທີ່ 3D
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                color: Colors.brown[50],
+                child: Center(
+                  child: ShimmerBox(
+                    width: 200,
+                    height: 160,
+                    progress: p,
+                    radius: 14,
+                  ),
+                ),
+              ),
+            ),
+            const Divider(height: 1),
+            // ພາກສ່ວນ dropdown 3 ອັນ
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ShimmerBox(
+                            width: double.infinity,
+                            height: 46,
+                            progress: p,
+                            radius: 6),
+                      ),
+                      const SizedBox(width: 8),
+                      ShimmerBox(
+                          width: 90, height: 46, progress: p, radius: 6),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ShimmerBox(
+                            width: double.infinity,
+                            height: 46,
+                            progress: p,
+                            radius: 6),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ShimmerBox(
+                            width: double.infinity,
+                            height: 46,
+                            progress: p,
+                            radius: 6),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

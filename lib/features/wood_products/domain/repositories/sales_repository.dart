@@ -21,4 +21,12 @@ abstract class SalesRepository {
     required String imageUrl,
     required double paidAmount,
   });
+
+  /// 🖼️ ອັບເດດຮູບພາບ (ແກ້ໄຂສະເພາະຮູບ)
+  Future<void> updateSaleImages(
+    String id, {
+    required List<String> paymentImageUrls,
+    required List<String> billImageUrls,
+    required List<String> topUpImageUrls,
+  });
 }

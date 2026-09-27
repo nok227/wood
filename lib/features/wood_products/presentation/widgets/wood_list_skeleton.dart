@@ -1,15 +1,9 @@
 // lib/features/wood_products/presentation/widgets/wood_list_skeleton.dart
-//
-// Skeleton loading (shimmer) สำหรับหน้า WoodProductListPage
-// เลียนแบบโครงของการ์ดจริง (รูป + 3 บรรทัด) แทนการใช้ CircularProgressIndicator
-// เขียนเองด้วย AnimationController + ShaderMask ไม่ต้องพึ่ง package เพิ่ม
 
 import 'package:flutter/material.dart';
 
-/// แสดงรายการ skeleton card หลายๆ อัน พร้อม shimmer effect วิ่งผ่าน
 class WoodListSkeleton extends StatefulWidget {
   final int itemCount;
-
   const WoodListSkeleton({super.key, this.itemCount = 6});
 
   @override
@@ -39,14 +33,13 @@ class _WoodListSkeletonState extends State<WoodListSkeleton>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _controller,
-      builder: (context, _) {
-        return ListView.builder(
-          padding: const EdgeInsets.all(8),
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: widget.itemCount,
-          itemBuilder: (context, index) => _ShimmerCard(progress: _controller.value),
-        );
-      },
+      builder: (context, _) => ListView.builder(
+        padding: const EdgeInsets.all(8),
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: widget.itemCount,
+        itemBuilder: (context, index) =>
+            _ShimmerCard(progress: _controller.value),
+      ),
     );
   }
 }
@@ -64,17 +57,44 @@ class _ShimmerCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _shimmerBox(width: 65, height: 65, radius: 6),
-            const SizedBox(width: 12),
+            // ✅ thumbnail 82×82 ຕົງກັບ _productCard ຈິງ
+            _shimmerBox(width: 82, height: 82, radius: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _shimmerBox(width: double.infinity, height: 14, radius: 4),
-                  const SizedBox(height: 8),
-                  _shimmerBox(width: 120, height: 12, radius: 4),
-                  const SizedBox(height: 8),
-                  _shimmerBox(width: 90, height: 14, radius: 4),
+                  // ຂະໜາດ (3 ຕົວເລກ)
+                  _shimmerBox(width: 160, height: 13, radius: 4),
+                  const SizedBox(height: 4),
+                  // ແຖວແປງໜ່ວຍ (ຍາວນ້ອຍກວ່າ)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16),
+                    child: _shimmerBox(width: 130, height: 10, radius: 4),
+                  ),
+                  const SizedBox(height: 6),
+                  // ຈຳນວນ
+                  _shimmerBox(width: 70, height: 12, radius: 4),
+                  const SizedBox(height: 6),
+                  // ✅ price box ສີຂຽວ (ຄ້າຍ _priceBox)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 9, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.green.shade200),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.sell_outlined,
+                            size: 13, color: Colors.green.shade200),
+                        const SizedBox(width: 5),
+                        _shimmerBox(width: 80, height: 14, radius: 4),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -84,9 +104,12 @@ class _ShimmerCard extends StatelessWidget {
     );
   }
 
-  Widget _shimmerBox({required double width, required double height, required double radius}) {
-    // สีไล่เฉด เลื่อนตำแหน่งตาม progress (0 -> 1) เพื่อให้ดูเหมือนแสงวิ่งผ่าน
-    final dx = (progress * 3) - 1.5; // วิ่งจาก -1.5 ถึง 1.5 ของความกว้าง gradient
+  Widget _shimmerBox({
+    required double width,
+    required double height,
+    required double radius,
+  }) {
+    final dx = (progress * 3) - 1.5;
     return ShaderMask(
       shaderCallback: (rect) => LinearGradient(
         colors: const [

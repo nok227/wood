@@ -31,6 +31,9 @@ class NotificationRemoteDataSource {
       targetId: n.targetId,
       meta: n.meta,
     );
+    
+    // บันทึกลง Firestore ตามปกติ
+    // เมื่อบันทึกแล้ว แอปฝั่งผู้รับที่เปิดแอปอยู่หรือกดรับจาก Topic 'all_users' จะได้รับข้อมูลอัตโนมัติ
     await _db.collection(_collection).doc(n.id).set(m.toMap());
   }
 

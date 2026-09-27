@@ -54,10 +54,6 @@ class SalesRemoteDataSource {
   }
 
   /// 🆕 ຈ່າຍໜີ້ + ເພີ່ມຮູບ
-  ///
-  /// ⚠️ ບໍ່ overwrite 'receivedAmount' ເພາະມັນເປັນຄ່າ
-  /// ສົດທີ່ຮັບມາຕອນຂາຍ — ໃຊ້ຄຳນວນເງິນທອນ.
-  /// ການຈ່າຍໜີ້ → increment ໃສ່ cashPaidAmount / transferPaidAmount ຢ່າງດຽວ
   Future<void> payDebt(
     String id, {
     required String paymentType,
@@ -74,6 +70,20 @@ class SalesRemoteDataSource {
         'cashPaidAmount': FieldValue.increment(paidAmount),
       if (paymentType == 'transfer')
         'transferPaidAmount': FieldValue.increment(paidAmount),
+    });
+  }
+
+  /// 🖼️ ອັບເດດຮູບພາບທັງໝົດ (ບໍ່ປ່ຽນຂໍ້ມູນອື່ນ)
+  Future<void> updateSaleImages(
+    String id, {
+    required List<String> paymentImageUrls,
+    required List<String> billImageUrls,
+    required List<String> topUpImageUrls,
+  }) async {
+    await _firestore.collection(_collection).doc(id).update({
+      'paymentImageUrls': paymentImageUrls,
+      'billImageUrls': billImageUrls,
+      'topUpImageUrls': topUpImageUrls,
     });
   }
 }

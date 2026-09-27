@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:wood/core/util/page_route_notifier.dart';
@@ -18,28 +19,47 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
+  // ══════════════════════════════════════════════
+  // ✅ Static — ຈື່ tab ລ່າສຸດ ຂ້າມ dispose/recreate
+  // ══════════════════════════════════════════════
+  static int? _lastTabIndex;
+
   late final PageController _pageController;
   late final bool _isAdmin;
   late final int _wood3dIndex;
   late final List<String> _titles;
   late final List<BottomNavigationBarItem> _navItems;
 
-  /// ✅ Cache ทุกหน้าไว้ครั้งเดียว — ไม่ rebuild ตอนปัด
+  /// ✅ Cache ทุกหน้าไว้ครั้งเดียว
   late final List<Widget> _pages;
 
   final ValueNotifier<int> _indexNotifier = ValueNotifier<int>(0);
   final ValueNotifier<bool> _lockSwipe = ValueNotifier<bool>(false);
 
-  Timer? _bumpTimer;   // ✅ ตัวใหม่ — หน่วง bump
+  // ✅ Title/WaveText ໃຊ້ index ແຍກຕ່າງຫາກ + debounce
+  // ບໍ່ໃຫ້ replay ອະນິເມຊັນຕອນນິ້ວຍັງລາກຢູ່ (ລໍຖ້າ settle ກ່ອນ)
+  final ValueNotifier<int> _titleIndexNotifier = ValueNotifier<int>(0);
+  Timer? _titleDebounce;
+
+  Timer? _bumpTimer;
 
   @override
   void initState() {
     super.initState();
     _isAdmin = Get.find<AuthController>().isAdmin;
     _wood3dIndex = _isAdmin ? 4 : 3;
+    final maxIndex = _isAdmin ? 4 : 3;
 
-    final initial = _isAdmin ? 1 : 0;
+    // ✅ ກັບມາຢູ່ tab ເກົ່າ ຖ້າເຄີຍເປີດໄວ້ — ບໍ່ດັ່ງນັ້ນ ໃຊ້ default
+    final fallback = _isAdmin ? 1 : 0;
+    final initial = (_lastTabIndex != null &&
+            _lastTabIndex! >= 0 &&
+            _lastTabIndex! <= maxIndex)
+        ? _lastTabIndex!
+        : fallback;
+
     _indexNotifier.value = initial;
+    _titleIndexNotifier.value = initial;
     _pageController = PageController(initialPage: initial);
 
     _titles = [
@@ -84,23 +104,41 @@ class _HomeShellState extends State<HomeShell> {
   List<Widget> _buildAllPages() {
     if (_isAdmin) {
       return [
-        const RepaintBoundary(child: WoodProductFormPage()),
-        const RepaintBoundary(child: WoodProductListPage()),
-        const RepaintBoundary(
-            child: _KeepAlivePage(child: SalesListPage())),
-        const RepaintBoundary(
-            child: _KeepAlivePage(child: AccountPage())),
-        _build3DPage(),
+        _gate(0, const RepaintBoundary(child: WoodProductFormPage())),
+        _gate(1, const RepaintBoundary(child: WoodProductListPage())),
+        _gate(
+            2,
+            const RepaintBoundary(
+                child: _KeepAlivePage(child: SalesListPage()))),
+        _gate(
+            3,
+            const RepaintBoundary(
+                child: _KeepAlivePage(child: AccountPage()))),
+        _gate(4, _build3DPage()),
       ];
     }
     return [
-      const RepaintBoundary(child: WoodProductListPage()),
-      const RepaintBoundary(
-          child: _KeepAlivePage(child: SalesListPage())),
-      const RepaintBoundary(
-          child: _KeepAlivePage(child: AccountPage())),
-      _build3DPage(),
+      _gate(0, const RepaintBoundary(child: WoodProductListPage())),
+      _gate(
+          1,
+          const RepaintBoundary(
+              child: _KeepAlivePage(child: SalesListPage()))),
+      _gate(
+          2,
+          const RepaintBoundary(
+              child: _KeepAlivePage(child: AccountPage()))),
+      _gate(3, _build3DPage()),
     ];
+  }
+
+  /// ✅ ຄຸມ TickerMode ຂອງແຕ່ລະ tab — tab ທີ່ບໍ່ໄດ້ສະແດງຢູ່ ຈະຢຸດ
+  /// AnimationController/AnimatedNumber ທັງໝົດຂອງມັນໂດຍອັດຕະໂນມັດ
+  Widget _gate(int index, Widget child) {
+    return _TabTickerGate(
+      index: index,
+      currentIndex: _indexNotifier,
+      child: child,
+    );
   }
 
   Widget _build3DPage() {
@@ -113,16 +151,17 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   void dispose() {
-    _bumpTimer?.cancel();   // ✅ ยกเลิก timer
+    _bumpTimer?.cancel();
+    _titleDebounce?.cancel();
     _pageController.dispose();
     _indexNotifier.dispose();
+    _titleIndexNotifier.dispose();
     _lockSwipe.dispose();
     super.dispose();
   }
 
   int get _pageCount => _isAdmin ? 5 : 4;
 
-  // ✅ bump หลังหน้าเลื่อนเสร็จ — ไม่ให้ชนกับอนิเมชั่น PageView
   void _scheduleBump() {
     _bumpTimer?.cancel();
     _bumpTimer = Timer(const Duration(milliseconds: 280), () {
@@ -132,8 +171,10 @@ class _HomeShellState extends State<HomeShell> {
 
   void _onItemTapped(int index) {
     if (_indexNotifier.value == index) return;
-    final distance = (index - _indexNotifier.value).abs();
+    // ✅ ບັນທຶກທັນທີ
+    _lastTabIndex = index;
 
+    final distance = (index - _indexNotifier.value).abs();
     if (distance == 1) {
       _pageController.animateToPage(
         index,
@@ -151,7 +192,7 @@ class _HomeShellState extends State<HomeShell> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: ValueListenableBuilder<int>(
-          valueListenable: _indexNotifier,
+          valueListenable: _titleIndexNotifier,
           builder: (context, idx, child) {
             return _HomeAppBar(title: _titles[idx]);
           },
@@ -169,7 +210,15 @@ class _HomeShellState extends State<HomeShell> {
             allowImplicitScrolling: true,
             onPageChanged: (i) {
               _indexNotifier.value = i;
-              _scheduleBump();   // ✅ หน่วง bump
+              _lastTabIndex = i;      // ✅ ບັນທຶກທຸກຄັ້ງທີ່ປ່ຽນ tab
+              _scheduleBump();
+
+              // ✅ ລໍໃຫ້ນິ້ວນິ່ງກ່ອນ ຄ່ອຍປ່ຽນ title (ບໍ່ໃຫ້ WaveText
+              // replay ອະນິເມຊັນຕອນ PageView ຍັງກຳລັງ scroll ຢູ່)
+              _titleDebounce?.cancel();
+              _titleDebounce = Timer(const Duration(milliseconds: 120), () {
+                if (mounted) _titleIndexNotifier.value = i;
+              });
             },
             children: _pages,
           );
@@ -197,7 +246,7 @@ class _HomeShellState extends State<HomeShell> {
 }
 
 // ══════════════════════════════════════════════
-// 🎯 3D Lazy Wrapper — คงเดิม
+// 🎯 3D Lazy Wrapper
 // ══════════════════════════════════════════════
 class _Lazy3DWrapper extends StatefulWidget {
   final ValueNotifier<bool>? swipeLock;
@@ -238,7 +287,35 @@ class _Lazy3DWrapperState extends State<_Lazy3DWrapper>
 }
 
 // ══════════════════════════════════════════════
-// KeepAlive — คงเดิม
+// 🎯 TickerMode Gate — ຢຸດອະນິເມຊັນຂອງ tab ທີ່ບໍ່ໄດ້ສະແດງ
+// ══════════════════════════════════════════════
+class _TabTickerGate extends StatelessWidget {
+  final int index;
+  final ValueListenable<int> currentIndex;
+  final Widget child;
+
+  const _TabTickerGate({
+    required this.index,
+    required this.currentIndex,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: currentIndex,
+      // ✅ child ຖືກສົ່ງຜ່ານ builder — ຂອງເດີມບໍ່ຖືກ rebuild ໃໝ່
+      // ມີແຕ່ TickerMode enabled flag ທີ່ toggle
+      builder: (context, current, child) {
+        return TickerMode(enabled: current == index, child: child!);
+      },
+      child: child,
+    );
+  }
+}
+
+// ══════════════════════════════════════════════
+// KeepAlive
 // ══════════════════════════════════════════════
 class _KeepAlivePage extends StatefulWidget {
   final Widget child;
@@ -261,7 +338,7 @@ class _KeepAlivePageState extends State<_KeepAlivePage>
 }
 
 // ══════════════════════════════════════════════
-// AppBar — คงเดิม
+// AppBar
 // ══════════════════════════════════════════════
 class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;

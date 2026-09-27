@@ -123,7 +123,7 @@ class AccountController extends GetxController {
       );
 
       Get.snackbar('ສຳເລັດ', 'ບັນທຶກຮຽບຮ້ອຍແລ້ວ',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           duration: const Duration(seconds: 2));
     } catch (e) {
       Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດບັນທຶກໄດ້: $e');
@@ -147,7 +147,7 @@ class AccountController extends GetxController {
       );
 
       Get.snackbar('ສຳເລັດ', 'ລຶບຮຽບຮ້ອຍແລ້ວ',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } catch (e) {
       Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດລຶບໄດ້: $e');
     }

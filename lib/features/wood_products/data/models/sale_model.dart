@@ -20,13 +20,19 @@ class SaleModel {
   final String? customerPhone;
   final DateTime? debtDate;
   final String? debtNote;
-  final DateTime? appointmentDate; // 🆕
+  final DateTime? appointmentDate;
   final String? note;
   final DateTime date;
   final bool isConfirmed;
   final bool isMismatch;
   final String? mismatchNote;
   final Map<int, int>? cashDenominations;
+
+  // 📐 ຂະໜາດສິນຄ້າ (ໃໝ່)
+  final double? productWidth;
+  final double? productLength;
+  final double? productThickness;
+  final String? productSizeUnit;
 
   SaleModel({
     required this.id,
@@ -48,13 +54,17 @@ class SaleModel {
     this.customerPhone,
     this.debtDate,
     this.debtNote,
-    this.appointmentDate, // 🆕
+    this.appointmentDate,
     this.note,
     required this.date,
     this.isConfirmed = false,
     this.isMismatch = false,
     this.mismatchNote,
     this.cashDenominations,
+    this.productWidth,
+    this.productLength,
+    this.productThickness,
+    this.productSizeUnit,
   });
 
   // ══════════════════════════════════════════════
@@ -73,6 +83,13 @@ class SaleModel {
     if (v == null) return def;
     if (v is num) return v.toDouble();
     return double.tryParse(v.toString()) ?? def;
+  }
+
+  /// 📐 double ທີ່ອາດຈະເປັນ null
+  static double? _dblOrNull(dynamic v) {
+    if (v == null) return null;
+    if (v is num) return v.toDouble();
+    return double.tryParse(v.toString());
   }
 
   static int _int(dynamic v, [int def = 0]) {
@@ -106,7 +123,6 @@ class SaleModel {
     return DateTime.now();
   }
 
-  /// 🆕 ອ່ານວັນທີແບບ nullable (ຄືນ null ຖ້າບໍ່ມີ)
   static DateTime? _dateOrNull(dynamic v) {
     if (v == null) return null;
     if (v is DateTime) return v;
@@ -136,7 +152,7 @@ class SaleModel {
   }
 
   // ══════════════════════════════════════════════
-  // Map → Model (backward compatible)
+  // Map → Model
   // ══════════════════════════════════════════════
   factory SaleModel.fromMap(Map<String, dynamic> map, String docId) {
     final totalAmount = _dbl(map['totalAmount']);
@@ -146,7 +162,6 @@ class SaleModel {
     double transferPaid = _dbl(map['transferPaidAmount']);
     final debtAmount = _dbl(map['debtAmount']);
 
-    // ✅ ຂໍ້ມູນເກົ່າທີ່ບໍ່ມີຟິວໃໝ່ → ຄຳນວນຈາກ paymentType
     if (cashPaid == 0 && transferPaid == 0 && debtAmount == 0) {
       if (paymentType == 'cash') {
         cashPaid = totalAmount;
@@ -175,7 +190,6 @@ class SaleModel {
       customerPhone: _strOrNull(map['customerPhone']),
       debtDate: _dateOrNull(map['debtDate']),
       debtNote: _strOrNull(map['debtNote']),
-      // ✅ ອ່ານ appointmentDate ຢ່າງປອດໄພ
       appointmentDate: _dateOrNull(map['appointmentDate']),
       note: _strOrNull(map['note']),
       date: _date(map['date']),
@@ -183,6 +197,11 @@ class SaleModel {
       isMismatch: _bool(map['isMismatch']),
       mismatchNote: _strOrNull(map['mismatchNote']),
       cashDenominations: _cashDenoms(map['cashDenominations']),
+      // 📐 ຂະໜາດ
+      productWidth: _dblOrNull(map['productWidth']),
+      productLength: _dblOrNull(map['productLength']),
+      productThickness: _dblOrNull(map['productThickness']),
+      productSizeUnit: _strOrNull(map['productSizeUnit']),
     );
   }
 
@@ -208,7 +227,6 @@ class SaleModel {
         'customerPhone': customerPhone,
         'debtDate': debtDate?.toIso8601String(),
         'debtNote': debtNote,
-        // ✅ ບັນທຶກ appointmentDate
         'appointmentDate': appointmentDate?.toIso8601String(),
         'note': note,
         'date': date.toIso8601String(),
@@ -218,6 +236,11 @@ class SaleModel {
         'cashDenominations': cashDenominations?.map(
           (k, v) => MapEntry(k.toString(), v),
         ),
+        // 📐 ຂະໜາດ
+        'productWidth': productWidth,
+        'productLength': productLength,
+        'productThickness': productThickness,
+        'productSizeUnit': productSizeUnit,
       };
 
   // ══════════════════════════════════════════════
@@ -243,7 +266,6 @@ class SaleModel {
         customerPhone: customerPhone,
         debtDate: debtDate,
         debtNote: debtNote,
-        // ✅ ສົ່ງ appointmentDate ກັບໄປ
         appointmentDate: appointmentDate,
         note: note,
         date: date,
@@ -251,5 +273,10 @@ class SaleModel {
         isMismatch: isMismatch,
         mismatchNote: mismatchNote,
         cashDenominations: cashDenominations,
+        // 📐 ຂະໜາດ
+        productWidth: productWidth,
+        productLength: productLength,
+        productThickness: productThickness,
+        productSizeUnit: productSizeUnit,
       );
 }

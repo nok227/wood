@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart'; // ✅ เพิ่ม
 import 'auth_repository.dart';
 import 'package:wood/features/wood_products/presentation/pages/home_shell.dart';
 
@@ -9,7 +10,6 @@ class AuthController extends GetxController {
 
   AuthController({required this.authRepository});
 
-  // 🔐 อีเมล Admin เพียงจุดเดียวของทั้งแอป — แก้ตรงนี้ที่เดียวพอ
   static const String adminEmail = 'wood1002@gmail.com';
 
   final nameController = TextEditingController();
@@ -19,7 +19,6 @@ class AuthController extends GetxController {
   var isLoading = false.obs;
   var currentUser = Rxn<User>();
 
-  // ✅ ใช้เช็คสิทธิ์ Admin จากที่เดียวทั่วทั้งแอป
   bool get isAdmin =>
       currentUser.value?.email?.toLowerCase().trim() == adminEmail;
 
@@ -29,14 +28,21 @@ class AuthController extends GetxController {
     currentUser.bindStream(FirebaseAuth.instance.authStateChanges());
   }
 
-  // 🧹 ฟังก์ชันล้างฟอร์ม
   void clearForm() {
     nameController.clear();
     emailController.clear();
     passwordController.clear();
   }
 
-  // ฟังก์ชันสมัครสมาชิก
+  // ✅ Helper: ຜູກ OneSignal ກັບ Firebase UID
+  void _linkOneSignalUser() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      OneSignal.login(user.uid);
+      debugPrint('OneSignal logged in with UID: ${user.uid}');
+    }
+  }
+
   Future<void> registerWithEmail() async {
     try {
       isLoading.value = true;
@@ -45,7 +51,8 @@ class AuthController extends GetxController {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
-      clearForm(); // 🧹 ล้างฟอร์มเมื่อสำเร็จ
+      _linkOneSignalUser(); // ✅ เพิ่ม
+      clearForm();
       Get.offAll(() => const HomeShell());
     } catch (e) {
       Get.snackbar('ຜິດພາດ', e.toString());
@@ -54,7 +61,6 @@ class AuthController extends GetxController {
     }
   }
 
-  // ฟังก์ชันเข้าสู่ระบบด้วย Email
   Future<void> signInWithEmail() async {
     try {
       isLoading.value = true;
@@ -62,7 +68,8 @@ class AuthController extends GetxController {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
-      clearForm(); // 🧹 ล้างฟอร์มเมื่อเข้าสู่ระบบสำเร็จ
+      _linkOneSignalUser(); // ✅ เพิ่ม
+      clearForm();
       Get.offAll(() => const HomeShell());
     } catch (e) {
       Get.snackbar('ຜິດພາດ', e.toString());
@@ -71,13 +78,13 @@ class AuthController extends GetxController {
     }
   }
 
-  // ฟังก์ชันเข้าสู่ระบบด้วย Google
   Future<void> signInWithGoogle() async {
     try {
       isLoading.value = true;
       final result = await authRepository.signInWithGoogle();
       if (result != null) {
-        clearForm(); // 🧹 ล้างฟอร์มเมื่อสำเร็จ
+        _linkOneSignalUser(); // ✅ เพิ่ม
+        clearForm();
         Get.offAll(() => const HomeShell());
       }
     } catch (e) {
@@ -87,8 +94,8 @@ class AuthController extends GetxController {
     }
   }
 
-  // ฟังก์ชันออกจากระบบ
   Future<void> logout() async {
+    OneSignal.logout(); // ✅ เพิ่ม — ຍົກເລີກການຜູກ User
     await authRepository.signOut();
     clearForm();
   }

@@ -54,9 +54,9 @@ class _SalesListSkeletonState extends State<SalesListSkeleton>
               // ── 2 ຮູບຈຳລອງ ──
               Column(
                 children: [
-                  _box(70, 70),
+                  _box(76, 76),
                   const SizedBox(height: 8),
-                  _box(70, 70),
+                  _box(76, 76),
                 ],
               ),
               const SizedBox(width: 12),

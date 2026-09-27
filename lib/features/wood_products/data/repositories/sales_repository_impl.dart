@@ -32,12 +32,18 @@ class SalesRepositoryImpl implements SalesRepository {
       customerPhone: sale.customerPhone,
       debtDate: sale.debtDate,
       debtNote: sale.debtNote,
+      appointmentDate: sale.appointmentDate,
       note: sale.note,
       date: sale.date,
       isConfirmed: sale.isConfirmed,
       isMismatch: sale.isMismatch,
       mismatchNote: sale.mismatchNote,
       cashDenominations: sale.cashDenominations,
+      // 📐 ຂະໜາດ
+      productWidth: sale.productWidth,
+      productLength: sale.productLength,
+      productThickness: sale.productThickness,
+      productSizeUnit: sale.productSizeUnit,
     );
     await remoteDataSource.addSale(m);
   }
@@ -77,5 +83,19 @@ class SalesRepositoryImpl implements SalesRepository {
         paymentType: paymentType,
         imageUrl: imageUrl,
         paidAmount: paidAmount,
+      );
+
+  @override
+  Future<void> updateSaleImages(
+    String id, {
+    required List<String> paymentImageUrls,
+    required List<String> billImageUrls,
+    required List<String> topUpImageUrls,
+  }) =>
+      remoteDataSource.updateSaleImages(
+        id,
+        paymentImageUrls: paymentImageUrls,
+        billImageUrls: billImageUrls,
+        topUpImageUrls: topUpImageUrls,
       );
 }

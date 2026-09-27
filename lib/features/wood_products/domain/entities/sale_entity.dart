@@ -38,6 +38,12 @@ class SaleEntity {
   final String? mismatchNote;
   final Map<int, int>? cashDenominations;
 
+  // 📐 ຂະໜາດສິນຄ້າ (ເກັບໄວ້ເພື່ອສະແດງ 3 ໜ່ວຍ)
+  final double? productWidth;
+  final double? productLength;
+  final double? productThickness;
+  final String? productSizeUnit;
+
   SaleEntity({
     required this.id,
     required this.productId,
@@ -65,6 +71,10 @@ class SaleEntity {
     this.isMismatch = false,
     this.mismatchNote,
     this.cashDenominations,
+    this.productWidth,
+    this.productLength,
+    this.productThickness,
+    this.productSizeUnit,
   });
 
   /// 💰 ເງິນທອນ — ຄຳນວນຈາກ receivedAmount ກ່ອນ
@@ -95,6 +105,13 @@ class SaleEntity {
 
   /// 🆕 ມີນັດວັນຈ່າຍບໍ
   bool get hasAppointment => appointmentDate != null;
+
+  /// 📐 ມີຂໍ້ມູນຂະໜາດຄົບບໍ
+  bool get hasProductSize =>
+      productWidth != null &&
+      productLength != null &&
+      productThickness != null &&
+      productSizeUnit != null;
 
   String? get slipImageUrl {
     if (paymentImageUrls.isEmpty) return null;

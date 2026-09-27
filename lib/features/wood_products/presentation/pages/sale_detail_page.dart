@@ -3,8 +3,11 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/sale_entity.dart';
 import '../controllers/sales_controller.dart';
+import '../controllers/wood_product_controller.dart';
+import '../../data/models/wood_product_model.dart';
 import '../widgets/sale_image_viewer.dart';
 import 'debt_payment_page.dart';
+import 'sale_image_edit_page.dart';
 import '../../../auth/auth_controller.dart';
 
 enum _Alert { success, error, warning, info }
@@ -22,6 +25,8 @@ class _SaleDetailPageState extends State<SaleDetailPage>
   late final AnimationController _spinCtrl;
   bool _saving = false;
 
+  bool _wasDeletedOnce = false;
+
   @override
   void initState() {
     super.initState();
@@ -37,7 +42,6 @@ class _SaleDetailPageState extends State<SaleDetailPage>
     super.dispose();
   }
 
-  // ✅ ດຶງ sale ສົດໆ ຈາກ controller
   SaleEntity get _liveSale {
     final list = Get.find<SalesController>().allSalesList;
     for (final s in list) {
@@ -54,15 +58,44 @@ class _SaleDetailPageState extends State<SaleDetailPage>
     return true;
   }
 
+  // ✅ ດຶງ product ຈາກ productId ເພື່ອສະແດງຂະໜາດ
+  WoodProductModel? _findProduct(String productId) {
+    try {
+      final products = Get.find<WoodProductController>().products;
+      for (final p in products) {
+        if (p.id == productId) return p;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // ✅ ຈັດຮູບແບບຕົວເລກ — ຕັດ .0 ອອກ
+  String _fmtDim(num v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+
+  // ✅ ສ້າງ string ຂະໜາດ
+  String? _dimensionText(WoodProductModel? p) {
+    if (p == null) return null;
+    return '${_fmtDim(p.width)}×${_fmtDim(p.length)}×${_fmtDim(p.thickness)} ${p.sizeUnit}';
+  }
+
   String _wPrefix(String? raw, String prefix) {
     final v = (raw ?? '').trim();
     if (v.isEmpty) return '-';
     return v.startsWith(prefix) ? v : '$prefix$v';
   }
 
-  // ══════════════════════════════════════════════
-  // 🎨 Alert — ດ້ານເທິງ + ສີຕາມປະເພດ
-  // ══════════════════════════════════════════════
+  void _safeCloseDialog() {
+    if (Get.isDialogOpen ?? false) {
+      final ctx = Get.context;
+      if (ctx != null) {
+        Navigator.of(ctx, rootNavigator: true).pop();
+      } else {
+        Get.back();
+      }
+    }
+  }
+
   void _snack(String title, String msg, {_Alert type = _Alert.info}) {
     Get.closeAllSnackbars();
 
@@ -117,14 +150,29 @@ class _SaleDetailPageState extends State<SaleDetailPage>
   void _warn(String t, String m) => _snack(t, m, type: _Alert.warning);
   void _info(String t, String m) => _snack(t, m, type: _Alert.info);
 
+  Future<void> _openImageEditor(SalesController ctrl) async {
+    final result = await Get.to<bool>(
+      () => SaleImageEditPage(sale: _liveSale),
+    );
+    if (result == true) {
+      _ok('ສຳເລັດ', 'ແກ້ໄຂຮູບຮຽບຮ້ອຍແລ້ວ');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      // ── ຖືກລຶບ → ກັບອັດຕະໂນມັດ ──
       if (_isDeleted) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) Get.back();
-        });
+        if (!_wasDeletedOnce) {
+          _wasDeletedOnce = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            final route = ModalRoute.of(context);
+            if (route != null && route.isCurrent) {
+              Get.back();
+            }
+          });
+        }
         return const Scaffold(
           body: Center(child: CircularProgressIndicator()),
         );
@@ -134,6 +182,10 @@ class _SaleDetailPageState extends State<SaleDetailPage>
       final ctrl = Get.find<SalesController>();
       final fmt = NumberFormat('#,###');
       final isAdmin = Get.find<AuthController>().isAdmin;
+
+      // ✅ ດຶງ product ເພື່ອສະແດງຂະໜາດ
+      final product = _findProduct(sale.productId);
+      final dimText = _dimensionText(product);
 
       final payTitle =
           sale.paymentType == 'cash' ? 'ຮູບເງິນສົດ' : 'ຮູບເງິນໂອນ';
@@ -162,6 +214,13 @@ class _SaleDetailPageState extends State<SaleDetailPage>
           backgroundColor: Colors.brown,
           foregroundColor: Colors.white,
           actions: [
+            if (isAdmin)
+              IconButton(
+                icon: const Icon(Icons.photo_library_outlined,
+                    color: Colors.white),
+                tooltip: 'ແກ້ໄຂຮູບ',
+                onPressed: () => _openImageEditor(ctrl),
+              ),
             if (isAdmin)
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, color: Colors.white),
@@ -279,6 +338,25 @@ class _SaleDetailPageState extends State<SaleDetailPage>
                   ),
                 ],
               ),
+
+            if (isAdmin) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () => _openImageEditor(ctrl),
+                icon: const Icon(Icons.edit, size: 18),
+                label: const Text('ແກ້ໄຂຮູບພາບ'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.brown,
+                  side: const BorderSide(color: Colors.brown),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  minimumSize: const Size.fromHeight(44),
+                ),
+              ),
+            ],
+
             const SizedBox(height: 20),
 
             // ═══ ຂໍ້ມູນການຂາຍ ═══
@@ -290,8 +368,19 @@ class _SaleDetailPageState extends State<SaleDetailPage>
                     sale.productName.isNotEmpty
                         ? sale.productName
                         : 'ລາຍການໄມ້'),
+
+                // ✅ ສະແດງຂະໜາດ
+                if (dimText != null)
+                  _row('ຂະໜາດ', dimText),
+
+                // ✅ ສະແດງຊະນິດໄມ້
+                if (product != null && product.woodType.trim().isNotEmpty)
+                  _row('ຊະນິດໄມ້', product.woodType),
+
                 if (sale.quantity > 0)
-                  _row('ຈຳນວນ', '${sale.quantity} ຊິ້ນ'),
+                  _row('ຈຳນວນ',
+                      '${sale.quantity} ${product?.unit ?? "ຊິ້ນ"}'),
+
                 if (sale.discountPerUnit > 0) ...[
                   _row('ສ່ວນລົດ/ຫົວໜ່ວຍ',
                       '${fmt.format(sale.discountPerUnit)} ກີບ'),
@@ -587,9 +676,6 @@ class _SaleDetailPageState extends State<SaleDetailPage>
     );
   }
 
-  // ══════════════════════════════════════════════
-  // 🎯 ສະຖານະ
-  // ══════════════════════════════════════════════
   Widget _statusBanner(
       SalesController ctrl, bool isAdmin, SaleEntity sale) {
     final Color c;
@@ -687,9 +773,6 @@ class _SaleDetailPageState extends State<SaleDetailPage>
     }
   }
 
-  // ══════════════════════════════════════════════
-  // Dialogs
-  // ══════════════════════════════════════════════
   void _confirmReceiveDebt(SalesController c, SaleEntity sale) {
     final name = _wPrefix(sale.customerName, 'ຊື່');
     final addr = _wPrefix(sale.customerAddress, 'ບ້ານ');
@@ -760,12 +843,13 @@ class _SaleDetailPageState extends State<SaleDetailPage>
       buttonColor: Colors.green.shade700,
       cancelTextColor: Colors.grey.shade700,
       onConfirm: () async {
-        Get.back();
+        _safeCloseDialog();
         await Future.delayed(const Duration(milliseconds: 350));
-        if (Get.isDialogOpen ?? false) {
-          Get.back();
-          await Future.delayed(const Duration(milliseconds: 150));
+        while (Get.isDialogOpen ?? false) {
+          _safeCloseDialog();
+          await Future.delayed(const Duration(milliseconds: 120));
         }
+        if (!mounted) return;
         Get.to(() => DebtPaymentPage(sale: sale));
       },
     );
@@ -786,10 +870,9 @@ class _SaleDetailPageState extends State<SaleDetailPage>
             label: const Text('ຢືນຢັນເງິນເຂົ້າ',
                 style: TextStyle(color: Colors.white)),
             onPressed: () async {
-              Get.back();
-              await Future.delayed(const Duration(milliseconds: 200));
+              _safeCloseDialog();
+              await Future.delayed(const Duration(milliseconds: 300));
               await c.confirmPaymentStatus(sale.id, false);
-              // ✅ ແຈ້ງເຕືອນຫຼັງປ່ຽນສະຖານະ
               _ok('ສຳເລັດ', 'ຢືນຢັນເງິນເຂົ້າແລ້ວ');
             },
           ),
@@ -804,12 +887,13 @@ class _SaleDetailPageState extends State<SaleDetailPage>
             label: const Text('ບັນຊີບໍ່ຕົງກັນ',
                 style: TextStyle(color: Colors.white)),
             onPressed: () async {
-              Get.back();
-              await Future.delayed(const Duration(milliseconds: 250));
+              _safeCloseDialog();
+              await Future.delayed(const Duration(milliseconds: 300));
               while (Get.isDialogOpen ?? false) {
-                Get.back();
+                _safeCloseDialog();
                 await Future.delayed(const Duration(milliseconds: 120));
               }
+              if (!mounted) return;
               _mismatchDialog(c, isEdit: false, sale: sale);
             },
           ),
@@ -852,9 +936,9 @@ class _SaleDetailPageState extends State<SaleDetailPage>
                     side: BorderSide(color: Colors.grey.shade400),
                   ),
                   onPressed: () async {
-                    Get.back();
+                    _safeCloseDialog();
                     await Future.delayed(
-                        const Duration(milliseconds: 200));
+                        const Duration(milliseconds: 300));
                     await c.clearMismatch(sale.id);
                     _ok('ສຳເລັດ', 'ຍົກເລີກສະຖານະແລ້ວ');
                   },
@@ -873,9 +957,9 @@ class _SaleDetailPageState extends State<SaleDetailPage>
                       _warn('ຕ້ອງການຂໍ້ມູນ', 'ກະລຸນາປ້ອນເຫດຜົນ');
                       return;
                     }
-                    Get.back();
+                    _safeCloseDialog();
                     await Future.delayed(
-                        const Duration(milliseconds: 200));
+                        const Duration(milliseconds: 300));
                     await c.updateMismatchNote(sale.id, t);
                     _ok('ສຳເລັດ', 'ອັບເດດໝາຍເຫດແລ້ວ');
                   },
@@ -898,9 +982,9 @@ class _SaleDetailPageState extends State<SaleDetailPage>
                     _warn('ຕ້ອງການຂໍ້ມູນ', 'ກະລຸນາປ້ອນເຫດຜົນ');
                     return;
                   }
-                  Get.back();
+                  _safeCloseDialog();
                   await Future.delayed(
-                      const Duration(milliseconds: 200));
+                      const Duration(milliseconds: 300));
                   await c.markAsMismatch(sale.id, t);
                   _ok('ສຳເລັດ', 'ບັນທຶກບັນຊີບໍ່ຕົງແລ້ວ');
                 },
@@ -972,14 +1056,10 @@ class _SaleDetailPageState extends State<SaleDetailPage>
       cancelTextColor: Colors.grey.shade700,
       buttonColor: Colors.red.shade700,
       onConfirm: () async {
-        Get.back();
-        await Future.delayed(const Duration(milliseconds: 200));
-        await c.deleteSale(widget.sale.id);
-        // ✅ ແຈ້ງເຕືອນ
-        _ok('ສຳເລັດ', 'ລຶບລາຍການຮຽບຮ້ອຍແລ້ວ');
-        // ✅ ກັບອັດຕະໂນມັດ (Obx ຈະກວດ _isDeleted)
+        _safeCloseDialog();
         await Future.delayed(const Duration(milliseconds: 300));
-        if (mounted) Get.back();
+        await c.deleteSale(widget.sale.id);
+        _ok('ສຳເລັດ', 'ລຶບລາຍການຮຽບຮ້ອຍແລ້ວ');
       },
     );
   }

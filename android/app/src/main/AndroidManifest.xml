@@ -3,6 +3,17 @@
     <!-- ✅ Internet -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- ✅ Permissions สำหรับการแจ้งเตือน -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+    <!-- ✅ Foreground Service (สำหรับให้แอปทำงานเบื้องหลังแม้ปัดออก) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+
     <!-- ✅ ສຳລັບ Speech to Text -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -13,6 +24,20 @@
         android:label="ລາຄາໄມ້"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
+
+        <!-- ✅ OneSignal App ID -->
+        <meta-data
+            android:name="com.onesignal.APP_ID"
+            android:value="17cd2a07-4e26-4f74-b202-2ff7c0e3d474" />
+
+        <!-- ✅ ตั้งค่า Channel และ Icon สำหรับแจ้งเตือน -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="high_importance_channel" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/launcher_icon" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -31,6 +56,12 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <!-- ✅ Foreground Service ของ flutter_foreground_task -->
+        <service
+            android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
 
         <meta-data
             android:name="flutterEmbedding"

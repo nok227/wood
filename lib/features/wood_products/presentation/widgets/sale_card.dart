@@ -30,6 +30,18 @@ class SaleCard extends StatelessWidget {
     return v.startsWith(prefix) ? v : '$prefix$v';
   }
 
+  // ✅ ປິດ dialog ຢ່າງປອດໄພ — root navigator
+  void _safeCloseDialog() {
+    if (Get.isDialogOpen ?? false) {
+      final ctx = Get.context;
+      if (ctx != null) {
+        Navigator.of(ctx, rootNavigator: true).pop();
+      } else {
+        Get.back();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ctrl = Get.find<SalesController>();
@@ -110,6 +122,7 @@ class SaleCard extends StatelessWidget {
                       value: sale.totalAmount,
                       suffix: ' ກີບ',
                       duration: 1200,
+                      replayOnRouteChange: true,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -161,12 +174,11 @@ class SaleCard extends StatelessWidget {
                 ),
               ),
 
-              // ✅ ປຸ່ມ ⋮ → ✏️ ແກ້ໄຂ + 🗑 ລຶບ
+              // ✅ ປຸ່ມ ⋮ → 🗑 ລຶບ (ເອົາ ✏️ ແກ້ໄຂ ອອກແລ້ວ)
               _FloatingActionsButton(
                 key: ValueKey('act-${sale.id}'),
                 saleId: sale.id,
                 isAdmin: isAdmin,
-                onEdit: () => _editAction(ctrl),
                 onDelete: () => _deleteDialog(ctrl),
               ),
             ],
@@ -174,19 +186,6 @@ class SaleCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  // ══════════════════════════════════════════════
-  // ✏️ ແກ້ໄຂ
-  // ══════════════════════════════════════════════
-  void _editAction(SalesController c) {
-    if (sale.hasDebt) {
-      // ມີໜີ້ → ໄປໜ້າຢືນຢັນຮັບເງິນ (ປິດໜີ້)
-      _confirmReceiveDebt(c);
-    } else {
-      // ບໍ່ມີໜີ້ → ໄປໜ້າລາຍລະອຽດ (ສາມາດແກ້ໄຂຕໍ່)
-      Get.to(() => SaleDetailPage(sale: sale));
-    }
   }
 
   Widget _paymentBadge(NumberFormat fmt) {
@@ -552,11 +551,11 @@ class SaleCard extends StatelessWidget {
       buttonColor: Colors.green.shade700,
       cancelTextColor: Colors.grey.shade700,
       onConfirm: () async {
-        Get.back();
+        _safeCloseDialog();
         await Future.delayed(const Duration(milliseconds: 350));
-        if (Get.isDialogOpen ?? false) {
-          Get.back();
-          await Future.delayed(const Duration(milliseconds: 150));
+        while (Get.isDialogOpen ?? false) {
+          _safeCloseDialog();
+          await Future.delayed(const Duration(milliseconds: 120));
         }
         Get.to(() => DebtPaymentPage(sale: sale));
       },
@@ -578,8 +577,8 @@ class SaleCard extends StatelessWidget {
             label: const Text('ຢືນຢັນເງິນເຂົ້າ',
                 style: TextStyle(color: Colors.white)),
             onPressed: () async {
-              Get.back();
-              await Future.delayed(const Duration(milliseconds: 200));
+              _safeCloseDialog();
+              await Future.delayed(const Duration(milliseconds: 300));
               await c.confirmPaymentStatus(sale.id, false);
             },
           ),
@@ -594,10 +593,10 @@ class SaleCard extends StatelessWidget {
             label: const Text('ບັນຊີບໍ່ຕົງກັນ',
                 style: TextStyle(color: Colors.white)),
             onPressed: () async {
-              Get.back();
-              await Future.delayed(const Duration(milliseconds: 250));
+              _safeCloseDialog();
+              await Future.delayed(const Duration(milliseconds: 300));
               while (Get.isDialogOpen ?? false) {
-                Get.back();
+                _safeCloseDialog();
                 await Future.delayed(const Duration(milliseconds: 120));
               }
               _mismatchDialog(c, isEdit: false);
@@ -637,8 +636,8 @@ class SaleCard extends StatelessWidget {
                     side: BorderSide(color: Colors.grey.shade400),
                   ),
                   onPressed: () async {
-                    Get.back();
-                    await Future.delayed(const Duration(milliseconds: 200));
+                    _safeCloseDialog();
+                    await Future.delayed(const Duration(milliseconds: 300));
                     await c.clearMismatch(sale.id);
                   },
                   child: const Text('ຍົກເລີກ'),
@@ -656,8 +655,8 @@ class SaleCard extends StatelessWidget {
                       Get.snackbar('ຜິດພາດ', 'ກະລຸນາປ້ອນເຫດຜົນ');
                       return;
                     }
-                    Get.back();
-                    await Future.delayed(const Duration(milliseconds: 200));
+                    _safeCloseDialog();
+                    await Future.delayed(const Duration(milliseconds: 300));
                     await c.updateMismatchNote(sale.id, t);
                   },
                   child: const Text('ບັນທຶກ',
@@ -679,8 +678,8 @@ class SaleCard extends StatelessWidget {
                     Get.snackbar('ຜິດພາດ', 'ກະລຸນາປ້ອນເຫດຜົນ');
                     return;
                   }
-                  Get.back();
-                  await Future.delayed(const Duration(milliseconds: 200));
+                  _safeCloseDialog();
+                  await Future.delayed(const Duration(milliseconds: 300));
                   await c.markAsMismatch(sale.id, t);
                 },
                 child: const Text('ຢືນຢັນ',
@@ -761,8 +760,8 @@ class SaleCard extends StatelessWidget {
       cancelTextColor: Colors.grey.shade700,
       buttonColor: Colors.red.shade700,
       onConfirm: () async {
-        Get.back();
-        await Future.delayed(const Duration(milliseconds: 250));
+        _safeCloseDialog();
+        await Future.delayed(const Duration(milliseconds: 300));
         await c.deleteSale(sale.id);
       },
     );
@@ -770,19 +769,17 @@ class SaleCard extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════
-// ⋮ → ✏️ + 🗑 — ປິດອັດຕະໂນມັດຜ່ານ Global
+// ⋮ → 🗑 (ເອົາ ✏️ ອອກແລ້ວ)
 // ══════════════════════════════════════════════
 class _FloatingActionsButton extends StatefulWidget {
   final String saleId;
   final bool isAdmin;
-  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _FloatingActionsButton({
     Key? key,
     required this.saleId,
     required this.isAdmin,
-    required this.onEdit,
     required this.onDelete,
   }) : super(key: key);
 
@@ -844,35 +841,25 @@ class _FloatingActionsButtonState extends State<_FloatingActionsButton>
 
   @override
   Widget build(BuildContext context) {
-    // ຖ້າບໍ່ແມ່ນແອດມິນ ໃຫ້ສະແດງແຕ່ Edit
+    // ✅ ເຫຼືອພຽງ 🗑 ລຶບ (admin ເທົ່ານັ້ນ)
+    if (!widget.isAdmin) return const SizedBox.shrink();
+
     final actions = <_ActionItem>[
       _ActionItem(
-        icon: Icons.edit_outlined,
-        color: Colors.blue.shade700,
-        shadow: Colors.blue.shade200,
+        icon: Icons.delete,
+        color: const Color(0xFFB71C1C),
+        shadow: Colors.red.shade200,
         onTap: () {
           _close();
           Future.delayed(const Duration(milliseconds: 200), () {
-            if (mounted) widget.onEdit();
+            if (mounted) widget.onDelete();
           });
         },
       ),
-      if (widget.isAdmin)
-        _ActionItem(
-          icon: Icons.delete,
-          color: const Color(0xFFB71C1C),
-          shadow: Colors.red.shade200,
-          onTap: () {
-            _close();
-            Future.delayed(const Duration(milliseconds: 200), () {
-              if (mounted) widget.onDelete();
-            });
-          },
-        ),
     ];
 
     final totalHeight = 40.0 + (actions.length * 52.0);
-    final width = 60.0;
+    const width = 60.0;
 
     return SizedBox(
       width: width,
@@ -887,7 +874,6 @@ class _FloatingActionsButtonState extends State<_FloatingActionsButton>
                 onTap: _close,
               ),
             ),
-          // ⋮
           Positioned(
             right: 0,
             top: 0,
@@ -903,7 +889,6 @@ class _FloatingActionsButtonState extends State<_FloatingActionsButton>
               onPressed: _toggle,
             ),
           ),
-          // ປຸ່ມຕ່າງໆ
           for (int i = 0; i < actions.length; i++)
             Positioned(
               right: 0,

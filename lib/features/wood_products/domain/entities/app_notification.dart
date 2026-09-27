@@ -4,12 +4,14 @@ enum AppNotificationType {
   productAdd,
   productEdit,
   priceChange,
-  saleAdd,
+  saleAdd,           // ຂາຍສົດ / ໂອນ / ປະສົມ (ຈ່າຍຄົບ)
+  saleDebtAdd,       // 🆕 ສ້າງໜີ້ໃໝ່
   saleConfirm,
   saleMismatch,
   saleMismatchClear,
   saleDelete,
-  debtPaid,
+  debtPaid,          // ປິດໜີ້ເຕັມ
+  debtPartial,       // 🆕 ຈ່າຍໜີ້ບາງສ່ວນ
   accountAdd,
   accountDelete,
 }
@@ -67,6 +69,8 @@ class AppNotification {
         return Icons.price_change_outlined;
       case AppNotificationType.saleAdd:
         return Icons.point_of_sale_outlined;
+      case AppNotificationType.saleDebtAdd:      // 🆕
+        return Icons.receipt_long_outlined;
       case AppNotificationType.saleConfirm:
         return Icons.check_circle_outline;
       case AppNotificationType.saleMismatch:
@@ -76,7 +80,9 @@ class AppNotification {
       case AppNotificationType.saleDelete:
         return Icons.delete_outline;
       case AppNotificationType.debtPaid:
-        return Icons.receipt_long;
+        return Icons.verified_outlined;
+      case AppNotificationType.debtPartial:      // 🆕
+        return Icons.payments_outlined;
       case AppNotificationType.accountAdd:
         return Icons.account_balance_wallet_outlined;
       case AppNotificationType.accountDelete:
@@ -89,21 +95,29 @@ class AppNotification {
       case AppNotificationType.productAdd:
       case AppNotificationType.saleConfirm:
       case AppNotificationType.debtPaid:
-        return const Color(0xFF2E7D32);
+        return const Color(0xFF2E7D32); // ຂຽວ
+
       case AppNotificationType.productEdit:
-        return const Color(0xFF1565C0);
+        return const Color(0xFF1565C0); // ຟ້າ
+
       case AppNotificationType.priceChange:
+      case AppNotificationType.saleDebtAdd:       // 🆕 ສົ້ມ
+      case AppNotificationType.debtPartial:       // 🆕 ສົ້ມ
         return const Color(0xFFE65100);
+
       case AppNotificationType.saleAdd:
-        return const Color(0xFF5D4037);
+        return const Color(0xFF5D4037); // ນ້ຳຕານ
+
       case AppNotificationType.saleMismatch:
       case AppNotificationType.saleDelete:
       case AppNotificationType.accountDelete:
-        return const Color(0xFFB71C1C);
+        return const Color(0xFFB71C1C); // ແດງ
+
       case AppNotificationType.saleMismatchClear:
-        return const Color(0xFF00695C);
+        return const Color(0xFF00695C); // ຂຽວເຂັ້ມ
+
       case AppNotificationType.accountAdd:
-        return const Color(0xFF283593);
+        return const Color(0xFF283593); // ມ່ວງ
     }
   }
 }

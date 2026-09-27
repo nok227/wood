@@ -28,7 +28,11 @@ dependencies:
   lottie: ^3.1.2
   speech_to_text: ^7.0.0
   flutter_native_splash: ^2.4.4
-         # สำหรับ State Management (ตามที่คุณใช้ในโปรเจกต์)
+  firebase_messaging: ^16.7.0
+  flutter_local_notifications: ^17.2.4
+  onesignal_flutter: ^5.5.4  
+  app_badge_plus: ^1.2.0
+  flutter_foreground_task: ^8.17.0
 
 dev_dependencies:
   flutter_test:
@@ -68,5 +72,3 @@ flutter:
     - assets/Icons/
     - assets/Images/
     # - images/Image_screen.jpg
-
- 

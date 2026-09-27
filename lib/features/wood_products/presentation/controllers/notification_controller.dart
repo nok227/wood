@@ -1,4 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:app_badge_plus/app_badge_plus.dart';
 import 'package:get/get.dart';
 import 'package:wood/features/auth/auth_controller.dart';
 import '../../domain/entities/app_notification.dart';
@@ -15,6 +17,30 @@ class NotificationController extends GetxController {
   void onInit() {
     super.onInit();
     fetchNotifications();
+    _bindBadgeToUnreadCount();
+  }
+
+  // ✅ ຜູກ Badge ກັບ unreadCount (ຜ່ານ allNotifications)
+  void _bindBadgeToUnreadCount() {
+    _updateBadge(unreadCount);
+
+    ever(allNotifications, (_) {
+      _updateBadge(unreadCount);
+    });
+  }
+
+  Future<void> _updateBadge(int count) async {
+    try {
+      // ✅ ແກ້: ໃຊ້ AppBadgePlus ແທນ FlutterAppBadger
+      final supported = await AppBadgePlus.isSupported();
+      if (!supported) return;
+
+      // ✅ ແກ້: ລວມເປັນບັນທັດດຽວ (0 ກໍ່ລຶບ badge ໄດ້ເລີຍ)
+      await AppBadgePlus.updateBadge(count);
+    } catch (e) {
+      // ✅ ແກ້: ລຶບການເອີ້ນຊ້ຳທີ່ຜິດພາດ
+      debugPrint('Badge update error: $e');
+    }
   }
 
   Future<void> fetchNotifications() async {
@@ -83,7 +109,6 @@ class NotificationController extends GetxController {
       );
 
       allNotifications.insert(0, n);
-
       await repository.add(n);
     } catch (_) {
       // silent

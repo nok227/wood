@@ -25,9 +25,9 @@ class _SalesListPageState extends State<SalesListPage>
   bool _isLoadingMore = false;
 
   // ══════════════════════════════════════════════
-  // ✅ Cache grouping
+  // ✅ Cache grouping — ໃຊ້ revision ແທນ identity
   // ══════════════════════════════════════════════
-  List<SaleEntity>? _cachedSource;
+  int _cachedRevision = -1;
   DateFilter? _cachedFilter;
   Map<String, List<SaleEntity>> _cachedGroup = const {};
   List<String> _cachedKeys = const [];
@@ -67,16 +67,18 @@ class _SalesListPageState extends State<SalesListPage>
   }
 
   // ══════════════════════════════════════════════
-  // ✅ ຈັດກຸ່ມຕາມວັນທີ — cached
+  // ✅ ຈັດກຸ່ມຕາມວັນທີ — cached by revision
   // ══════════════════════════════════════════════
   Map<String, List<SaleEntity>> _groupCached(
     List<SaleEntity> source,
     DateFilter filter,
+    int revision,
   ) {
-    if (identical(_cachedSource, source) && _cachedFilter == filter) {
+    // ✅ ຖ້າ revision ບໍ່ປ່ຽນ ແລະ filter ບໍ່ປ່ຽນ → ໃຊ້ cache
+    if (_cachedRevision == revision && _cachedFilter == filter) {
       return _cachedGroup;
     }
-    _cachedSource = source;
+    _cachedRevision = revision;
     _cachedFilter = filter;
 
     final map = <String, List<SaleEntity>>{};
@@ -153,7 +155,10 @@ class _SalesListPageState extends State<SalesListPage>
                 return const SalesListSkeleton(count: 5);
               }
 
+              // ✅ ອ່ານ revision — ໃຫ້ Obx track ການປ່ຽນແປງ
+              final rev = controller.salesRevision.value;
               final sales = controller.filteredSalesList;
+
               if (sales.isEmpty) {
                 return RefreshIndicator(
                   color: Colors.brown,
@@ -170,8 +175,12 @@ class _SalesListPageState extends State<SalesListPage>
                 );
               }
 
-              // ✅ ໃຊ້ cache
-              final grouped = _groupCached(sales, controller.selectedFilter.value);
+              // ✅ ສົ່ງ revision ເຂົ້າ cache
+              final grouped = _groupCached(
+                sales,
+                controller.selectedFilter.value,
+                rev,
+              );
               final groupKeys = _cachedKeys;
               final displayKeys = groupKeys.take(_displayLimit).toList();
               final hasMore = groupKeys.length > displayKeys.length;

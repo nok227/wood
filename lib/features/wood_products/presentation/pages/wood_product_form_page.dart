@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import 'package:wood/features/wood_products/presentation/widgets/custom_app_bar.dart';
 import '../controllers/wood_product_controller.dart';
+import '../../data/models/wood_product_model.dart';
 import 'package:wood/core/util/currency_formatter.dart';
 
 class WoodProductFormPage extends StatefulWidget {
@@ -22,6 +24,56 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
 
   @override
   bool get wantKeepAlive => true;
+
+  // ══════════════════════════════════════════════
+  // 🔍 ກວດສອບສິນຄ້າຊ້ຳ
+  // ══════════════════════════════════════════════
+  bool _isDuplicate() => _findDuplicate() != null;
+
+  WoodProductModel? _findDuplicate() {
+    final editingId = controller.editingProductId.value;
+
+    final woodType = controller.woodTypeController.text.trim().toLowerCase();
+    final name = controller.nameController.text.trim().toLowerCase();
+    final width = controller.widthController.text.trim();
+    final length = controller.lengthController.text.trim();
+    final thickness = controller.thicknessController.text.trim();
+    final sizeUnit = controller.selectedSizeUnit.value.trim().toLowerCase();
+    final unit = controller.selectedUnit.value.trim().toLowerCase();
+    final price = controller.priceController.text.trim().replaceAll(',', '');
+
+    for (final p in controller.products) {
+      if (editingId != null && p.id == editingId) continue;
+
+      final sameWoodType = p.woodType.trim().toLowerCase() == woodType;
+      final sameName = p.name.trim().toLowerCase() == name;
+      final sameWidth = _numEq(p.width, width);
+      final sameLength = _numEq(p.length, length);
+      final sameThickness = _numEq(p.thickness, thickness);
+      final sameSizeUnit = p.sizeUnit.trim().toLowerCase() == sizeUnit;
+      final sameUnit = p.unit.trim().toLowerCase() == unit;
+      final samePrice =
+          _numEq(p.price, price.replaceAll(RegExp(r'\.0+$'), ''));
+
+      if (sameWoodType &&
+          sameName &&
+          sameWidth &&
+          sameLength &&
+          sameThickness &&
+          sameSizeUnit &&
+          sameUnit &&
+          samePrice) {
+        return p;
+      }
+    }
+    return null;
+  }
+
+  bool _numEq(num a, String bStr) {
+    final b = double.tryParse(bStr);
+    if (b == null) return false;
+    return (a - b).abs() < 0.001;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +110,10 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
             ),
             const SizedBox(height: 8),
             Obx(() => _buildImagesPicker(controller)),
+
+            // ══════════════════════════════════════════
+            // ✅ ຊະນິດໄມ້ + ຄຳແນະນຳ
+            // ══════════════════════════════════════════
             const SizedBox(height: 16),
             const Align(
               alignment: Alignment.centerLeft,
@@ -71,6 +127,18 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
               controller: controller.woodTypeController,
               decoration: _minimalInputDecoration('ຊະນິດໄມ້'),
             ),
+            Obx(() => _suggestionChips(
+                  items: controller.uniqueWoodTypes,
+                  onTap: (t) {
+                    controller.woodTypeController.text = t;
+                    controller.woodTypeController.selection =
+                        TextSelection.collapsed(offset: t.length);
+                  },
+                )),
+
+            // ══════════════════════════════════════════
+            // ✅ ຊື່ໄມ້ + ຄຳແນະນຳ
+            // ══════════════════════════════════════════
             const SizedBox(height: 16),
             const Align(
               alignment: Alignment.centerLeft,
@@ -84,6 +152,15 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
               controller: controller.nameController,
               decoration: _minimalInputDecoration('ຊື່ໄມ້'),
             ),
+            Obx(() => _suggestionChips(
+                  items: controller.uniqueProductNames,
+                  onTap: (t) {
+                    controller.nameController.text = t;
+                    controller.nameController.selection =
+                        TextSelection.collapsed(offset: t.length);
+                  },
+                )),
+
             const SizedBox(height: 16),
             const Align(
               alignment: Alignment.centerLeft,
@@ -203,7 +280,6 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
             // 🚀 ປຸ່ມ ບັນທຶກ/ຍົກເລີກ + Progress Bar
             // ══════════════════════════════════════════════
             Obx(() {
-              // ── ກຳລັງບັນທຶກ: ສະແດງ Progress Bar ──
               if (controller.isSaving.value) {
                 return Container(
                   padding: const EdgeInsets.all(16),
@@ -221,7 +297,6 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                   ),
                   child: Column(
                     children: [
-                      // Progress bar
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
@@ -272,7 +347,6 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                 );
               }
 
-              // ── ປົກກະຕິ: ສະແດງປຸ່ມ ບັນທຶກ/ຍົກເລີກ ──
               return Row(
                 children: [
                   Expanded(
@@ -286,6 +360,13 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                         ),
                       ),
                       onPressed: () async {
+                        // ✅ ກວດສອບສິນຄ້າຊ້ຳກ່ອນ
+                        final dup = _findDuplicate();
+                        if (dup != null) {
+                          _showDuplicateDialog(dup);
+                          return;
+                        }
+
                         final isEditing =
                             controller.editingProductId.value != null;
                         final isSuccess = await controller.saveProduct();
@@ -345,6 +426,78 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     );
   }
 
+  // ══════════════════════════════════════════════
+  // ⚠️ Dialog ແຈ້ງເຕືອນສິນຄ້າຊ້ຳ
+  // ══════════════════════════════════════════════
+  void _showDuplicateDialog(WoodProductModel dup) {
+    Get.defaultDialog(
+      title: 'ມີສິນຄ້ານີ້ແລ້ວ',
+      content: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.warning_amber_rounded,
+                color: Colors.orange.shade800, size: 48),
+            const SizedBox(height: 10),
+            Text(
+              'ສິນຄ້ານີ້ມີຢູ່ໃນລະບົບແລ້ວ',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Colors.orange.shade900,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade300),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _dupRow('ຊະນິດໄມ້', dup.woodType),
+                  _dupRow('ຊື່ໄມ້', dup.name),
+                  _dupRow(
+                    'ຂະໜາດ',
+                    '${_fmtNum(dup.width)}×${_fmtNum(dup.length)}×${_fmtNum(dup.thickness)} ${dup.sizeUnit}',
+                  ),
+                  _dupRow('ໜ່ວຍນັບ', dup.unit),
+                  _dupRow(
+                    'ລາຄາ',
+                    '${NumberFormat('#,###').format(dup.price)} ກີບ',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'ກະລຸນາແກ້ໄຂຂໍ້ມູນໃຫ້ແຕກຕ່າງກ່ອນບັນທຶກ',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+                fontStyle: FontStyle.italic,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+      textConfirm: 'ຕົກລົງ',
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.brown,
+      barrierDismissible: true,
+      onConfirm: () => Get.back(),
+    );
+  }
+
+  String _fmtNum(num v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+
   InputDecoration _minimalInputDecoration(String labelText) {
     return InputDecoration(
       labelText: labelText,
@@ -362,6 +515,98 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
       ),
     );
   }
+}
+
+// ══════════════════════════════════════════════
+// 📋 ແຖວສະແດງຂໍ້ມູນສິນຄ້າຊ້ຳ
+// ══════════════════════════════════════════════
+Widget _dupRow(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 2),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 78,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade700,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value.isEmpty ? '-' : value,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// ══════════════════════════════════════════════
+// ✅ ຄຳແນະນຳ — Chips ໃຕ້ input
+// ══════════════════════════════════════════════
+Widget _suggestionChips({
+  required List<String> items,
+  required ValueChanged<String> onTap,
+}) {
+  if (items.isEmpty) return const SizedBox.shrink();
+
+  final sorted = List<String>.from(items);
+
+  return Padding(
+    padding: const EdgeInsets.only(top: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.lightbulb_outline,
+                size: 13, color: Colors.brown.shade400),
+            const SizedBox(width: 4),
+            Text(
+              'ເຄີຍປ້ອນ (${sorted.length})',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.brown.shade500,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: sorted.map((t) {
+            return ActionChip(
+              label: Text(
+                t,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.brown,
+                ),
+              ),
+              backgroundColor: Colors.brown.shade50,
+              side: BorderSide(color: Colors.brown.shade200),
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              onPressed: () => onTap(t),
+            );
+          }).toList(),
+        ),
+      ],
+    ),
+  );
 }
 
 // ══════════════════════════════════════════════
