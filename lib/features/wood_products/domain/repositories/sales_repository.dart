@@ -1,8 +1,9 @@
 import '../entities/sale_entity.dart';
+import '../entities/sale_order_entity.dart';
 
 abstract class SalesRepository {
-  Future<List<SaleEntity>> getSales();
-  Future<void> addSale(SaleEntity sale);
+  Future<List<SaleOrderEntity>> getSaleOrders();
+  Future<void> addSaleOrder(SaleOrderEntity order);
   Future<void> updateSaleStatus(String id, bool isConfirmed);
   Future<void> deleteSale(String id);
 
@@ -14,7 +15,6 @@ abstract class SalesRepository {
 
   Future<void> markDebtAsPaid(String id);
 
-  /// 🆕 ຈ່າຍໜີ້ + ເພີ່ມຮູບ
   Future<void> payDebt(
     String id, {
     required String paymentType,
@@ -22,7 +22,6 @@ abstract class SalesRepository {
     required double paidAmount,
   });
 
-  /// 🖼️ ອັບເດດຮູບພາບ (ແກ້ໄຂສະເພາະຮູບ)
   Future<void> updateSaleImages(
     String id, {
     required List<String> paymentImageUrls,

@@ -5,11 +5,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:wood/core/util/cloudinary_service.dart';
-import '../../domain/entities/sale_entity.dart';
+import '../../domain/entities/sale_order_entity.dart';
 import '../controllers/sales_controller.dart';
 
 class SaleImageEditPage extends StatefulWidget {
-  final SaleEntity sale;
+  final SaleOrderEntity sale;
   const SaleImageEditPage({super.key, required this.sale});
 
   @override
@@ -51,9 +51,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                 Get.back();
                 final p = await picker.pickImage(
                   source: ImageSource.camera,
-                  maxWidth: 1600,
-                  maxHeight: 1600,
-                  imageQuality: 80,
+                  maxWidth: 1600, maxHeight: 1600, imageQuality: 80,
                 );
                 if (p == null) return;
                 setState(() => target.add(File(p.path)));
@@ -67,9 +65,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                 Get.back();
                 final p = await picker.pickImage(
                   source: ImageSource.gallery,
-                  maxWidth: 1600,
-                  maxHeight: 1600,
-                  imageQuality: 80,
+                  maxWidth: 1600, maxHeight: 1600, imageQuality: 80,
                 );
                 if (p == null) return;
                 setState(() => target.add(File(p.path)));
@@ -255,14 +251,12 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                         const CircularProgressIndicator(
                             color: Colors.brown, strokeWidth: 3),
                         const SizedBox(height: 14),
-                        Text(
-                          'ກຳລັງບັນທຶກ...',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.brown.shade800,
-                          ),
-                        ),
+                        Text('ກຳລັງບັນທຶກ...',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.brown.shade800,
+                            )),
                       ],
                     ),
                   ),
@@ -309,8 +303,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                   onPressed: _saving ? null : _save,
                   icon: _saving
                       ? const SizedBox(
-                          width: 18,
-                          height: 18,
+                          width: 18, height: 18,
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white),
                         )
@@ -396,31 +389,24 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w900,
-                          color: color,
-                        ),
-                      ),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: color.withOpacity(0.7),
-                        ),
-                      ),
+                      Text(title,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w900,
+                            color: color,
+                          )),
+                      Text(subtitle,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: color.withOpacity(0.7),
+                          )),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: child,
-          ),
+          Padding(padding: const EdgeInsets.all(12), child: child),
         ],
       ),
     );
@@ -461,8 +447,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
       GestureDetector(
         onTap: onAdd,
         child: Container(
-          width: 90,
-          height: 90,
+          width: 90, height: 90,
           decoration: BoxDecoration(
             color: Colors.grey.shade50,
             border: Border.all(color: Colors.grey.shade300, width: 1.2),
@@ -474,14 +459,12 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
               Icon(Icons.add_a_photo_outlined,
                   color: Colors.brown.shade400, size: 26),
               const SizedBox(height: 4),
-              Text(
-                'ເພີ່ມຮູບ',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.brown.shade600,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('ເພີ່ມຮູບ',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.brown.shade600,
+                    fontWeight: FontWeight.bold,
+                  )),
             ],
           ),
         ),
@@ -500,8 +483,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
       clipBehavior: Clip.none,
       children: [
         Container(
-          width: 90,
-          height: 90,
+          width: 90, height: 90,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
@@ -515,8 +497,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
           ),
         ),
         Positioned(
-          top: -4,
-          right: -4,
+          top: -4, right: -4,
           child: GestureDetector(
             onTap: onRemove,
             child: Container(
@@ -532,8 +513,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
         ),
         if (isNew)
           Positioned(
-            bottom: 4,
-            left: 4,
+            bottom: 4, left: 4,
             child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
@@ -541,14 +521,12 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                 color: Colors.green.shade700,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Text(
-                'ໃໝ່',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: const Text('ໃໝ່',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  )),
             ),
           ),
       ],

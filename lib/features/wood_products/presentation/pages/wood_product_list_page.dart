@@ -579,23 +579,35 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                       ),
                     ],
                   ),
-                  // ✅ ແປງໜ່ວຍ — mm → cm · m  /  cm → mm · m  /  m → mm · cm
+                  // ແປງໜ່ວຍ — mm → cm · m  /  cm → mm · m  /  m → mm · cm
+                  // ແປງໜ່ວຍ — mm → cm · m  /  cm → mm · m  /  m → mm · cm
                   Padding(
                     padding: const EdgeInsets.only(left: 16, top: 2),
-                    child: Text(
-                      dimConversions(
-                        item.width,
-                        item.length,
-                        item.thickness,
-                        item.sizeUnit,
-                      ),
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        color: Colors.brown.shade500,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children:
+                          dimConversions(
+                                item.width,
+                                item.length,
+                                item.thickness,
+                                item.sizeUnit,
+                              )
+                              .split('·') // ແຍກແຕ່ລະໜ່ວຍອອກ
+                              .map((s) => s.trim())
+                              .where((s) => s.isNotEmpty)
+                              .map(
+                                (line) => Text(
+                                  line,
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    color: Colors.brown.shade500,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              )
+                              .toList(),
                     ),
                   ),
 
@@ -669,9 +681,8 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     );
   }
 
-  // ══════════════════════════════════════════════
-  // 💰 ກ່ອງລາຄາຂາຍ + Badge "ໃໝ່"
-  // ══════════════════════════════════════════════
+  // ກ່ອງລາຄາຂາຍ + Badge "ໃໝ່"
+
   Widget _priceBox(WoodProductModel item) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),

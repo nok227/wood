@@ -15,6 +15,7 @@ class SaleModel {
   final List<String> paymentImageUrls;
   final List<String> billImageUrls;
   final List<String> topUpImageUrls;
+  final List<String> debtPaymentImageUrls;
   final String? customerName;
   final String? customerAddress;
   final String? customerPhone;
@@ -55,6 +56,7 @@ class SaleModel {
     this.debtDate,
     this.debtNote,
     this.appointmentDate,
+    this.debtPaymentImageUrls = const [],
     this.note,
     required this.date,
     this.isConfirmed = false,
@@ -202,6 +204,8 @@ class SaleModel {
       productLength: _dblOrNull(map['productLength']),
       productThickness: _dblOrNull(map['productThickness']),
       productSizeUnit: _strOrNull(map['productSizeUnit']),
+
+      debtPaymentImageUrls: _strList(map['debtPaymentImageUrls']),
     );
   }
 
@@ -223,6 +227,7 @@ class SaleModel {
         'billImageUrls': billImageUrls,
         'topUpImageUrls': topUpImageUrls,
         'customerName': customerName,
+                'debtPaymentImageUrls': debtPaymentImageUrls,
         'customerAddress': customerAddress,
         'customerPhone': customerPhone,
         'debtDate': debtDate?.toIso8601String(),
@@ -244,6 +249,42 @@ class SaleModel {
       };
 
   // ══════════════════════════════════════════════
+  // Entity → Model
+  // ══════════════════════════════════════════════
+  static SaleModel fromEntity(SaleEntity e) => SaleModel(
+        id: e.id,
+        productId: e.productId,
+        productName: e.productName,
+        paymentType: e.paymentType,
+        totalAmount: e.totalAmount,
+        quantity: e.quantity,
+        discountPerUnit: e.discountPerUnit,
+        cashPaidAmount: e.cashPaidAmount,
+        transferPaidAmount: e.transferPaidAmount,
+        debtAmount: e.debtAmount,
+        receivedAmount: e.receivedAmount,
+        paymentImageUrls: e.paymentImageUrls,
+        billImageUrls: e.billImageUrls,
+        topUpImageUrls: e.topUpImageUrls,
+        customerName: e.customerName,
+        customerAddress: e.customerAddress,
+        customerPhone: e.customerPhone,
+        debtDate: e.debtDate,
+        debtNote: e.debtNote,
+        appointmentDate: e.appointmentDate,
+        debtPaymentImageUrls: e.debtPaymentImageUrls,
+        note: e.note,
+        date: e.date,
+        isConfirmed: e.isConfirmed,
+        isMismatch: e.isMismatch,
+        mismatchNote: e.mismatchNote,
+        cashDenominations: e.cashDenominations,
+        productWidth: e.productWidth,
+        productLength: e.productLength,
+        productThickness: e.productThickness,
+        productSizeUnit: e.productSizeUnit,
+      );
+  // ══════════════════════════════════════════════
   // Model → Entity
   // ══════════════════════════════════════════════
   SaleEntity toEntity() => SaleEntity(
@@ -257,6 +298,7 @@ class SaleModel {
         cashPaidAmount: cashPaidAmount,
         transferPaidAmount: transferPaidAmount,
         debtAmount: debtAmount,
+        debtPaymentImageUrls: debtPaymentImageUrls,
         receivedAmount: receivedAmount,
         paymentImageUrls: paymentImageUrls,
         billImageUrls: billImageUrls,

@@ -8,11 +8,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wood/core/util/cloudinary_service.dart';
 import 'package:wood/features/wood_products/presentation/widgets/animated_number.dart';
 
-import '../../domain/entities/sale_entity.dart';
+import '../../domain/entities/sale_order_entity.dart';
 import '../controllers/sales_controller.dart';
 
 class DebtPaymentPage extends StatefulWidget {
-  final SaleEntity sale;
+  final SaleOrderEntity sale;
   const DebtPaymentPage({super.key, required this.sale});
 
   @override
@@ -29,7 +29,7 @@ class _DebtPaymentPageState extends State<DebtPaymentPage> {
   bool _loading = false;
   bool _done = false;
 
-  SaleEntity get sale => widget.sale;
+  SaleOrderEntity get sale => widget.sale;
 
   Future<void> _pick() async {
     Get.bottomSheet(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../domain/entities/sale_entity.dart';
+import '../../domain/entities/sale_order_entity.dart';
 import '../controllers/sales_controller.dart';
 import '../widgets/sale_card.dart';
 import '../widgets/sales_list_skeleton.dart';
@@ -24,12 +24,9 @@ class _SalesListPageState extends State<SalesListPage>
   int _displayLimit = _perPage;
   bool _isLoadingMore = false;
 
-  // ══════════════════════════════════════════════
-  // ✅ Cache grouping — ໃຊ້ revision ແທນ identity
-  // ══════════════════════════════════════════════
   int _cachedRevision = -1;
   DateFilter? _cachedFilter;
-  Map<String, List<SaleEntity>> _cachedGroup = const {};
+  Map<String, List<SaleOrderEntity>> _cachedGroup = const {};
   List<String> _cachedKeys = const [];
 
   @override
@@ -66,25 +63,22 @@ class _SalesListPageState extends State<SalesListPage>
     });
   }
 
-  // ══════════════════════════════════════════════
-  // ✅ ຈັດກຸ່ມຕາມວັນທີ — cached by revision
-  // ══════════════════════════════════════════════
-  Map<String, List<SaleEntity>> _groupCached(
-    List<SaleEntity> source,
+  Map<String, List<SaleOrderEntity>> _groupCached(
+    List<SaleOrderEntity> source,
     DateFilter filter,
     int revision,
   ) {
-    // ✅ ຖ້າ revision ບໍ່ປ່ຽນ ແລະ filter ບໍ່ປ່ຽນ → ໃຊ້ cache
     if (_cachedRevision == revision && _cachedFilter == filter) {
       return _cachedGroup;
     }
     _cachedRevision = revision;
     _cachedFilter = filter;
 
-    final map = <String, List<SaleEntity>>{};
+    final map = <String, List<SaleOrderEntity>>{};
     for (final sale in source) {
       final d = sale.date;
-      final k = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+      final k =
+          '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
       map.putIfAbsent(k, () => []).add(sale);
     }
     final keys = map.keys.toList()..sort((a, b) => b.compareTo(a));
@@ -93,7 +87,6 @@ class _SalesListPageState extends State<SalesListPage>
     return _cachedGroup;
   }
 
-  // ── ດຶງວັນທີ ──
   String _formatDateHeader(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -129,7 +122,6 @@ class _SalesListPageState extends State<SalesListPage>
       backgroundColor: Colors.brown[50],
       body: Column(
         children: [
-          // ═══ ຕົວກອງເວລາ ═══
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.fromLTRB(8, 2, 8, 4),
@@ -145,17 +137,13 @@ class _SalesListPageState extends State<SalesListPage>
               ),
             ),
           ),
-
-          // ═══ ລາຍການ ═══
           Expanded(
             child: Obx(() {
-              // 🦴 ກຳລັງໂຫຼດຄັ້ງທຳອິດ
               if (controller.isLoading.value &&
                   controller.allSalesList.isEmpty) {
                 return const SalesListSkeleton(count: 5);
               }
 
-              // ✅ ອ່ານ revision — ໃຫ້ Obx track ການປ່ຽນແປງ
               final rev = controller.salesRevision.value;
               final sales = controller.filteredSalesList;
 
@@ -175,7 +163,6 @@ class _SalesListPageState extends State<SalesListPage>
                 );
               }
 
-              // ✅ ສົ່ງ revision ເຂົ້າ cache
               final grouped = _groupCached(
                 sales,
                 controller.selectedFilter.value,
@@ -204,26 +191,24 @@ class _SalesListPageState extends State<SalesListPage>
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 20),
                         child: Center(
-                          child: CircularProgressIndicator(
-                              color: Colors.brown),
+                          child: CircularProgressIndicator(color: Colors.brown),
                         ),
                       );
                     }
 
                     final dateKey = displayKeys[index];
                     final salesInGroup = grouped[dateKey]!;
-                    final headerTitle =
-                        _formatDateHeader(salesInGroup.first.date);
+                    final headerTitle = _formatDateHeader(
+                      salesInGroup.first.date,
+                    );
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── ກາດຫົວວັນທີ ──
                         Card(
                           color: Colors.brown[100],
                           elevation: 1,
-                          margin:
-                              const EdgeInsets.only(top: 6.0, bottom: 6.0),
+                          margin: const EdgeInsets.only(top: 6.0, bottom: 6.0),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -266,11 +251,10 @@ class _SalesListPageState extends State<SalesListPage>
                                   ),
                                   decoration: BoxDecoration(
                                     color: Colors.brown[800],
-                                    borderRadius:
-                                        BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
-                                    '${salesInGroup.length} ລາຍການ',
+                                    '${salesInGroup.length} ອໍເດີ',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 12,
@@ -283,7 +267,6 @@ class _SalesListPageState extends State<SalesListPage>
                           ),
                         ),
 
-                        // ✅ RepaintBoundary ຕໍ່ SaleCard
                         ...salesInGroup.map(
                           (sale) => RepaintBoundary(
                             key: ValueKey('rb-${sale.id}'),
@@ -304,7 +287,6 @@ class _SalesListPageState extends State<SalesListPage>
         ],
       ),
 
-      // ═══ FAB ═══
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
@@ -318,10 +300,11 @@ class _SalesListPageState extends State<SalesListPage>
                 Get.to(() => const SalesSummaryPage());
               },
               backgroundColor: Colors.brown[700],
-              icon: const Icon(Icons.assessment_outlined,
-                  color: Colors.white),
-              label: const Text('ສະຫຼຸບການຂາຍ',
-                  style: TextStyle(color: Colors.white)),
+              icon: const Icon(Icons.assessment_outlined, color: Colors.white),
+              label: const Text(
+                'ສະຫຼຸບການຂາຍ',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
             const SizedBox(height: 10),
             FloatingActionButton.extended(
@@ -332,8 +315,10 @@ class _SalesListPageState extends State<SalesListPage>
               },
               backgroundColor: Colors.brown[700],
               icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text('ບັນທຶກການຂາຍ',
-                  style: TextStyle(color: Colors.white)),
+              label: const Text(
+                'ບັນທຶກການຂາຍ',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
             const SizedBox(height: 10),
           ],
@@ -352,6 +337,7 @@ class _SalesListPageState extends State<SalesListPage>
       ),
     );
   }
+
 
   Widget _filterChip(
     SalesController controller,

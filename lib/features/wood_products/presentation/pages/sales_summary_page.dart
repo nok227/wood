@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:wood/features/wood_products/presentation/widgets/animated_number.dart';
 import 'package:wood/features/wood_products/presentation/widgets/skeletons.dart';
 
-import '../../domain/entities/sale_entity.dart';
+import '../../domain/entities/sale_order_entity.dart';
 import '../controllers/sales_controller.dart';
 import 'sales_summary_detail_page.dart';
 
@@ -41,7 +41,6 @@ class SalesSummaryPage extends StatelessWidget {
           ),
           Expanded(
             child: Obx(() {
-              // ✅ Skeleton ແທນ spinner
               if (controller.isLoading.value &&
                   controller.allSalesList.isEmpty) {
                 return const SalesSummarySkeleton();
@@ -204,7 +203,7 @@ class SalesSummaryPage extends StatelessWidget {
                           onTap: () => _open(
                             '🏷 ລາຍລະອຽດສ່ວນລົດ',
                             sales
-                                .where((e) => e.discountPerUnit > 0)
+                                .where((e) => e.hasDiscount)
                                 .toList(),
                             Icons.discount,
                             Colors.red,
@@ -213,7 +212,7 @@ class SalesSummaryPage extends StatelessWidget {
                           child: _statTile(
                             '🏷 ສ່ວນລົດລວມ',
                             s.discountTotal,
-                            '${s.discountCount} ລາຍການ',
+                            '${s.discountCount} ອໍເດີ',
                             Colors.red,
                           ),
                         ),
@@ -263,7 +262,10 @@ class SalesSummaryPage extends StatelessWidget {
                       fmt: fmt,
                       onTap: () => _open(
                         '📦 ${e.key}',
-                        sales.where((x) => x.productName == e.key).toList(),
+                        sales
+                            .where((x) =>
+                                x.items.any((it) => it.productName == e.key))
+                            .toList(),
                         Icons.inventory_2_outlined,
                         Colors.brown,
                         SummaryDetailType.list,
@@ -282,7 +284,7 @@ class SalesSummaryPage extends StatelessWidget {
 
   void _open(
     String title,
-    List<SaleEntity> sales,
+    List<SaleOrderEntity> sales,
     IconData icon,
     Color color,
     SummaryDetailType type,
@@ -352,7 +354,7 @@ class SalesSummaryPage extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${s.count} ລາຍການ · ຂາຍທັງໝົດ ${fmt.format(s.qty)} ຊິ້ນ',
+            '${s.count} ອໍເດີ · ${s.itemCount} ລາຍການ · ${fmt.format(s.qty)} ຊິ້ນ',
             style: const TextStyle(color: Colors.white, fontSize: 13),
           ),
         ],
@@ -424,8 +426,7 @@ class SalesSummaryPage extends StatelessWidget {
     final denoms = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500];
     final total = denoms.fold<double>(
         0, (acc, d) => acc + d * (s.notes[d] ?? 0));
-    final totalBills =
-        s.notes.values.fold<int>(0, (sum, e) => sum + e);
+    final totalBills = s.notes.values.fold<int>(0, (sum, e) => sum + e);
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -446,9 +447,8 @@ class SalesSummaryPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
-                  color: isEmpty
-                      ? Colors.grey.shade100
-                      : Colors.brown.shade50,
+                  color:
+                      isEmpty ? Colors.grey.shade100 : Colors.brown.shade50,
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
                     color: isEmpty
@@ -579,7 +579,7 @@ class SalesSummaryPage extends StatelessWidget {
         title: Text(e.key.isNotEmpty ? e.key : 'ລາຍການໄມ້',
             style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(
-            '${e.value.count} ລາຍການ · ${fmt.format(e.value.qty)} ຊິ້ນ'),
+            '${e.value.count} ຄັ້ງ · ${fmt.format(e.value.qty)} ຊິ້ນ'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -626,15 +626,17 @@ class _Summary {
   int discountCount = 0;
   int changeCount = 0;
   int qty = 0;
+  int itemCount = 0;
   final Map<int, int> notes = {};
   final Map<String, _ProductStat> products = {};
 
-  _Summary.from(List<SaleEntity> sales) {
+  _Summary.from(List<SaleOrderEntity> sales) {
     for (final s in sales) {
       count++;
       total += s.totalAmount;
-      qty += s.quantity;
-      discountTotal += s.discountPerUnit * s.quantity;
+      qty += s.totalQuantity;
+      itemCount += s.itemCount;
+      discountTotal += s.discountTotal;
 
       if (s.cashPaidAmount > 0 || s.paymentType == 'cash') {
         cashCount++;
@@ -665,15 +667,19 @@ class _Summary {
         mismatchCount++;
         mismatchTotal += s.totalAmount;
       }
-      if (s.discountPerUnit > 0) discountCount++;
-      if (s.changeAmount > 0) changeTotal += s.changeAmount;
-      if (s.changeAmount > 0) changeCount++;
+      if (s.hasDiscount) discountCount++;
+      if (s.changeAmount > 0) {
+        changeTotal += s.changeAmount;
+        changeCount++;
+      }
 
-      final p =
-          products.putIfAbsent(s.productName, () => _ProductStat());
-      p.count++;
-      p.qty += s.quantity;
-      p.total += s.totalAmount;
+      // ນັບແຍກຕໍ່ item
+      for (final item in s.items) {
+        final p = products.putIfAbsent(item.productName, () => _ProductStat());
+        p.count++;
+        p.qty += item.quantity;
+        p.total += item.totalAmount;
+      }
     }
   }
 

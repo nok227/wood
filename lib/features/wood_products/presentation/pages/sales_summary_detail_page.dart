@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../domain/entities/sale_entity.dart';
+import '../../domain/entities/sale_order_entity.dart';
 import '../widgets/sale_card.dart';
 
 import 'package:get/get.dart';
 import '../../../auth/auth_controller.dart';
 
-/// 🎯 ປະເພດລາຍລະອຽດ
 enum SummaryDetailType { list, change, discount, cashBills }
 
-/// 📋 ໜ້າລາຍລະອຽດຍ່ອຍ — ໃຊ້ date header + SaleCard ແບບດຽວກັບ sales_list_page
 class SalesSummaryDetailPage extends StatelessWidget {
   final String title;
-  final List<SaleEntity> sales;
+  final List<SaleOrderEntity> sales;
   final IconData icon;
   final Color accentColor;
   final SummaryDetailType detailType;
@@ -31,6 +29,7 @@ class SalesSummaryDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final fmt = NumberFormat('#,###');
     final total = sales.fold<double>(0, (s, e) => s + e.totalAmount);
+    final totalItems = sales.fold<int>(0, (s, e) => s + e.itemCount);
 
     return Scaffold(
       backgroundColor: Colors.brown[50],
@@ -41,7 +40,6 @@ class SalesSummaryDetailPage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // ── ສະຫຼຸບຫົວ ──
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(14),
@@ -55,7 +53,7 @@ class SalesSummaryDetailPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${sales.length} ລາຍການ',
+                        '${sales.length} ອໍເດີ · $totalItems ລາຍການ',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -77,8 +75,6 @@ class SalesSummaryDetailPage extends StatelessWidget {
               ],
             ),
           ),
-
-          // ── ເນື້ອໃນ ──
           Expanded(
             child: detailType == SummaryDetailType.cashBills
                 ? _cashBillsView(fmt)
@@ -89,24 +85,19 @@ class SalesSummaryDetailPage extends StatelessWidget {
     );
   }
 
-  // ══════════════════════════════════════════════
-  // 📋 ລາຍການ + ຈັດກຸ່ມຕາມວັນທີ
-  // ══════════════════════════════════════════════
   Widget _listWithDateGroup() {
-    // ກັ່ນຕອງຕາມປະເພດ
-    List<SaleEntity> filtered = sales;
+    List<SaleOrderEntity> filtered = sales;
     if (detailType == SummaryDetailType.change) {
       filtered = sales.where((e) => e.changeAmount > 0).toList();
     } else if (detailType == SummaryDetailType.discount) {
-      filtered = sales.where((e) => e.discountPerUnit > 0).toList();
+      filtered = sales.where((e) => e.hasDiscount).toList();
     }
 
     if (filtered.isEmpty) {
       return const Center(child: Text('ບໍ່ມີລາຍການ'));
     }
 
-    // ຈັດກຸ່ມຕາມວັນທີ
-    final Map<String, List<SaleEntity>> grouped = {};
+    final Map<String, List<SaleOrderEntity>> grouped = {};
     for (final s in filtered) {
       final key =
           '${s.date.year}-${s.date.month.toString().padLeft(2, '0')}-${s.date.day.toString().padLeft(2, '0')}';
@@ -115,7 +106,8 @@ class SalesSummaryDetailPage extends StatelessWidget {
     final sortedKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
 
     return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 20, left: 12, right: 12, top: 4),
+      padding:
+          const EdgeInsets.only(bottom: 20, left: 12, right: 12, top: 4),
       itemCount: sortedKeys.length,
       itemBuilder: (context, index) {
         final dateKey = sortedKeys[index];
@@ -126,7 +118,6 @@ class SalesSummaryDetailPage extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ═══ 📌 ກາດຫົວວັນທີ ═══
             Card(
               color: Colors.brown[100],
               elevation: 1,
@@ -144,11 +135,8 @@ class SalesSummaryDetailPage extends StatelessWidget {
                     Expanded(
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.calendar_today,
-                            size: 18,
-                            color: Colors.brown[800],
-                          ),
+                          Icon(Icons.calendar_today,
+                              size: 18, color: Colors.brown[800]),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -168,15 +156,13 @@ class SalesSummaryDetailPage extends StatelessWidget {
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.brown[800],
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${salesInGroup.length} ລາຍການ',
+                        '${salesInGroup.length} ອໍເດີ',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -188,8 +174,6 @@ class SalesSummaryDetailPage extends StatelessWidget {
                 ),
               ),
             ),
-
-            // ✅ Key ບັງຄັບ — ປ້ອງກັນ state ວຸ່ນວາຍ
             ...salesInGroup.map(
               (s) => SaleCard(
                 key: ValueKey('sale-${s.id}'),
@@ -203,9 +187,6 @@ class SalesSummaryDetailPage extends StatelessWidget {
     );
   }
 
-  // ══════════════════════════════════════════════
-  // 💰 ຕາຕະລາງໃບເງິນ
-  // ══════════════════════════════════════════════
   Widget _cashBillsView(NumberFormat fmt) {
     final Map<int, int> totalBills = {};
     for (final s in sales) {
@@ -231,10 +212,9 @@ class SalesSummaryDetailPage extends StatelessWidget {
             ),
             child: Column(
               children: [
-                const Text(
-                  'ໃບເງິນສົດທີ່ໄດ້ຮັບທັງໝົດ',
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
-                ),
+                const Text('ໃບເງິນສົດທີ່ໄດ້ຮັບທັງໝົດ',
+                    style:
+                        TextStyle(color: Colors.white70, fontSize: 13)),
                 const SizedBox(height: 4),
                 FittedBox(
                   fit: BoxFit.scaleDown,
@@ -250,7 +230,8 @@ class SalesSummaryDetailPage extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   '${totalBills.values.fold<int>(0, (s, e) => s + e)} ໃບ ທັງໝົດ',
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 12),
                 ),
               ],
             ),
@@ -262,9 +243,6 @@ class SalesSummaryDetailPage extends StatelessWidget {
     );
   }
 
-  // ══════════════════════════════════════════════
-  // Helpers
-  // ══════════════════════════════════════════════
   DateTime _parseDateKey(String key) {
     final p = key.split('-');
     return DateTime(int.parse(p[0]), int.parse(p[1]), int.parse(p[2]));
@@ -277,13 +255,8 @@ class SalesSummaryDetailPage extends StatelessWidget {
     final targetDate = DateTime(date.year, date.month, date.day);
 
     const daysOfWeek = [
-      'ວັນອາທິດ',
-      'ວັນຈັນ',
-      'ວັນອັງຄານ',
-      'ວັນພຸດ',
-      'ວັນພະຫັດ',
-      'ວັນສຸກ',
-      'ວັນເສົາ',
+      'ວັນອາທິດ', 'ວັນຈັນ', 'ວັນອັງຄານ',
+      'ວັນພຸດ', 'ວັນພະຫັດ', 'ວັນສຸກ', 'ວັນເສົາ',
     ];
     final dayName = daysOfWeek[date.weekday % 7];
     final formattedDate =
@@ -325,49 +298,43 @@ class SalesSummaryDetailPage extends StatelessWidget {
         children: [
           if (showHeader)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: Colors.brown.shade100,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(12)),
               ),
               child: Row(
                 children: const [
                   Expanded(
                     flex: 3,
-                    child: Text(
-                      'ໃບລະ',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.brown,
-                      ),
-                    ),
+                    child: Text('ໃບລະ',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.brown,
+                        )),
                   ),
                   Expanded(
                     flex: 2,
-                    child: Text(
-                      'ຈຳນວນໃບ',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.brown,
-                      ),
-                    ),
+                    child: Text('ຈຳນວນໃບ',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.brown,
+                        )),
                   ),
                   Expanded(
                     flex: 3,
-                    child: Text(
-                      'ລວມ',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.brown,
-                      ),
-                    ),
+                    child: Text('ລວມ',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.brown,
+                        )),
                   ),
                 ],
               ),
@@ -377,9 +344,11 @@ class SalesSummaryDetailPage extends StatelessWidget {
             final sub = d * count;
             final isEmpty = count == 0;
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: Colors.grey.shade200)),
+                border:
+                    Border(top: BorderSide(color: Colors.grey.shade200)),
                 color: isEmpty ? Colors.grey.shade50 : Colors.white,
               ),
               child: Row(
@@ -388,11 +357,11 @@ class SalesSummaryDetailPage extends StatelessWidget {
                     flex: 3,
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.payments_outlined,
-                          size: 14,
-                          color: isEmpty ? Colors.grey.shade400 : Colors.brown,
-                        ),
+                        Icon(Icons.payments_outlined,
+                            size: 14,
+                            color: isEmpty
+                                ? Colors.grey.shade400
+                                : Colors.brown),
                         const SizedBox(width: 6),
                         Text(
                           fmt.format(d),
@@ -429,7 +398,9 @@ class SalesSummaryDetailPage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: isEmpty ? Colors.grey.shade400 : Colors.black87,
+                        color: isEmpty
+                            ? Colors.grey.shade400
+                            : Colors.black87,
                       ),
                     ),
                   ),
@@ -438,25 +409,23 @@ class SalesSummaryDetailPage extends StatelessWidget {
             );
           }),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.brown.shade800,
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(12),
-              ),
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(12)),
             ),
             child: Row(
               children: [
                 const Expanded(
                   flex: 3,
-                  child: Text(
-                    'ລວມທັງໝົດ',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: Text('ລວມທັງໝົດ',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      )),
                 ),
                 Expanded(
                   flex: 2,

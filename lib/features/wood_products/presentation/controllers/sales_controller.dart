@@ -5,7 +5,7 @@ import 'package:wood/core/util/cloudinary_service.dart';
 import 'package:wood/features/wood_products/data/models/wood_product_model.dart';
 import 'package:wood/features/wood_products/domain/entities/app_notification.dart';
 import 'package:wood/features/wood_products/presentation/controllers/notification_controller.dart';
-import '../../domain/entities/sale_entity.dart';
+import '../../domain/entities/sale_order_entity.dart';
 import '../../domain/repositories/sales_repository.dart';
 
 enum DateFilter { today, week, month, year, all }
@@ -16,8 +16,8 @@ class SalesController extends GetxController {
 
   final fmt = NumberFormat('#,###');
 
-  var allSalesList = <SaleEntity>[].obs;
-  var filteredSalesList = <SaleEntity>[].obs;
+  var allSalesList = <SaleOrderEntity>[].obs;
+  var filteredSalesList = <SaleOrderEntity>[].obs;
   var isLoading = false.obs;
   var selectedFilter = DateFilter.today.obs;
 
@@ -43,9 +43,6 @@ class SalesController extends GetxController {
     fetchSales();
   }
 
-  // ══════════════════════════════════════════════
-  // 🔔 Helper
-  // ══════════════════════════════════════════════
   Future<void> _notify({
     required AppNotificationType type,
     required String title,
@@ -65,10 +62,10 @@ class SalesController extends GetxController {
     } catch (_) {}
   }
 
-  String _productLabel(SaleEntity sale) =>
-      sale.productName.trim().isNotEmpty ? sale.productName : 'ລາຍການໄມ້';
+  String _productLabel(SaleOrderEntity sale) =>
+      sale.shortSummary.trim().isNotEmpty ? sale.shortSummary : 'ລາຍການໄມ້';
 
-  String _customerLabel(SaleEntity sale) {
+  String _customerLabel(SaleOrderEntity sale) {
     final c = (sale.customerName ?? '').trim();
     return c.isEmpty ? 'ລູກຄ້າ' : c;
   }
@@ -91,7 +88,7 @@ class SalesController extends GetxController {
   Future<void> fetchSales() async {
     isLoading.value = true;
     try {
-      final sales = await repository.getSales();
+      final sales = await repository.getSaleOrders();
       allSalesList.assignAll(sales);
       applyDateFilter(selectedFilter.value);
     } catch (e) {
@@ -140,11 +137,9 @@ class SalesController extends GetxController {
     cashCounts.forEach((_, c) => c.value = 0);
   }
 
-  // ══════════════════════════════════════════════
-  // 🔔 ແຈ້ງເຕືອນ — ບັນທຶກການຂາຍໃໝ່
-  // ══════════════════════════════════════════════
-  Future<void> notifyNewSale(SaleEntity sale) async {
+  Future<void> notifyNewSale(SaleOrderEntity sale) async {
     final name = _productLabel(sale);
+    final itemInfo = sale.hasMultiItems ? ' · ${sale.itemCount} ລາຍການ' : '';
 
     if (sale.hasDebt) {
       final customer = _customerLabel(sale);
@@ -154,7 +149,7 @@ class SalesController extends GetxController {
         await _notify(
           type: AppNotificationType.saleDebtAdd,
           title: 'ຂາຍຕິດໜີ້ · ຈ່າຍກ່ອນ',
-          message: '"$name" ລວມ ${fmt.format(sale.totalAmount)} ກີບ\n'
+          message: '"$name"$itemInfo ລວມ ${fmt.format(sale.totalAmount)} ກີບ\n'
               'ຈ່າຍກ່ອນ ${fmt.format(paidBefore)} · ຕິດໜີ້ ${fmt.format(sale.debtAmount)} ກີບ\n'
               'ລູກຄ້າ: $customer',
           targetId: sale.id,
@@ -163,7 +158,7 @@ class SalesController extends GetxController {
         await _notify(
           type: AppNotificationType.saleDebtAdd,
           title: 'ຂາຍຕິດໜີ້',
-          message: '"$name" ຍອດ ${fmt.format(sale.debtAmount)} ກີບ\n'
+          message: '"$name"$itemInfo ຍອດ ${fmt.format(sale.debtAmount)} ກີບ\n'
               'ລູກຄ້າ: $customer',
           targetId: sale.id,
         );
@@ -175,7 +170,7 @@ class SalesController extends GetxController {
       await _notify(
         type: AppNotificationType.saleAdd,
         title: 'ຂາຍປະສົມ',
-        message: '"$name" ລວມ ${fmt.format(sale.totalAmount)} ກີບ\n'
+        message: '"$name"$itemInfo ລວມ ${fmt.format(sale.totalAmount)} ກີບ\n'
             'ສົດ ${fmt.format(sale.cashPaidAmount)} + ໂອນ ${fmt.format(sale.transferPaidAmount)}'
             '${sale.changeAmount > 0 ? " · ທອນ ${fmt.format(sale.changeAmount)} ກີບ" : ""}',
         targetId: sale.id,
@@ -188,8 +183,8 @@ class SalesController extends GetxController {
     if (sale.changeAmount > 0) {
       extra.write(' · ທອນ ${fmt.format(sale.changeAmount)} ກີບ');
     }
-    if (sale.quantity > 1) {
-      extra.write(' · ${sale.quantity} ຊິ້ນ');
+    if (sale.hasMultiItems) {
+      extra.write(' · ${sale.itemCount} ລາຍການ');
     }
 
     await _notify(
@@ -200,9 +195,11 @@ class SalesController extends GetxController {
     );
   }
 
-  // ══════════════════════════════════════════════
-  // 🔒 ລຶບ
-  // ══════════════════════════════════════════════
+  Future<void> addOrder(SaleOrderEntity order) async {
+    await repository.addSaleOrder(order);
+    await fetchSales();
+  }
+
   Future<void> deleteSale(String id) async {
     try {
       final sale = allSalesList.firstWhereOrNull((s) => s.id == id);
@@ -210,6 +207,7 @@ class SalesController extends GetxController {
         ...?sale?.paymentImageUrls,
         ...?sale?.billImageUrls,
         ...?sale?.topUpImageUrls,
+        ...?sale?.debtPaymentImageUrls, 
       ].where((u) => u.isNotEmpty).toList();
 
       await repository.deleteSale(id);
@@ -218,8 +216,8 @@ class SalesController extends GetxController {
 
       final name = sale == null
           ? 'ລາຍການ'
-          : (sale.productName.trim().isNotEmpty
-              ? sale.productName
+          : (sale.shortSummary.trim().isNotEmpty
+              ? sale.shortSummary
               : 'ລາຍການໄມ້');
 
       String status = '';
@@ -259,9 +257,6 @@ class SalesController extends GetxController {
     }
   }
 
-  // ══════════════════════════════════════════════
-  // ✅ ຢືນຢັນເງິນເຂົ້າ
-  // ══════════════════════════════════════════════
   Future<void> confirmPaymentStatus(String id, bool cur) async {
     try {
       await repository.updateSaleStatus(id, !cur);
@@ -284,9 +279,6 @@ class SalesController extends GetxController {
     }
   }
 
-  // ══════════════════════════════════════════════
-  // ⚠ ບັນຊີບໍ່ຕົງ
-  // ══════════════════════════════════════════════
   Future<void> markAsMismatch(String id, String note) async {
     try {
       await repository.updateMismatchStatus(id,
@@ -342,9 +334,6 @@ class SalesController extends GetxController {
     }
   }
 
-  // ══════════════════════════════════════════════
-  // 💰 ປິດໜີ້
-  // ══════════════════════════════════════════════
   Future<void> payDebt(
     String id, {
     required String paymentType,
@@ -394,9 +383,6 @@ class SalesController extends GetxController {
     }
   }
 
-  // ══════════════════════════════════════════════
-  // 🖼️ ອັບເດດຮູບພາບ — ແກ້ໄຂສະເພາະຮູບ
-  // ══════════════════════════════════════════════
   Future<void> updateSaleImages(
     String id, {
     required List<String> paymentImageUrls,

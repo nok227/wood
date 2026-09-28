@@ -1,14 +1,19 @@
+// lib/features/wood_products/domain/entities/sale_entity.dart
+
+import 'sale_item_entity.dart';
+import 'sale_order_entity.dart';
+
 class SaleEntity {
   final String id;
   final String productId;
   final String productName;
-  final String paymentType; // 'cash' | 'transfer' | 'mixed'
+  final String paymentType; // 'cash' | 'transfer' | 'mixed' | 'debt'
 
   final double totalAmount;
   final int quantity;
   final double discountPerUnit;
 
-  // 💵 ຈຳນວນເງິນທີ່ຈ່າຍຕົວຈິງ (ແບ່ງໄດ້)
+  // 💵 ຈຳນວນເງິນທີ່ຈ່າຍຕົວຈິງ
   final double cashPaidAmount;
   final double transferPaidAmount;
   final double debtAmount;
@@ -20,6 +25,7 @@ class SaleEntity {
   final List<String> paymentImageUrls;
   final List<String> billImageUrls;
   final List<String> topUpImageUrls;
+  final List<String> debtPaymentImageUrls;   // 🆕 ຮູບຈ່າຍໜີ້
 
   // 👤 ຂໍ້ມູນລູກຄ້າ (ຕິດໜີ້)
   final String? customerName;
@@ -38,7 +44,7 @@ class SaleEntity {
   final String? mismatchNote;
   final Map<int, int>? cashDenominations;
 
-  // 📐 ຂະໜາດສິນຄ້າ (ເກັບໄວ້ເພື່ອສະແດງ 3 ໜ່ວຍ)
+  // 📐 ຂະໜາດສິນຄ້າ
   final double? productWidth;
   final double? productLength;
   final double? productThickness;
@@ -59,6 +65,7 @@ class SaleEntity {
     this.paymentImageUrls = const [],
     this.billImageUrls = const [],
     this.topUpImageUrls = const [],
+    this.debtPaymentImageUrls = const [],   // 🆕
     this.customerName,
     this.customerAddress,
     this.customerPhone,
@@ -77,20 +84,11 @@ class SaleEntity {
     this.productSizeUnit,
   });
 
-  /// 💰 ເງິນທອນ — ຄຳນວນຈາກ receivedAmount ກ່ອນ
-  /// ຖ້າບໍ່ມີ → fallback ຄຳນວນຈາກ cashPaid + transferPaid
-  ///
-  /// ເຫດຜົນ: ໃນການຂາຍສົດ ຖ້າລູກຄ້າຈ່າຍເກີນ
-  ///   - receivedAmount = 100000 (ຮັບມາຕອນຂາຍ)
-  ///   - cashPaidAmount  = 80000  (ຍອດທີ່ຫັກຈາກສິນຄ້າ — capped ບໍ່ໃຫ້ເກີນ total)
-  /// ສະນັ້ນ ຕ້ອງໃຊ້ receivedAmount ເປັນຫຼັກ
+  /// 💰 ເງິນທອນ
   double get changeAmount {
-    // ── ກໍລະນີມີ receivedAmount → ໃຊ້ອັນນີ້ກ່ອນ ──
     if (receivedAmount > totalAmount) {
       return receivedAmount - totalAmount;
     }
-    // ── Fallback: ຄຳນວນຈາກ cashPaid + transferPaid ລວມ ──
-    // (ກໍລະນີເກົ່າທີ່ບໍ່ມີ receivedAmount ຫຼື ຖືກ 0)
     if (debtAmount <= 0) {
       final applied = cashPaidAmount + transferPaidAmount;
       if (applied > totalAmount) return applied - totalAmount;
@@ -100,13 +98,12 @@ class SaleEntity {
 
   bool get hasDebt => debtAmount > 0;
   bool get hasTopUp => topUpImageUrls.isNotEmpty;
+  bool get hasDebtPayment => debtPaymentImageUrls.isNotEmpty;   // 🆕
   bool get isMixed => cashPaidAmount > 0 && transferPaidAmount > 0;
   bool get isFullyPaid => debtAmount <= 0;
 
-  /// 🆕 ມີນັດວັນຈ່າຍບໍ
   bool get hasAppointment => appointmentDate != null;
 
-  /// 📐 ມີຂໍ້ມູນຂະໜາດຄົບບໍ
   bool get hasProductSize =>
       productWidth != null &&
       productLength != null &&
@@ -116,5 +113,57 @@ class SaleEntity {
   String? get slipImageUrl {
     if (paymentImageUrls.isEmpty) return null;
     return paymentImageUrls.first;
+  }
+}
+
+// ══════════════════════════════════════════════
+// 🔄 Legacy SaleEntity → SaleOrderEntity
+// ══════════════════════════════════════════════
+extension SaleEntityToOrderX on SaleEntity {
+  SaleOrderEntity toOrderEntity() {
+    final q = quantity <= 0 ? 1 : quantity;
+    final unitPrice = (totalAmount + discountPerUnit * q) / q;
+
+    return SaleOrderEntity(
+      id: id,
+      source: SaleOrderSource.legacy,
+      items: [
+        SaleItemEntity(
+          itemId: 'legacy_$id',
+          productId: productId,
+          productName: productName,
+          woodType: '',
+          productWidth: productWidth,
+          productLength: productLength,
+          productThickness: productThickness,
+          productSizeUnit: productSizeUnit,
+          unitPrice: unitPrice,
+          quantity: q,
+          unit: 'ຊິ້ນ',
+          discountPerUnit: discountPerUnit,
+        ),
+      ],
+      paymentType: paymentType,
+      cashPaidAmount: cashPaidAmount,
+      transferPaidAmount: transferPaidAmount,
+      debtAmount: debtAmount,
+      receivedAmount: receivedAmount,
+      paymentImageUrls: paymentImageUrls,
+      billImageUrls: billImageUrls,
+      topUpImageUrls: topUpImageUrls,
+      debtPaymentImageUrls: debtPaymentImageUrls,   // 🆕
+      customerName: customerName,
+      customerPhone: customerPhone,
+      customerAddress: customerAddress,
+      debtDate: debtDate,
+      debtNote: debtNote,
+      appointmentDate: appointmentDate,
+      note: note,
+      date: date,
+      isConfirmed: isConfirmed,
+      isMismatch: isMismatch,
+      mismatchNote: mismatchNote,
+      cashDenominations: cashDenominations,
+    );
   }
 }

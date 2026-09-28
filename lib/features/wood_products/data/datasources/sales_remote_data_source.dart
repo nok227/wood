@@ -1,35 +1,79 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/sale_entity.dart';
+import '../../domain/entities/sale_order_entity.dart';
 import '../models/sale_model.dart';
+import '../models/sale_order_model.dart';
 
 class SalesRemoteDataSource {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static const String _collection = 'sales';
+  static const String _collection = 'sales'; // ← ເກົ່າ
+  static const String _orderCollection = 'sale_orders'; // ← ໃໝ່
 
-  Future<List<SaleEntity>> getSales() async {
-    final snap = await _firestore
-        .collection(_collection)
-        .orderBy('date', descending: true)
-        .get();
-    return snap.docs
-        .map((d) => SaleModel.fromMap(d.data(), d.id).toEntity())
+  // ══════════════════════════════════════════════
+  // 📖 ອ່ານ — ລວມ 2 collection
+  // ══════════════════════════════════════════════
+  Future<List<SaleOrderEntity>> getSaleOrders() async {
+    final results = await Future.wait([
+      _firestore
+          .collection(_collection)
+          .orderBy('date', descending: true)
+          .get(),
+      _firestore
+          .collection(_orderCollection)
+          .orderBy('date', descending: true)
+          .get(),
+    ]);
+
+    final legacy = results[0].docs
+        .map(
+          (d) => SaleModel.fromMap(d.data(), d.id).toEntity().toOrderEntity(),
+        )
         .toList();
+
+    final orders = results[1].docs
+        .map((d) => SaleOrderModel.fromMap(d.data(), d.id).toEntity())
+        .toList();
+
+    final all = [...legacy, ...orders];
+    all.sort((a, b) => b.date.compareTo(a.date));
+    return all;
   }
 
-  Future<void> addSale(SaleModel sale) async {
-    await _firestore.collection(_collection).doc(sale.id).set(sale.toMap());
+  // ══════════════════════════════════════════════
+  // ✍️ ຂຽນ — ອໍເດີໃໝ່ → sale_orders
+  // ══════════════════════════════════════════════
+  Future<void> addSaleOrder(SaleOrderModel order) async {
+    await _firestore
+        .collection(_orderCollection)
+        .doc(order.id)
+        .set(order.toMap());
+  }
+
+  // ══════════════════════════════════════════════
+  // 🔧 Update — ຫາ collection ອັດຕະໂນມັດ
+  // ══════════════════════════════════════════════
+  Future<bool> _tryUpdate(String id, Map<String, dynamic> data) async {
+    // ລອງ order ກ່ອນ
+    try {
+      await _firestore.collection(_orderCollection).doc(id).update(data);
+      return true;
+    } catch (_) {}
+
+    // fallback legacy
+    try {
+      await _firestore.collection(_collection).doc(id).update(data);
+      return true;
+    } catch (_) {}
+
+    return false;
   }
 
   Future<void> updateSaleStatus(String id, bool isConfirmed) async {
-    await _firestore.collection(_collection).doc(id).update({
+    await _tryUpdate(id, {
       'isConfirmed': isConfirmed,
       if (isConfirmed) 'isMismatch': false,
       if (isConfirmed) 'mismatchNote': null,
     });
-  }
-
-  Future<void> deleteSale(String id) async {
-    await _firestore.collection(_collection).doc(id).delete();
   }
 
   Future<void> updateMismatchStatus(
@@ -37,7 +81,7 @@ class SalesRemoteDataSource {
     required bool isMismatch,
     String? mismatchNote,
   }) async {
-    await _firestore.collection(_collection).doc(id).update({
+    await _tryUpdate(id, {
       'isMismatch': isMismatch,
       'mismatchNote': isMismatch ? mismatchNote : null,
       if (isMismatch) 'isConfirmed': false,
@@ -45,7 +89,7 @@ class SalesRemoteDataSource {
   }
 
   Future<void> markDebtAsPaid(String id) async {
-    await _firestore.collection(_collection).doc(id).update({
+    await _tryUpdate(id, {
       'debtAmount': 0,
       'isConfirmed': true,
       'isMismatch': false,
@@ -53,19 +97,18 @@ class SalesRemoteDataSource {
     });
   }
 
-  /// 🆕 ຈ່າຍໜີ້ + ເພີ່ມຮູບ
   Future<void> payDebt(
     String id, {
     required String paymentType,
     required String imageUrl,
     required double paidAmount,
   }) async {
-    await _firestore.collection(_collection).doc(id).update({
+    await _tryUpdate(id, {
       'debtAmount': 0,
       'isConfirmed': true,
       'isMismatch': false,
       'mismatchNote': null,
-      'paymentImageUrls': FieldValue.arrayUnion([imageUrl]),
+      'debtPaymentImageUrls': FieldValue.arrayUnion([imageUrl]), // ✅ ໃໝ່
       if (paymentType == 'cash')
         'cashPaidAmount': FieldValue.increment(paidAmount),
       if (paymentType == 'transfer')
@@ -73,17 +116,25 @@ class SalesRemoteDataSource {
     });
   }
 
-  /// 🖼️ ອັບເດດຮູບພາບທັງໝົດ (ບໍ່ປ່ຽນຂໍ້ມູນອື່ນ)
   Future<void> updateSaleImages(
     String id, {
     required List<String> paymentImageUrls,
     required List<String> billImageUrls,
     required List<String> topUpImageUrls,
   }) async {
-    await _firestore.collection(_collection).doc(id).update({
+    await _tryUpdate(id, {
       'paymentImageUrls': paymentImageUrls,
       'billImageUrls': billImageUrls,
       'topUpImageUrls': topUpImageUrls,
     });
+  }
+
+  Future<void> deleteSale(String id) async {
+    try {
+      await _firestore.collection(_orderCollection).doc(id).delete();
+    } catch (_) {}
+    try {
+      await _firestore.collection(_collection).doc(id).delete();
+    } catch (_) {}
   }
 }

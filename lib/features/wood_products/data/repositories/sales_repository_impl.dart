@@ -1,51 +1,19 @@
-import '../../domain/entities/sale_entity.dart';
+import '../../domain/entities/sale_order_entity.dart';
 import '../../domain/repositories/sales_repository.dart';
 import '../datasources/sales_remote_data_source.dart';
-import '../models/sale_model.dart';
+import '../models/sale_order_model.dart';
 
 class SalesRepositoryImpl implements SalesRepository {
   final SalesRemoteDataSource remoteDataSource;
   SalesRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<List<SaleEntity>> getSales() => remoteDataSource.getSales();
+  Future<List<SaleOrderEntity>> getSaleOrders() =>
+      remoteDataSource.getSaleOrders();
 
   @override
-  Future<void> addSale(SaleEntity sale) async {
-    final m = SaleModel(
-      id: sale.id,
-      productId: sale.productId,
-      productName: sale.productName,
-      paymentType: sale.paymentType,
-      totalAmount: sale.totalAmount,
-      quantity: sale.quantity,
-      discountPerUnit: sale.discountPerUnit,
-      cashPaidAmount: sale.cashPaidAmount,
-      transferPaidAmount: sale.transferPaidAmount,
-      debtAmount: sale.debtAmount,
-      receivedAmount: sale.receivedAmount,
-      paymentImageUrls: sale.paymentImageUrls,
-      billImageUrls: sale.billImageUrls,
-      topUpImageUrls: sale.topUpImageUrls,
-      customerName: sale.customerName,
-      customerAddress: sale.customerAddress,
-      customerPhone: sale.customerPhone,
-      debtDate: sale.debtDate,
-      debtNote: sale.debtNote,
-      appointmentDate: sale.appointmentDate,
-      note: sale.note,
-      date: sale.date,
-      isConfirmed: sale.isConfirmed,
-      isMismatch: sale.isMismatch,
-      mismatchNote: sale.mismatchNote,
-      cashDenominations: sale.cashDenominations,
-      // 📐 ຂະໜາດ
-      productWidth: sale.productWidth,
-      productLength: sale.productLength,
-      productThickness: sale.productThickness,
-      productSizeUnit: sale.productSizeUnit,
-    );
-    await remoteDataSource.addSale(m);
+  Future<void> addSaleOrder(SaleOrderEntity order) async {
+    await remoteDataSource.addSaleOrder(SaleOrderModel.fromEntity(order));
   }
 
   @override

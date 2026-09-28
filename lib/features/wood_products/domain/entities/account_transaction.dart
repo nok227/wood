@@ -6,8 +6,8 @@ class AccountItem {
 
 class AccountTransaction {
   final String id;
-  final String type;        // 'in' | 'out'
-  final String paymentType; // 'cash' | 'transfer'
+  final String type;      
+  final String paymentType;
   final List<AccountItem> items;
   final String? note;
   final DateTime date;

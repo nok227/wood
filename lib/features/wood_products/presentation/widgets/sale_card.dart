@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 
 import 'package:wood/features/wood_products/presentation/widgets/animated_number.dart';
 
-import '../../domain/entities/sale_entity.dart';
+import '../../domain/entities/sale_order_entity.dart';
 import '../controllers/sales_controller.dart';
 import '../pages/debt_payment_page.dart';
 import '../pages/sale_detail_page.dart';
@@ -15,14 +15,11 @@ import 'sale_image_viewer.dart';
 final ValueNotifier<String?> _openMenuId = ValueNotifier<String?>(null);
 
 class SaleCard extends StatelessWidget {
-  final SaleEntity sale;
+  final SaleOrderEntity sale;
   final bool isAdmin;
 
-  const SaleCard({
-    Key? key,
-    required this.sale,
-    required this.isAdmin,
-  }) : super(key: key);
+  const SaleCard({Key? key, required this.sale, required this.isAdmin})
+    : super(key: key);
 
   static String _wPrefix(String? raw, String prefix) {
     final v = (raw ?? '').trim();
@@ -30,7 +27,6 @@ class SaleCard extends StatelessWidget {
     return v.startsWith(prefix) ? v : '$prefix$v';
   }
 
-  // ✅ ປິດ dialog ຢ່າງປອດໄພ — root navigator
   void _safeCloseDialog() {
     if (Get.isDialogOpen ?? false) {
       final ctx = Get.context;
@@ -47,8 +43,7 @@ class SaleCard extends StatelessWidget {
     final ctrl = Get.find<SalesController>();
     final fmt = NumberFormat('#,###');
 
-    final payLabel =
-        sale.paymentType == 'cash' ? 'ຮູບເງິນສົດ' : 'ຮູບສະລິບໂອນ';
+    final payLabel = sale.paymentType == 'cash' ? 'ຮູບເງິນສົດ' : 'ຮູບສະລິບໂອນ';
     final images = <SaleImageItem>[
       ...sale.paymentImageUrls
           .where((u) => u.isNotEmpty)
@@ -59,6 +54,9 @@ class SaleCard extends StatelessWidget {
       ...sale.billImageUrls
           .where((u) => u.isNotEmpty)
           .map((u) => SaleImageItem(u, 'ຮູບໃບບິນ')),
+      ...sale.debtPaymentImageUrls
+          .where((u) => u.isNotEmpty)
+          .map((u) => SaleImageItem(u, 'ຮູບຈ່າຍໜີ້')),
     ];
     final openViewer = images.isEmpty
         ? null
@@ -67,8 +65,8 @@ class SaleCard extends StatelessWidget {
     final borderColor = sale.isMismatch
         ? const Color(0xFFB71C1C)
         : sale.hasDebt
-            ? Colors.orange.shade800
-            : (sale.isConfirmed ? Colors.green : Colors.amber);
+        ? Colors.orange.shade800
+        : (sale.isConfirmed ? Colors.green : Colors.amber);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -84,39 +82,112 @@ class SaleCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(children: [
-                _thumb(_first(sale.paymentImageUrls),
-                    Icons.payments_outlined, openViewer),
-                const SizedBox(height: 8),
-                _thumb(_first(sale.billImageUrls),
-                    Icons.receipt_long_outlined, openViewer),
-              ]),
+              Column(
+                children: [
+                  // ① ຮູບເງິນ (ສົດ / ໂອນ)
+                  _thumb(
+                    _first(sale.paymentImageUrls),
+                    Icons.payments_outlined,
+                    openViewer,
+                  ),
+                  const SizedBox(height: 6),
+                  // ② ຮູບໃບບິນ
+                  _thumb(
+                    _first(sale.billImageUrls),
+                    Icons.receipt_long_outlined,
+                    openViewer,
+                  ),
+                  const SizedBox(height: 6),
+                  // ③ ຮູບຈ່າຍໜີ້ (ຖ້າມີ)
+                  _thumb(
+                    _first(sale.debtPaymentImageUrls),
+                    Icons.account_balance_wallet_outlined,
+                    openViewer,
+                  ),
+                ],
+              ),
               const SizedBox(width: 12),
 
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ── ຫົວ: ຊື່ ຫຼື summary ──
                     Text(
-                      sale.productName.isNotEmpty
-                          ? sale.productName
-                          : 'ລາຍການໄມ້',
+                      sale.shortSummary,
                       style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold),
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (sale.quantity > 0) ...[
-                      const SizedBox(height: 1),
-                      Row(children: [
-                        Icon(Icons.inventory_2_outlined,
-                            size: 11, color: Colors.grey.shade600),
-                        const SizedBox(width: 3),
-                        Text('${sale.quantity} ຊິ້ນ',
+
+                    // ── ລາຍການຍ່ອຍ (ຖ້າມີຫຼາຍ) ──
+                    if (sale.hasMultiItems) ...[
+                      const SizedBox(height: 4),
+                      ...sale.items
+                          .take(2)
+                          .map(
+                            (it) => Padding(
+                              padding: const EdgeInsets.only(bottom: 2),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.circle,
+                                    size: 5,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Expanded(
+                                    child: Text(
+                                      '${it.productName} · ${it.quantity} ${it.unit}'
+                                      '${it.hasDiscount ? " · ລົດ ${fmt.format(it.discountPerUnit)}" : ""}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey.shade700,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      if (sale.items.length > 2)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2, left: 10),
+                          child: Text(
+                            '+${sale.items.length - 2} ລາຍການອື່ນ',
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey.shade700)),
-                      ]),
+                              fontSize: 11,
+                              color: Colors.brown.shade600,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
                     ],
+
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.inventory_2_outlined,
+                          size: 11,
+                          color: Colors.grey.shade600,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${sale.itemCount} ລາຍການ · ${sale.totalQuantity} ຊິ້ນ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+
                     const SizedBox(height: 2),
                     AnimatedNumber(
                       value: sale.totalAmount,
@@ -130,20 +201,29 @@ class SaleCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'ວິທີ: ${sale.paymentType == 'cash' ? 'ເງິນສົດ' : sale.paymentType == 'transfer' ? 'ເງິນໂອນ' : 'ປະສົມ'}',
+                      'ວິທີ: ${sale.paymentType == 'cash'
+                          ? 'ເງິນສົດ'
+                          : sale.paymentType == 'transfer'
+                          ? 'ເງິນໂອນ'
+                          : sale.paymentType == 'mixed'
+                          ? 'ປະສົມ'
+                          : 'ຕິດໜີ້'}',
                       style: const TextStyle(fontSize: 12),
                     ),
                     Text(
                       ctrl.formatLaoDate(sale.date),
                       style: TextStyle(
-                          fontSize: 11, color: Colors.grey.shade700),
+                        fontSize: 11,
+                        color: Colors.grey.shade700,
+                      ),
                     ),
-                    if (sale.discountPerUnit > 0) ...[
+
+                    if (sale.discountTotal > 0) ...[
                       const SizedBox(height: 4),
                       _miniChip(
                         icon: Icons.discount,
                         text:
-                            'ສ່ວນລົດ ${fmt.format(sale.discountPerUnit * sale.quantity)} ກີບ',
+                            'ສ່ວນລົດລວມ ${fmt.format(sale.discountTotal)} ກີບ',
                         color: Colors.red.shade700,
                         bgColor: Colors.red.shade50,
                       ),
@@ -174,7 +254,6 @@ class SaleCard extends StatelessWidget {
                 ),
               ),
 
-              // ✅ ປຸ່ມ ⋮ → 🗑 ລຶບ (ເອົາ ✏️ ແກ້ໄຂ ອອກແລ້ວ)
               _FloatingActionsButton(
                 key: ValueKey('act-${sale.id}'),
                 saleId: sale.id,
@@ -281,10 +360,15 @@ class SaleCard extends StatelessWidget {
           Icon(icon, size: 13, color: color),
           const SizedBox(width: 4),
           Flexible(
-            child: Text(text,
-                style: TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.bold, color: color),
-                overflow: TextOverflow.ellipsis),
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -310,11 +394,16 @@ class SaleCard extends StatelessWidget {
           Icon(icon, size: 11, color: color),
           const SizedBox(width: 3),
           Flexible(
-            child: Text(text,
-                style: TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.bold, color: color),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -342,8 +431,7 @@ class SaleCard extends StatelessWidget {
                   imageUrl: url,
                   fit: BoxFit.cover,
                   memCacheWidth: 168,
-                  placeholder: (c, u) =>
-                      Container(color: Colors.grey.shade100),
+                  placeholder: (c, u) => Container(color: Colors.grey.shade100),
                   errorWidget: (_, __, ___) =>
                       Icon(fallback, color: Colors.grey.shade400, size: 32),
                 )
@@ -369,16 +457,20 @@ class SaleCard extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.warning_amber_rounded,
-                  color: Color(0xFFB71C1C), size: 18),
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Color(0xFFB71C1C),
+                size: 18,
+              ),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
                   isAdmin ? 'ບັນຊີບໍ່ຕົງ · ແຕະແກ້ໄຂ' : 'ບັນຊີບໍ່ຕົງ',
                   style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFB71C1C)),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFB71C1C),
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -402,11 +494,14 @@ class SaleCard extends StatelessWidget {
           children: const [
             _Checkmark(size: 16),
             SizedBox(width: 6),
-            Text('ເງິນເຂົ້າແລ້ວ',
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2E7D32))),
+            Text(
+              'ເງິນເຂົ້າແລ້ວ',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2E7D32),
+              ),
+            ),
           ],
         ),
       );
@@ -433,9 +528,10 @@ class SaleCard extends StatelessWidget {
                 child: Text(
                   isAdmin ? 'ກວດສອບ · ແຕະຢືນຢັນຮັບເງິນ' : 'ກວດສອບ',
                   style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.amber.shade900),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.amber.shade900,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -465,9 +561,10 @@ class SaleCard extends StatelessWidget {
               child: Text(
                 isAdmin ? 'ກວດສອບ · ແຕະຈັດການ' : 'ກວດສອບ',
                 style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.amber.shade900),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber.shade900,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -487,24 +584,29 @@ class SaleCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Column(
           children: [
-            Icon(Icons.receipt_long,
-                size: 48, color: Colors.green.shade600),
+            Icon(Icons.receipt_long, size: 48, color: Colors.green.shade600),
             const SizedBox(height: 8),
             if (name.isNotEmpty)
-              Text('ລູກຄ້າ: $name',
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.bold)),
+              Text(
+                'ລູກຄ້າ: $name',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             if ((sale.customerPhone ?? '').isNotEmpty) ...[
               const SizedBox(height: 2),
-              Text('ເບີໂທ: ${sale.customerPhone}',
-                  style: TextStyle(
-                      fontSize: 12, color: Colors.grey.shade700)),
+              Text(
+                'ເບີໂທ: ${sale.customerPhone}',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              ),
             ],
             if (addr.isNotEmpty) ...[
               const SizedBox(height: 2),
-              Text('ທີ່ຢູ່: $addr',
-                  style: TextStyle(
-                      fontSize: 12, color: Colors.grey.shade700)),
+              Text(
+                'ທີ່ຢູ່: $addr',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              ),
             ],
             const SizedBox(height: 10),
             Text(
@@ -517,8 +619,7 @@ class SaleCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: Colors.amber.shade50,
                 borderRadius: BorderRadius.circular(10),
@@ -526,8 +627,11 @@ class SaleCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.help_outline,
-                      color: Colors.amber.shade900, size: 20),
+                  Icon(
+                    Icons.help_outline,
+                    color: Colors.amber.shade900,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -567,42 +671,50 @@ class SaleCard extends StatelessWidget {
       title: 'ຈັດການສະຖານະ',
       content: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Column(children: [
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              minimumSize: const Size.fromHeight(44),
-            ),
-            icon: const Icon(Icons.check, color: Colors.white),
-            label: const Text('ຢືນຢັນເງິນເຂົ້າ',
-                style: TextStyle(color: Colors.white)),
-            onPressed: () async {
-              _safeCloseDialog();
-              await Future.delayed(const Duration(milliseconds: 300));
-              await c.confirmPaymentStatus(sale.id, false);
-            },
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB71C1C),
-              minimumSize: const Size.fromHeight(44),
-            ),
-            icon: const Icon(Icons.warning_amber_rounded,
-                color: Colors.white),
-            label: const Text('ບັນຊີບໍ່ຕົງກັນ',
-                style: TextStyle(color: Colors.white)),
-            onPressed: () async {
-              _safeCloseDialog();
-              await Future.delayed(const Duration(milliseconds: 300));
-              while (Get.isDialogOpen ?? false) {
+        child: Column(
+          children: [
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                minimumSize: const Size.fromHeight(44),
+              ),
+              icon: const Icon(Icons.check, color: Colors.white),
+              label: const Text(
+                'ຢືນຢັນເງິນເຂົ້າ',
+                style: TextStyle(color: Colors.white),
+              ),
+              onPressed: () async {
                 _safeCloseDialog();
-                await Future.delayed(const Duration(milliseconds: 120));
-              }
-              _mismatchDialog(c, isEdit: false);
-            },
-          ),
-        ]),
+                await Future.delayed(const Duration(milliseconds: 300));
+                await c.confirmPaymentStatus(sale.id, false);
+              },
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFB71C1C),
+                minimumSize: const Size.fromHeight(44),
+              ),
+              icon: const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.white,
+              ),
+              label: const Text(
+                'ບັນຊີບໍ່ຕົງກັນ',
+                style: TextStyle(color: Colors.white),
+              ),
+              onPressed: () async {
+                _safeCloseDialog();
+                await Future.delayed(const Duration(milliseconds: 300));
+                while (Get.isDialogOpen ?? false) {
+                  _safeCloseDialog();
+                  await Future.delayed(const Duration(milliseconds: 120));
+                }
+                _mismatchDialog(c, isEdit: false);
+              },
+            ),
+          ],
+        ),
       ),
       textCancel: 'ຍົກເລີກ',
     );
@@ -617,37 +729,65 @@ class SaleCard extends StatelessWidget {
       title: isEdit ? 'ແກ້ໄຂບັນຊີບໍ່ຕົງ' : 'ບັນຊີບໍ່ຕົງກັນ',
       content: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Column(children: [
-          TextField(
-            controller: noteCtrl,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              hintText: 'ປ້ອນເຫດຜົນ...',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (isEdit)
-            Row(children: [
-              Expanded(
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.grey.shade700,
-                    side: BorderSide(color: Colors.grey.shade400),
-                  ),
-                  onPressed: () async {
-                    _safeCloseDialog();
-                    await Future.delayed(const Duration(milliseconds: 300));
-                    await c.clearMismatch(sale.id);
-                  },
-                  child: const Text('ຍົກເລີກ'),
-                ),
+        child: Column(
+          children: [
+            TextField(
+              controller: noteCtrl,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                hintText: 'ປ້ອນເຫດຜົນ...',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(width: 8),
-              Expanded(
+            ),
+            const SizedBox(height: 12),
+            if (isEdit)
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.grey.shade700,
+                        side: BorderSide(color: Colors.grey.shade400),
+                      ),
+                      onPressed: () async {
+                        _safeCloseDialog();
+                        await Future.delayed(const Duration(milliseconds: 300));
+                        await c.clearMismatch(sale.id);
+                      },
+                      child: const Text('ຍົກເລີກ'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFB71C1C),
+                      ),
+                      onPressed: () async {
+                        final t = noteCtrl.text.trim();
+                        if (t.isEmpty) {
+                          Get.snackbar('ຜິດພາດ', 'ກະລຸນາປ້ອນເຫດຜົນ');
+                          return;
+                        }
+                        _safeCloseDialog();
+                        await Future.delayed(const Duration(milliseconds: 300));
+                        await c.updateMismatchNote(sale.id, t);
+                      },
+                      child: const Text(
+                        'ບັນທຶກ',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else
+              SizedBox(
+                width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFB71C1C),
+                    minimumSize: const Size.fromHeight(44),
                   ),
                   onPressed: () async {
                     final t = noteCtrl.text.trim();
@@ -657,36 +797,16 @@ class SaleCard extends StatelessWidget {
                     }
                     _safeCloseDialog();
                     await Future.delayed(const Duration(milliseconds: 300));
-                    await c.updateMismatchNote(sale.id, t);
+                    await c.markAsMismatch(sale.id, t);
                   },
-                  child: const Text('ບັນທຶກ',
-                      style: TextStyle(color: Colors.white)),
+                  child: const Text(
+                    'ຢືນຢັນ',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ),
-            ])
-          else
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFB71C1C),
-                  minimumSize: const Size.fromHeight(44),
-                ),
-                onPressed: () async {
-                  final t = noteCtrl.text.trim();
-                  if (t.isEmpty) {
-                    Get.snackbar('ຜິດພາດ', 'ກະລຸນາປ້ອນເຫດຜົນ');
-                    return;
-                  }
-                  _safeCloseDialog();
-                  await Future.delayed(const Duration(milliseconds: 300));
-                  await c.markAsMismatch(sale.id, t);
-                },
-                child: const Text('ຢືນຢັນ',
-                    style: TextStyle(color: Colors.white)),
-              ),
-            ),
-        ]),
+          ],
+        ),
       ),
       textCancel: 'ປິດ',
       textConfirm: '',
@@ -700,58 +820,73 @@ class SaleCard extends StatelessWidget {
       title: 'ຢືນຢັນການລຶບ',
       content: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Column(children: [
-          Icon(Icons.warning_amber_rounded,
-              size: 48, color: Colors.red.shade600),
-          const SizedBox(height: 8),
-          Text(
-            sale.productName.isNotEmpty
-                ? sale.productName
-                : 'ລາຍການໄມ້',
-            style: const TextStyle(
-                fontSize: 15, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${NumberFormat('#,###').format(sale.totalAmount)} ກີບ',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.brown,
+        child: Column(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 48,
+              color: Colors.red.shade600,
             ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.red.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red.shade200),
+            const SizedBox(height: 8),
+            Text(
+              sale.shortSummary,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            child: Row(children: [
-              Icon(Icons.info_outline,
-                  color: Colors.red.shade700, size: 18),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  'ຈະລຶບອອກຈາກ Firebase ແລະ Cloudinary ຖາວອນ',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red.shade700,
-                  ),
-                ),
+            const SizedBox(height: 6),
+            Text(
+              '${NumberFormat('#,###').format(sale.totalAmount)} ກີບ',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.brown,
               ),
-            ]),
-          ),
-          const SizedBox(height: 10),
-          const Text('ຢືນຢັນການລຶບ?',
-              style: TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.bold)),
-        ]),
+            ),
+            if (sale.hasMultiItems) ...[
+              const SizedBox(height: 4),
+              Text(
+                'ຈະລຶບທັງໝົດ ${sale.itemCount} ລາຍການ',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.red.shade700,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'ຈະລຶບອອກຈາກ Firebase ແລະ Cloudinary ຖາວອນ',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'ຢືນຢັນການລຶບ?',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
       ),
       barrierDismissible: true,
       textConfirm: 'ລຶບ',
@@ -769,7 +904,7 @@ class SaleCard extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════
-// ⋮ → 🗑 (ເອົາ ✏️ ອອກແລ້ວ)
+// ⋮ → 🗑
 // ══════════════════════════════════════════════
 class _FloatingActionsButton extends StatefulWidget {
   final String saleId;
@@ -784,8 +919,7 @@ class _FloatingActionsButton extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<_FloatingActionsButton> createState() =>
-      _FloatingActionsButtonState();
+  State<_FloatingActionsButton> createState() => _FloatingActionsButtonState();
 }
 
 class _FloatingActionsButtonState extends State<_FloatingActionsButton>
@@ -841,7 +975,6 @@ class _FloatingActionsButtonState extends State<_FloatingActionsButton>
 
   @override
   Widget build(BuildContext context) {
-    // ✅ ເຫຼືອພຽງ 🗑 ລຶບ (admin ເທົ່ານັ້ນ)
     if (!widget.isAdmin) return const SizedBox.shrink();
 
     final actions = <_ActionItem>[
@@ -924,8 +1057,11 @@ class _FloatingActionsButtonState extends State<_FloatingActionsButton>
                         ),
                       ],
                     ),
-                    child: Icon(actions[i].icon,
-                        color: actions[i].color, size: 24),
+                    child: Icon(
+                      actions[i].icon,
+                      color: actions[i].color,
+                      size: 24,
+                    ),
                   ),
                 ),
               ),
@@ -955,10 +1091,10 @@ class _Waiting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Icon(
-        Icons.hourglass_bottom,
-        size: size * 0.85,
-        color: Colors.amber.shade800,
-      );
+    Icons.hourglass_bottom,
+    size: size * 0.85,
+    color: Colors.amber.shade800,
+  );
 }
 
 class _Checkmark extends StatelessWidget {
@@ -966,18 +1102,18 @@ class _Checkmark extends StatelessWidget {
   const _Checkmark({this.size = 18});
   @override
   Widget build(BuildContext context) => TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0, end: 1),
-        duration: const Duration(milliseconds: 700),
-        curve: Curves.elasticOut,
-        builder: (_, v, child) => Transform.scale(scale: v, child: child),
-        child: Container(
-          width: size,
-          height: size,
-          decoration: const BoxDecoration(
-            color: Color(0xFF2E7D32),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(Icons.check, color: Colors.white, size: size * 0.7),
-        ),
-      );
+    tween: Tween(begin: 0, end: 1),
+    duration: const Duration(milliseconds: 700),
+    curve: Curves.elasticOut,
+    builder: (_, v, child) => Transform.scale(scale: v, child: child),
+    child: Container(
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(
+        color: Color(0xFF2E7D32),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(Icons.check, color: Colors.white, size: size * 0.7),
+    ),
+  );
 }
