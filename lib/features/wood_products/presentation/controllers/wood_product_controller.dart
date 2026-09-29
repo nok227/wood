@@ -35,8 +35,8 @@ class WoodProductController extends GetxController {
   var selectedSizeUnit = 'mm'.obs;
 
   // ---------- หน่วยนับจำนวน ----------
-  final List<String> unitOptions = ['ແຜ່ນ', 'ທ່ອນ', 'ວົງ', 'ອື່ນໆ'];
-  var selectedUnit = 'ແຜ່ນ'.obs;
+final List<String> unitOptions = ['ແຜ່ນ', 'ທ່ອນ', 'ວົງ', 'ອື່ນໆ'];
+var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint 'ເລືອກໜ່ວຍນັບ'
 
   // ---------- โหมดแก้ไข ----------
   var editingProductId = RxnString();
@@ -392,23 +392,24 @@ class WoodProductController extends GetxController {
   // ══════════════════════════════════════════════
   // 🧹 ລ້າງຟອມ
   // ══════════════════════════════════════════════
-  void clearForm() {
-    editingProductId.value = null;
-    _originalPrice = null;
-    _originalPriceUpdatedAt = null;
-    nameController.clear();
-    woodTypeController.clear();
-    widthController.clear();
-    lengthController.clear();
-    thicknessController.clear();
-    quantityController.text = '1';
-    customUnitController.clear();
-    priceController.clear();
-    selectedUnit.value = 'ແຜ່ນ';
-    selectedSizeUnit.value = 'cm';
-    existingImageUrls.clear();
-    selectedImages.clear();
-  }
+ // ─── ໃໝ່ ───
+void clearForm() {
+  editingProductId.value = null;
+  _originalPrice = null;
+  _originalPriceUpdatedAt = null;
+  nameController.clear();
+  woodTypeController.clear();
+  widthController.clear();
+  lengthController.clear();
+  thicknessController.clear();
+  quantityController.text = '1';
+  customUnitController.clear();
+  priceController.clear();
+  selectedUnit.value = '';              // ✅ ຫວ່າງ
+  selectedSizeUnit.value = 'cm';
+  existingImageUrls.clear();
+  selectedImages.clear();
+}
 
   String _fmtPrice(num v) {
     String text = v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();

@@ -32,6 +32,10 @@ class _NumFmt extends TextInputFormatter {
 class AccountPage extends StatefulWidget {
   const AccountPage({Key? key}) : super(key: key);
 
+  /// true = ສະແດງ appbar ສະຫຼຸບ (ຍອດລວມ/ເງິນສົດ/ເງິນໂອນ/ລາຍຮັບ/ລາຍຈ່າຍ)
+  /// false = ເຊື່ອງ (ເມື່ອເລື່ອນລາຍການຂຶ້ນ). Shell ຟັງຄ່ານີ້ເພື່ອເຊື່ອງ/ສະແດງ appbar.
+  static final ValueNotifier<bool> headerVisible = ValueNotifier<bool>(true);
+
   @override
   State<AccountPage> createState() => _AccountPageState();
 }
@@ -40,10 +44,58 @@ class _AccountPageState extends State<AccountPage> {
   late final AccountController controller;
   final fmt = NumberFormat('#,###');
 
+  // ✅ ScrollController ແທນ NotificationListener ເກົ່າ
+  final ScrollController _scrollController = ScrollController();
+  double _lastOffset = 0;
+
+  // ✅ ຕົວບອກວ່າ banner + ປຸ່ມ ຄວນສະແດງ ຫຼື ບໍ່
+  final ValueNotifier<bool> _bannerVisible = ValueNotifier<bool>(true);
+
   @override
   void initState() {
     super.initState();
     controller = Get.find<AccountController>();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _bannerVisible.dispose();
+
+    // ຄືນຄ່າ appbar ໃຫ້ສະແດງ ເມື່ອອອກຈາກໜ້ານີ້
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AccountPage.headerVisible.value = true;
+    });
+    super.dispose();
+  }
+
+  // ══════════════════════════════════════════════
+  // ✅ Scroll listener — ເຊື່ອງ/ສະແດງ banner + ປຸ່ມ
+  //    ເລື່ອນລົງ (swipe ຂຶ້ນ) → ເຊື່ອງ
+  //    ເລື່ອນຂຶ້ນ (swipe ລົງ) → ສະແດງ
+  // ══════════════════════════════════════════════
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final offset = _scrollController.offset;
+    final delta = offset - _lastOffset;
+    _lastOffset = offset;
+
+    // ຢູ່ເທິງສຸດ → ສະແດງສະເໝີ
+    if (offset < 20) {
+      if (!_bannerVisible.value) _bannerVisible.value = true;
+      return;
+    }
+
+    // ເລື່ອນລົງ → ເຊື່ອງ
+    if (delta > 5 && _bannerVisible.value) {
+      _bannerVisible.value = false;
+    }
+    // ເລື່ອນຂຶ້ນ → ສະແດງ
+    else if (delta < -5 && !_bannerVisible.value) {
+      _bannerVisible.value = true;
+    }
   }
 
   String _day(DateTime d) {
@@ -70,8 +122,38 @@ class _AccountPageState extends State<AccountPage> {
       backgroundColor: const Color(0xFFF5F0EA),
       body: Column(
         children: [
-          _balanceBanner(),
-          _actionButtons(),
+          // ══════════════════════════════════════════════
+          // ✅ Banner + ປຸ່ມ ຮັບ/ຈ່າຍ ເງິນ
+          //    ເຊື່ອງ/ສະແດງໄດ້ຕາມການເລື່ອນພ້ອມກັນ
+          // ══════════════════════════════════════════════
+          ValueListenableBuilder<bool>(
+            valueListenable: _bannerVisible,
+            builder: (context, visible, child) {
+              return AnimatedSize(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: visible ? 1 : 0,
+                  child: visible
+                      ? child
+                      : const SizedBox(width: double.infinity),
+                ),
+              );
+            },
+            // ✅ ໃສ່ທັງ banner + ປຸ່ມ ເຂົ້າ Column ດຽວກັນ
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _balanceBanner(),
+                _actionButtons(),
+              ],
+            ),
+          ),
+
+          // ══════════════════════════════════════════════
+          // ✅ ລາຍການ — ໃຊ້ _scrollController
+          // ══════════════════════════════════════════════
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value &&
@@ -86,6 +168,7 @@ class _AccountPageState extends State<AccountPage> {
                 );
               }
               return ListView.builder(
+                controller: _scrollController,   // ✅ ຜູກ controller
                 padding: const EdgeInsets.only(
                     bottom: 100, left: 12, right: 12, top: 4),
                 itemCount: groups.length,
@@ -105,40 +188,41 @@ class _AccountPageState extends State<AccountPage> {
     return Obx(() {
       final bal = controller.balance;
       return Container(
-        margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Colors.brown.shade700, Colors.brown.shade500],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: Colors.brown.withOpacity(0.25),
-              blurRadius: 12,
-              offset: const Offset(0, 5),
+              color: Colors.brown.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.account_balance_wallet,
-                    color: Colors.white70, size: 14),
-                SizedBox(width: 5),
+                    color: Colors.white70, size: 12),
+                SizedBox(width: 4),
                 Text('ຍອດຄົງເຫຼືອ',
                     style: TextStyle(
                         color: Colors.white70,
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5)),
+                        letterSpacing: 0.3)),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 2),
             FittedBox(
               fit: BoxFit.scaleDown,
               child: AnimatedNumber(
@@ -147,14 +231,14 @@ class _AccountPageState extends State<AccountPage> {
                 duration: 1200,
                 style: TextStyle(
                   color: bal < 0 ? Colors.red.shade200 : Colors.white,
-                  fontSize: 28,
+                  fontSize: 22,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 0.5,
+                  letterSpacing: 0.3,
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            // ── ສົດ / ໂອນ — ແບບບາງໆ ──
+            const SizedBox(height: 8),
+            // ── ສົດ / ໂອນ ──
             Row(
               children: [
                 Expanded(
@@ -166,7 +250,7 @@ class _AccountPageState extends State<AccountPage> {
                 ),
                 Container(
                   width: 1,
-                  height: 24,
+                  height: 20,
                   color: Colors.white24,
                 ),
                 Expanded(
@@ -190,16 +274,15 @@ class _AccountPageState extends State<AccountPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(i, color: Colors.white70, size: 12),
-            const SizedBox(width: 4),
+            Icon(i, color: Colors.white70, size: 11),
+            const SizedBox(width: 3),
             Text(l,
                 style: const TextStyle(
                     color: Colors.white70,
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.w600)),
           ],
         ),
-        const SizedBox(height: 2),
         FittedBox(
           fit: BoxFit.scaleDown,
           child: AnimatedNumber(
@@ -208,7 +291,7 @@ class _AccountPageState extends State<AccountPage> {
             duration: 1100,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.w800,
             ),
           ),

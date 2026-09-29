@@ -376,7 +376,7 @@ class _WoodProductListPageState extends State<WoodProductListPage>
             ),
           ),
 
-          // ── ແຕ່ລະຊະນິດ (Level 2) — ✅ ຫຼຸດ padding ເທິງ
+          // ── ແຕ່ລະຊະນິດ (Level 2) ──
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
             child: Column(
@@ -384,7 +384,7 @@ class _WoodProductListPageState extends State<WoodProductListPage>
               children: [
                 for (int i = 0; i < typeKeys.length; i++) ...[
                   _typeSubHeader(typeKeys[i], typeMap[typeKeys[i]]!.length),
-                  const SizedBox(height: 4), // ✅ ຫຼຸດຈາກ 8 → 4
+                  const SizedBox(height: 4),
 
                   for (int j = 0; j < typeMap[typeKeys[i]]!.length; j++) ...[
                     _productCard(typeMap[typeKeys[i]]![j], isAdmin, controller),
@@ -482,7 +482,7 @@ class _WoodProductListPageState extends State<WoodProductListPage>
   }
 
   // ══════════════════════════════════════════════
-  // 🎴 ກາດສິນຄ້າ (Level 3) — ✅ ໃຊ້ Column + Align
+  // 🎴 ກາດສິນຄ້າ (Level 3)
   // ══════════════════════════════════════════════
   Widget _productCard(
     WoodProductModel item,
@@ -490,57 +490,27 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     WoodProductController controller,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2), // ✅ ຫຼຸດຈາກ 4 → 2
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── ຮູບ 9:16 ──
-          GestureDetector(
+          // ── ຮູບ 9:16 — ປັດຊ້າຍ/ຂວາໄດ້ ──
+          _SwipeableImage(
+            imageUrls: item.imageUrls,
+            width: 72,
+            height: 130,
             onTap: item.imageUrls.isEmpty
                 ? null
                 : () => Get.to(
-                    () => WoodGalleryPage(
-                      imageUrls: item.imageUrls,
-                      title: item.name,
-                    ),
-                  ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                width: 72,
-                height: 130,
-                child: item.imageUrls.isEmpty
-                    ? Icon(
-                        Icons.image_not_supported,
-                        color: Colors.grey.shade400,
-                        size: 22,
-                      )
-                    : CachedNetworkImage(
-                        imageUrl: item.imageUrls.first,
-                        fit: BoxFit.contain,
-                        memCacheWidth: 216,
-                        placeholder: (c, u) => const Center(
-                          child: SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.brown,
-                            ),
-                          ),
-                        ),
-                        errorWidget: (c, u, e) => Icon(
-                          Icons.broken_image,
-                          color: Colors.grey.shade400,
-                          size: 22,
-                        ),
+                      () => WoodGalleryPage(
+                        imageUrls: item.imageUrls,
+                        title: item.name,
                       ),
-              ),
-            ),
+                    ),
           ),
           const SizedBox(width: 10),
 
-          // ── ຂໍ້ມູນ — ✅ ໃຊ້ SizedBox ຄວບຄຸມຄວາມສູງ ບໍ່ໃຊ້ Row ຊ້ອນ ──
+          // ── ຂໍ້ມູນ ──
           Expanded(
             child: SizedBox(
               height: 130,
@@ -548,14 +518,10 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // ═══════════════════════════════════
-                  // ກຸ່ມເທິງ: ຂະໜາດ + ແປງໜ່ວຍ + ຈຳນວນ
-                  // ═══════════════════════════════════
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // ✅ Label ຂະໜາດ (ບັນທັດເທິງ)
                       Text(
                         'ຂະໜາດ',
                         style: TextStyle(
@@ -566,7 +532,6 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                         ),
                       ),
                       const SizedBox(height: 1),
-                      // ✅ ຄ່າຂະໜາດ (ບັນທັດລຸ່ມ)
                       Text(
                         '${formatNum(item.width)} × ${formatNum(item.length)} × ${formatNum(item.thickness)} ${item.sizeUnit}',
                         style: const TextStyle(
@@ -580,12 +545,10 @@ class _WoodProductListPageState extends State<WoodProductListPage>
 
                       const SizedBox(height: 4),
 
-                      // ✅ ແປງໜ່ວຍ (ບໍ່ມີ label — ຕໍ່ຈາກຂະໜາດ)
                       _conversionColumn(item),
 
                       const SizedBox(height: 6),
 
-                      // ✅ Label ຈຳນວນ (ບັນທັດເທິງ)
                       Text(
                         'ຈຳນວນ',
                         style: TextStyle(
@@ -596,7 +559,6 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                         ),
                       ),
                       const SizedBox(height: 1),
-                      // ✅ ຄ່າຈຳນວນ (ບັນທັດລຸ່ມ)
                       Text(
                         '${item.quantity} ${item.unit}',
                         style: TextStyle(
@@ -607,10 +569,6 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                       ),
                     ],
                   ),
-
-                  // ═══════════════════════════════════
-                  // ✅ ລາຄາ — Label + ຄ່າ ຢູ່ແຖວດຽວກັນ (ຍົກເວັ້ນ)
-                  // ═══════════════════════════════════
                   Align(
                     alignment: Alignment.centerRight,
                     child: Row(
@@ -763,6 +721,167 @@ class _WoodProductListPageState extends State<WoodProductListPage>
             child: const Text('ລຶບ', style: TextStyle(color: Colors.red)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════
+// 🖼️ ຮູບທີ່ປັດໄດ້ (Swipeable)
+// ══════════════════════════════════════════════
+class _SwipeableImage extends StatefulWidget {
+  final List<String> imageUrls;
+  final double width;
+  final double height;
+  final VoidCallback? onTap;
+
+  const _SwipeableImage({
+    required this.imageUrls,
+    required this.width,
+    required this.height,
+    this.onTap,
+  });
+
+  @override
+  State<_SwipeableImage> createState() => _SwipeableImageState();
+}
+
+class _SwipeableImageState extends State<_SwipeableImage> {
+  final PageController _pageCtrl = PageController();
+  int _current = 0;
+
+  @override
+  void dispose() {
+    _pageCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // ── ບໍ່ມີຮູບ ──
+    if (widget.imageUrls.isEmpty) {
+      return GestureDetector(
+        onTap: widget.onTap,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: widget.width,
+            height: widget.height,
+            color: Colors.grey.shade100,
+            child: Icon(
+              Icons.image_not_supported,
+              color: Colors.grey.shade400,
+              size: 22,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final hasMultiple = widget.imageUrls.length > 1;
+
+    return SizedBox(
+      width: widget.width,
+      height: widget.height,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Stack(
+          children: [
+            // ── ຮູບທີ່ປັດໄດ້ ──
+            PageView.builder(
+              key: ValueKey('pv-${widget.imageUrls.first}'),
+              controller: _pageCtrl,
+              physics: const PageScrollPhysics(),
+              itemCount: widget.imageUrls.length,
+              onPageChanged: (i) => setState(() => _current = i),
+              itemBuilder: (_, i) => GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: widget.onTap,
+                child: CachedNetworkImage(
+                  imageUrl: widget.imageUrls[i],
+                  fit: BoxFit.contain,
+                  memCacheWidth: 216,
+                  placeholder: (c, u) => const Center(
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.brown,
+                      ),
+                    ),
+                  ),
+                  errorWidget: (c, u, e) => Icon(
+                    Icons.broken_image,
+                    color: Colors.grey.shade400,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ),
+
+            // ── ຈຸດ indicator ລຸ່ມ ──
+            if (hasMultiple)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 4,
+                child: IgnorePointer(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(widget.imageUrls.length, (i) {
+                      final active = _current == i;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                        width: active ? 6 : 4,
+                        height: active ? 6 : 4,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: active
+                              ? Colors.brown.shade700
+                              : Colors.white.withOpacity(0.85),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.25),
+                              blurRadius: 2,
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ),
+
+            // ── badge 1/N ມຸມເທິງຂວາ ──
+            if (hasMultiple)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: IgnorePointer(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.55),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${_current + 1}/${widget.imageUrls.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -1422,14 +1422,18 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     VoidCallback onTap,
     VoidCallback onRm, {
     double h = 110,
+    BoxFit fit = BoxFit.cover,
+    VoidCallback? onView,
   }) {
     return InkWell(
-      onTap: f == null ? onTap : null,
+      onTap: f == null ? onTap : onView,
       borderRadius: BorderRadius.circular(10),
       child: Container(
         height: h,
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          color: fit == BoxFit.contain && f != null
+              ? Colors.grey.shade100
+              : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: f == null ? Colors.grey.shade300 : Colors.green,
@@ -1445,9 +1449,34 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                       f,
                       width: double.infinity,
                       height: double.infinity,
-                      fit: BoxFit.cover,
+                      fit: fit,
+                      alignment: Alignment.center,
                     ),
                   ),
+                  if (onView != null)
+                    Positioned(
+                      bottom: 6,
+                      right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.zoom_out_map,
+                                color: Colors.white, size: 14),
+                            SizedBox(width: 4),
+                            Text('ກົດເພື່ອຂະຫຍາຍ',
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 10.5)),
+                          ],
+                        ),
+                      ),
+                    ),
                   Positioned(
                     top: 4,
                     right: 4,
@@ -1469,24 +1498,28 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                   ),
                 ],
               )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.add_a_photo_outlined,
-                    size: 32,
-                    color: Colors.brown.shade400,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.brown.shade700,
+            : Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.add_a_photo_outlined,
+                      size: title.isEmpty ? 56 : 38,
+                      color: Colors.brown.shade400,
                     ),
-                  ),
-                ],
+                    if (title.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.brown.shade700,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
       ),
     );
@@ -2160,6 +2193,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           Icons.receipt_long_outlined,
           () => _pick(which: 'debtBill'),
           () => setState(() => _debtBillImg = null),
+          big: true,
         ),
 
         const SizedBox(height: 16),
@@ -2294,8 +2328,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     File? f,
     IconData icon,
     VoidCallback onPick,
-    VoidCallback onRm,
-  ) {
+    VoidCallback onRm, {
+    bool big = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2308,8 +2343,25 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           ),
         ),
         const SizedBox(height: 8),
-        _imgTile('', f, onPick, onRm, h: 120),
+        _imgTile(
+          '',
+          f,
+          onPick,
+          onRm,
+          h: (big && f != null) ? 320 : 120,
+          fit: big ? BoxFit.contain : BoxFit.cover,
+          onView: (big && f != null) ? () => _viewFull(f!) : null,
+        ),
       ],
+    );
+  }
+
+  // ── ເປີດຮູບເຕັມຈໍ (ຂະຫຍາຍ/ຫຍໍ້ໄດ້ + ປັດຂຶ້ນ/ລົງເພື່ອປິດ) ──
+  void _viewFull(File f) {
+    Get.dialog(
+      _FullImageViewer(file: f),
+      barrierColor: Colors.transparent,
+      useSafeArea: false,
     );
   }
 
@@ -2753,4 +2805,123 @@ class _RowLabel extends StatelessWidget {
       ),
     ],
   );
+}
+
+
+// ══════════════════════════════════════════════
+// 🖼️ Full-screen image viewer — ປັດຂຶ້ນ/ລົງເພື່ອປິດ, ຫຍິກນິ້ວເພື່ອຊູມ
+// ══════════════════════════════════════════════
+class _FullImageViewer extends StatefulWidget {
+  final File file;
+  const _FullImageViewer({required this.file});
+
+  @override
+  State<_FullImageViewer> createState() => _FullImageViewerState();
+}
+
+class _FullImageViewerState extends State<_FullImageViewer> {
+  final _tc = TransformationController();
+  double _dy = 0;
+  int _pointers = 0;
+  bool _dragging = false;
+
+  bool get _zoomed => _tc.value.getMaxScaleOnAxis() > 1.02;
+
+  @override
+  void dispose() {
+    _tc.dispose();
+    super.dispose();
+  }
+
+  void _onMove(PointerMoveEvent e) {
+    if (_pointers != 1 || _zoomed) return;
+    setState(() {
+      _dragging = true;
+      _dy += e.delta.dy;
+    });
+  }
+
+  void _onEnd() {
+    if (_pointers > 0) return;
+    if (!_dragging) return;
+    final h = MediaQuery.of(context).size.height;
+    if (_dy.abs() > 110) {
+      // ປັດພໍ → ອອກ
+      setState(() {
+        _dragging = false;
+        _dy = _dy > 0 ? h : -h;
+      });
+      Future.delayed(const Duration(milliseconds: 180), () {
+        if (mounted) Get.back();
+      });
+    } else {
+      // ບໍ່ພໍ → ເດັ້ງກັບ
+      setState(() {
+        _dragging = false;
+        _dy = 0;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final h = MediaQuery.of(context).size.height;
+    final progress = (_dy.abs() / (h * 0.4)).clamp(0.0, 1.0);
+    final dur = _dragging ? Duration.zero : const Duration(milliseconds: 180);
+
+    return Material(
+      type: MaterialType.transparency,
+      child: AnimatedContainer(
+        duration: dur,
+        color: Colors.black.withOpacity(1 - 0.75 * progress),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Listener(
+                onPointerDown: (_) {
+                  _pointers++;
+                  if (_pointers > 1) setState(() => _dy = 0);
+                },
+                onPointerMove: _onMove,
+                onPointerUp: (_) {
+                  _pointers--;
+                  _onEnd();
+                },
+                onPointerCancel: (_) {
+                  _pointers--;
+                  _onEnd();
+                },
+                child: AnimatedContainer(
+                  duration: dur,
+                  curve: Curves.easeOut,
+                  transform: Matrix4.translationValues(0, _dy, 0),
+                  child: InteractiveViewer(
+                    transformationController: _tc,
+                    minScale: 1,
+                    maxScale: 6,
+                    child: Center(
+                      child: Image.file(widget.file, fit: BoxFit.contain),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Opacity(
+                  opacity: 1 - progress,
+                  child: IconButton(
+                    onPressed: () => Get.back(),
+                    icon: const Icon(Icons.close,
+                        color: Colors.white, size: 28),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
