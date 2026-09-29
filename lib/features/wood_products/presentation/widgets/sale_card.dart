@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import 'package:wood/core/util/option_tile.dart';
 import 'package:wood/features/wood_products/presentation/widgets/animated_number.dart';
 
 import '../../domain/entities/sale_order_entity.dart';
@@ -43,6 +44,13 @@ class SaleCard extends StatelessWidget {
     final ctrl = Get.find<SalesController>();
     final fmt = NumberFormat('#,###');
 
+    // ── 3 ຮູບ ──
+    final payUrl = _first(sale.paymentImageUrls);
+    final billUrl = _first(sale.billImageUrls);
+    final thirdUrl =
+        _first(sale.debtPaymentImageUrls) ?? _first(sale.topUpImageUrls);
+
+    // ── Image viewer list ──
     final payLabel = sale.paymentType == 'cash' ? 'ຮູບເງິນສົດ' : 'ຮູບສະລິບໂອນ';
     final images = <SaleImageItem>[
       ...sale.paymentImageUrls
@@ -62,211 +70,247 @@ class SaleCard extends StatelessWidget {
         ? null
         : () => Get.to(() => SaleImageViewer(images: images));
 
-    final borderColor = sale.isMismatch
-        ? const Color(0xFFB71C1C)
-        : sale.hasDebt
-        ? Colors.orange.shade800
-        : (sale.isConfirmed ? Colors.green : Colors.amber);
-
-    return Card(
+    return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: borderColor, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => Get.to(() => SaleDetailPage(sale: sale)),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => Get.to(() => SaleDetailPage(sale: sale)),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ① ຮູບເງິນ (ສົດ / ໂອນ)
-                  _thumb(
-                    _first(sale.paymentImageUrls),
-                    Icons.payments_outlined,
-                    openViewer,
+                  // ── 3 ຮູບ ──
+                  Column(
+                    children: [
+                      _thumb(payUrl, openViewer),
+                      const SizedBox(height: 4),
+                      _thumb(billUrl, openViewer),
+                      const SizedBox(height: 4),
+                      _thumb(thirdUrl, openViewer),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-                  // ② ຮູບໃບບິນ
-                  _thumb(
-                    _first(sale.billImageUrls),
-                    Icons.receipt_long_outlined,
-                    openViewer,
-                  ),
-                  const SizedBox(height: 6),
-                  // ③ ຮູບຈ່າຍໜີ້ (ຖ້າມີ)
-                  _thumb(
-                    _first(sale.debtPaymentImageUrls),
-                    Icons.account_balance_wallet_outlined,
-                    openViewer,
+                  const SizedBox(width: 10),
+
+                  // ── ຂໍ້ມູນ ──
+                  Expanded(child: _buildInfo(ctrl, fmt)),
+
+                  // ── Admin menu ──
+                  _FloatingActionsButton(
+                    key: ValueKey('act-${sale.id}'),
+                    saleId: sale.id,
+                    isAdmin: isAdmin,
+                    onDelete: () => _deleteDialog(ctrl),
                   ),
                 ],
               ),
-              const SizedBox(width: 12),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── ຫົວ: ຊື່ ຫຼື summary ──
-                    Text(
-                      sale.shortSummary,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    // ── ລາຍການຍ່ອຍ (ຖ້າມີຫຼາຍ) ──
-                    if (sale.hasMultiItems) ...[
-                      const SizedBox(height: 4),
-                      ...sale.items
-                          .take(2)
-                          .map(
-                            (it) => Padding(
-                              padding: const EdgeInsets.only(bottom: 2),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.circle,
-                                    size: 5,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Expanded(
-                                    child: Text(
-                                      '${it.productName} · ${it.quantity} ${it.unit}'
-                                      '${it.hasDiscount ? " · ລົດ ${fmt.format(it.discountPerUnit)}" : ""}',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey.shade700,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      if (sale.items.length > 2)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2, left: 10),
-                          child: Text(
-                            '+${sale.items.length - 2} ລາຍການອື່ນ',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.brown.shade600,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
-                    ],
-
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.inventory_2_outlined,
-                          size: 11,
-                          color: Colors.grey.shade600,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${sale.itemCount} ລາຍການ · ${sale.totalQuantity} ຊິ້ນ',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 2),
-                    AnimatedNumber(
-                      value: sale.totalAmount,
-                      suffix: ' ກີບ',
-                      duration: 1200,
-                      replayOnRouteChange: true,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.brown,
-                      ),
-                    ),
-                    Text(
-                      'ວິທີ: ${sale.paymentType == 'cash'
-                          ? 'ເງິນສົດ'
-                          : sale.paymentType == 'transfer'
-                          ? 'ເງິນໂອນ'
-                          : sale.paymentType == 'mixed'
-                          ? 'ປະສົມ'
-                          : 'ຕິດໜີ້'}',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    Text(
-                      ctrl.formatLaoDate(sale.date),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-
-                    if (sale.discountTotal > 0) ...[
-                      const SizedBox(height: 4),
-                      _miniChip(
-                        icon: Icons.discount,
-                        text:
-                            'ສ່ວນລົດລວມ ${fmt.format(sale.discountTotal)} ກີບ',
-                        color: Colors.red.shade700,
-                        bgColor: Colors.red.shade50,
-                      ),
-                    ],
-                    if (sale.changeAmount > 0) ...[
-                      const SizedBox(height: 4),
-                      _miniChip(
-                        icon: Icons.swap_horiz,
-                        text: 'ເງິນທອນ ${fmt.format(sale.changeAmount)} ກີບ',
-                        color: Colors.blue.shade700,
-                        bgColor: Colors.blue.shade50,
-                      ),
-                    ],
-                    const SizedBox(height: 6),
-                    _paymentBadge(fmt),
-                    if ((sale.note ?? '').trim().isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      _miniChip(
-                        icon: Icons.sticky_note_2_outlined,
-                        text: sale.note!,
-                        color: Colors.brown.shade700,
-                        bgColor: Colors.brown.shade50,
-                      ),
-                    ],
-                    const SizedBox(height: 6),
-                    _statusButton(ctrl),
-                  ],
-                ),
-              ),
-
-              _FloatingActionsButton(
-                key: ValueKey('act-${sale.id}'),
-                saleId: sale.id,
-                isAdmin: isAdmin,
-                onDelete: () => _deleteDialog(ctrl),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  // ══════════════════════════════════════════════
+  // 📋 Info Section
+  // ══════════════════════════════════════════════
+  Widget _buildInfo(SalesController ctrl, NumberFormat fmt) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── ຫົວ: ຊື່ / summary ──
+        Text(
+          sale.shortSummary,
+          style: const TextStyle(
+            fontSize: 14.5,
+            fontWeight: FontWeight.w900,
+            color: Colors.black87,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+
+        // ── ລາຍການຍ່ອຍ ──
+        if (sale.hasMultiItems) ...[
+          const SizedBox(height: 4),
+          ...sale.items
+              .take(2)
+              .map(
+                (it) => Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade400,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          '${it.productName} · ${it.quantity} ${it.unit}'
+                          '${it.hasDiscount ? " · ລົດ ${fmt.format(it.discountPerUnit)}" : ""}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          if (sale.items.length > 2)
+            Padding(
+              padding: const EdgeInsets.only(top: 2, left: 9),
+              child: Text(
+                '+${sale.items.length - 2} ລາຍການອື່ນ',
+                style: TextStyle(
+                  fontSize: 10.5,
+                  color: Colors.brown.shade600,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+        ],
+
+        const SizedBox(height: 4),
+
+        // ── ຈຳນວນ ──
+        Text(
+          '${sale.itemCount} ລາຍການ · ${sale.totalQuantity} ຊິ້ນ',
+          style: TextStyle(
+            fontSize: 11.5,
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+
+        const SizedBox(height: 6),
+
+        // ── ລວມ ──
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              'ລວມ ',
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade500,
+              ),
+            ),
+            AnimatedNumber(
+              value: sale.totalAmount,
+              suffix: ' ກີບ',
+              duration: 1200,
+              replayOnRouteChange: true,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                color: Colors.brown.shade700,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 4),
+
+        // ── ວິທີ ──
+        Row(
+          children: [
+            Text(
+              'ວິທີ: ',
+              style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500),
+            ),
+            Text(
+              sale.paymentType == 'cash'
+                  ? 'ເງິນສົດ'
+                  : sale.paymentType == 'transfer'
+                      ? 'ເງິນໂອນ'
+                      : sale.paymentType == 'mixed'
+                          ? 'ປະສົມ'
+                          : 'ຕິດໜີ້',
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                color: Colors.grey.shade800,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 2),
+
+        // ── ວັນທີ ──
+        Text(
+          ctrl.formatLaoDate(sale.date),
+          style: TextStyle(fontSize: 10.5, color: Colors.grey.shade500),
+        ),
+
+        // ── ສ່ວນລົດ ──
+        if (sale.discountTotal > 0) ...[
+          const SizedBox(height: 4),
+          _miniChip(
+            icon: Icons.discount,
+            text: 'ສ່ວນລົດ ${fmt.format(sale.discountTotal)} ກີບ',
+            color: Colors.red.shade700,
+          ),
+        ],
+
+        // ── ເງິນທອນ ──
+        if (sale.changeAmount > 0) ...[
+          const SizedBox(height: 4),
+          _miniChip(
+            icon: Icons.swap_horiz,
+            text: 'ເງິນທອນ ${fmt.format(sale.changeAmount)} ກີບ',
+            color: Colors.blue.shade700,
+          ),
+        ],
+
+        const SizedBox(height: 6),
+        _paymentBadge(fmt),
+
+        // ── ໝາຍເຫດ ──
+        if ((sale.note ?? '').trim().isNotEmpty) ...[
+          const SizedBox(height: 4),
+          _miniChip(
+            icon: Icons.sticky_note_2_outlined,
+            text: sale.note!,
+            color: Colors.brown.shade700,
+          ),
+        ],
+
+        const Spacer(),
+        _statusButton(ctrl),
+      ],
+    );
+  }
+
+  // ══════════════════════════════════════════════
+  // 💳 Payment Badge
+  // ══════════════════════════════════════════════
   Widget _paymentBadge(NumberFormat fmt) {
     if (sale.hasDebt) {
       final name = _wPrefix(sale.customerName, 'ຊື່');
@@ -280,7 +324,6 @@ class SaleCard extends StatelessWidget {
             icon: Icons.warning_amber_rounded,
             text: 'ຕິດໜີ້ ${fmt.format(sale.debtAmount)} ກີບ',
             color: Colors.orange.shade800,
-            bgColor: Colors.orange.shade50,
           ),
           if (name.isNotEmpty) ...[
             const SizedBox(height: 3),
@@ -308,7 +351,6 @@ class SaleCard extends StatelessWidget {
         text:
             'ສົດ ${fmt.format(sale.cashPaidAmount)} · ໂອນ ${fmt.format(sale.transferPaidAmount)}',
         color: Colors.indigo.shade700,
-        bgColor: Colors.indigo.shade50,
       );
     }
 
@@ -316,7 +358,6 @@ class SaleCard extends StatelessWidget {
       icon: Icons.verified_outlined,
       text: 'ຈ່າຍແລ້ວ',
       color: Colors.green.shade700,
-      bgColor: Colors.green.shade50,
     );
   }
 
@@ -341,72 +382,58 @@ class SaleCard extends StatelessWidget {
     );
   }
 
+  // ── Badge: ສີຕົວໜັງສືເທົ່ານັ້ນ ──
   Widget _badge({
     required IconData icon,
     required String text,
     required Color color,
-    required Color bgColor,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.5)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-              overflow: TextOverflow.ellipsis,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: color),
+        const SizedBox(width: 5),
+        Flexible(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w900,
+              color: color,
+              letterSpacing: 0.2,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
+  // ── Mini Chip: ສີຕົວໜັງສືເທົ່ານັ້ນ ──
   Widget _miniChip({
     required IconData icon,
     required String text,
     required Color color,
-    required Color bgColor,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 11, color: color),
-          const SizedBox(width: 3),
-          Flexible(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w800,
+              color: color,
+              letterSpacing: 0.2,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -417,31 +444,63 @@ class SaleCard extends StatelessWidget {
     return null;
   }
 
-  Widget _thumb(String? url, IconData fallback, VoidCallback? onTap) {
+  // ══════════════════════════════════════════════
+  // 🖼️ Thumb — ✅ ບໍ່ມີພື້ນຫຼັງ
+  // ══════════════════════════════════════════════
+  Widget _thumb(String? url, VoidCallback? onTap) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: url != null ? onTap : null,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         child: Container(
           width: 76,
           height: 76,
-          color: Colors.grey.shade100,
+          // ✅ ບໍ່ມີ color → ພື້ນຫຼັງໂປ່ງໃສ
           child: url != null
               ? CachedNetworkImage(
                   imageUrl: url,
-                  fit: BoxFit.cover,
-                  memCacheWidth: 168,
-                  placeholder: (c, u) => Container(color: Colors.grey.shade100),
-                  errorWidget: (_, __, ___) =>
-                      Icon(fallback, color: Colors.grey.shade400, size: 32),
+                  fit: BoxFit.contain,
+                  memCacheWidth: 152,
+                  placeholder: (c, u) => const SizedBox.shrink(),
+                  errorWidget: (_, __, ___) => _noImagePlaceholder(),
                 )
-              : Icon(fallback, color: Colors.grey.shade400, size: 32),
+              : _noImagePlaceholder(),
         ),
       ),
     );
   }
 
+  // ── ບໍ່ມີຮູບ ──
+  Widget _noImagePlaceholder() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.image_not_supported_outlined,
+            color: Colors.grey.shade300,
+            size: 20,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'ບໍ່ມີຮູບ',
+            style: TextStyle(
+              fontSize: 9,
+              color: Colors.grey.shade400,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════
+  // 🎯 Status
+  // ══════════════════════════════════════════════
   Widget _statusButton(SalesController c) {
+    // ─── ບັນຊີບໍ່ຕົງ (interactive) ───
     if (sale.isMismatch) {
       return InkWell(
         onTap: isAdmin ? () => _mismatchDialog(c, isEdit: true) : null,
@@ -452,7 +511,10 @@ class SaleCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.red.shade50,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFB71C1C), width: 1.5),
+            border: Border.all(
+              color: const Color(0xFFB71C1C).withOpacity(0.5),
+              width: 1.0,
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -480,33 +542,27 @@ class SaleCard extends StatelessWidget {
       );
     }
 
+    // ─── ຈ່າຍແລ້ວ (PASSIVE) ───
     if (sale.isConfirmed) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        decoration: BoxDecoration(
-          color: Colors.green.shade50,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.green, width: 1.5),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            _Checkmark(size: 16),
-            SizedBox(width: 6),
-            Text(
-              'ເງິນເຂົ້າແລ້ວ',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2E7D32),
-              ),
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          _Checkmark(size: 16),
+          SizedBox(width: 6),
+          Text(
+            'ເງິນເຂົ້າແລ້ວ',
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF2E7D32),
+              letterSpacing: 0.2,
             ),
-          ],
-        ),
+          ),
+        ],
       );
     }
 
+    // ─── ຕິດໜີ້ (interactive) ───
     if (sale.hasDebt) {
       return InkWell(
         onTap: isAdmin ? () => _confirmReceiveDebt(c) : null,
@@ -517,7 +573,10 @@ class SaleCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.amber.shade50,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.amber.shade700, width: 1.5),
+            border: Border.all(
+              color: Colors.amber.shade700.withOpacity(0.5),
+              width: 1.0,
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -526,7 +585,7 @@ class SaleCard extends StatelessWidget {
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  isAdmin ? 'ກວດສອບ · ແຕະຢືນຢັນຮັບເງິນ' : 'ກວດສອບ',
+                  isAdmin ? 'ແຕະຢືນຢັນຮັບເງິນ' : 'ກວດສອບ',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -541,6 +600,7 @@ class SaleCard extends StatelessWidget {
       );
     }
 
+    // ─── ລໍຖ້າຢືນຢັນ (interactive) ───
     return InkWell(
       onTap: isAdmin ? () => _pendingDialog(c) : null,
       borderRadius: BorderRadius.circular(8),
@@ -550,7 +610,10 @@ class SaleCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.amber.shade50,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.amber.shade700, width: 1.5),
+          border: Border.all(
+            color: Colors.amber.shade700.withOpacity(0.5),
+            width: 1.0,
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -559,7 +622,7 @@ class SaleCard extends StatelessWidget {
             const SizedBox(width: 6),
             Flexible(
               child: Text(
-                isAdmin ? 'ກວດສອບ · ແຕະຈັດການ' : 'ກວດສອບ',
+                isAdmin ? 'ແຕະຈັດການ' : 'ກວດສອບ',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -574,6 +637,9 @@ class SaleCard extends StatelessWidget {
     );
   }
 
+  // ══════════════════════════════════════════════
+  // 💰 ຢືນຢັນການຮັບເງິນ
+  // ══════════════════════════════════════════════
   void _confirmReceiveDebt(SalesController c) {
     final name = _wPrefix(sale.customerName, 'ຊື່');
     final addr = _wPrefix(sale.customerAddress, 'ບ້ານ');
@@ -666,60 +732,109 @@ class SaleCard extends StatelessWidget {
     );
   }
 
+  // ══════════════════════════════════════════════
+  // 🎯 ຈັດການສະຖານະ — OptionTile
+  // ══════════════════════════════════════════════
   void _pendingDialog(SalesController c) {
     Get.defaultDialog(
-      title: 'ຈັດການສະຖານະ',
-      content: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Column(
-          children: [
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                minimumSize: const Size.fromHeight(44),
-              ),
-              icon: const Icon(Icons.check, color: Colors.white),
-              label: const Text(
-                'ຢືນຢັນເງິນເຂົ້າ',
-                style: TextStyle(color: Colors.white),
-              ),
-              onPressed: () async {
-                _safeCloseDialog();
-                await Future.delayed(const Duration(milliseconds: 300));
-                await c.confirmPaymentStatus(sale.id, false);
-              },
+      title: '',
+      titlePadding: EdgeInsets.zero,
+      contentPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      backgroundColor: Colors.white,
+      radius: 20,
+      barrierDismissible: true,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.amber.shade50,
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 10),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFB71C1C),
-                minimumSize: const Size.fromHeight(44),
-              ),
-              icon: const Icon(
-                Icons.warning_amber_rounded,
-                color: Colors.white,
-              ),
-              label: const Text(
-                'ບັນຊີບໍ່ຕົງກັນ',
-                style: TextStyle(color: Colors.white),
-              ),
-              onPressed: () async {
-                _safeCloseDialog();
-                await Future.delayed(const Duration(milliseconds: 300));
-                while (Get.isDialogOpen ?? false) {
-                  _safeCloseDialog();
-                  await Future.delayed(const Duration(milliseconds: 120));
-                }
-                _mismatchDialog(c, isEdit: false);
-              },
+            child: Icon(
+              Icons.fact_check_outlined,
+              color: Colors.amber.shade800,
+              size: 30,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'ຈັດການສະຖານະ',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'ເລືອກການດຳເນີນການ',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade500,
+            ),
+          ),
+          const SizedBox(height: 18),
+          OptionTile(
+            icon: Icons.check_circle_outline,
+            iconColor: Colors.green.shade700,
+            iconBg: Colors.green.shade50,
+            title: 'ຢືນຢັນເງິນເຂົ້າ',
+            subtitle: 'ບັນທຶກວ່າຮັບເງິນຄົບແລ້ວ',
+            onTap: () async {
+              _safeCloseDialog();
+              await Future.delayed(const Duration(milliseconds: 300));
+              await c.confirmPaymentStatus(sale.id, false);
+            },
+          ),
+          const SizedBox(height: 10),
+          OptionTile(
+            icon: Icons.warning_amber_rounded,
+            iconColor: const Color(0xFFB71C1C),
+            iconBg: Colors.red.shade50,
+            title: 'ບັນຊີບໍ່ຕົງກັນ',
+            subtitle: 'ບັນທຶກບັນຫາ · ລໍຖ້າກວດສອບ',
+            onTap: () async {
+              _safeCloseDialog();
+              await Future.delayed(const Duration(milliseconds: 300));
+              while (Get.isDialogOpen ?? false) {
+                _safeCloseDialog();
+                await Future.delayed(const Duration(milliseconds: 120));
+              }
+              _mismatchDialog(c, isEdit: false);
+            },
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () => Get.back(),
+              child: Text(
+                'ຍົກເລີກ',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
-      textCancel: 'ຍົກເລີກ',
     );
   }
 
+  // ══════════════════════════════════════════════
+  // ⚠️ ບັນຊີບໍ່ຕົງ
+  // ══════════════════════════════════════════════
   void _mismatchDialog(SalesController c, {required bool isEdit}) {
     final noteCtrl = TextEditingController(
       text: isEdit ? (sale.mismatchNote ?? '') : '',
@@ -813,6 +928,9 @@ class SaleCard extends StatelessWidget {
     );
   }
 
+  // ══════════════════════════════════════════════
+  // 🗑 ຢືນຢັນການລຶບ
+  // ══════════════════════════════════════════════
   void _deleteDialog(SalesController c) {
     if (Get.isDialogOpen ?? false) return;
 
@@ -1091,10 +1209,10 @@ class _Waiting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Icon(
-    Icons.hourglass_bottom,
-    size: size * 0.85,
-    color: Colors.amber.shade800,
-  );
+        Icons.hourglass_bottom,
+        size: size * 0.85,
+        color: Colors.amber.shade800,
+      );
 }
 
 class _Checkmark extends StatelessWidget {
@@ -1102,18 +1220,18 @@ class _Checkmark extends StatelessWidget {
   const _Checkmark({this.size = 18});
   @override
   Widget build(BuildContext context) => TweenAnimationBuilder<double>(
-    tween: Tween(begin: 0, end: 1),
-    duration: const Duration(milliseconds: 700),
-    curve: Curves.elasticOut,
-    builder: (_, v, child) => Transform.scale(scale: v, child: child),
-    child: Container(
-      width: size,
-      height: size,
-      decoration: const BoxDecoration(
-        color: Color(0xFF2E7D32),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(Icons.check, color: Colors.white, size: size * 0.7),
-    ),
-  );
+        tween: Tween(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.elasticOut,
+        builder: (_, v, child) => Transform.scale(scale: v, child: child),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: const BoxDecoration(
+            color: Color(0xFF2E7D32),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(Icons.check, color: Colors.white, size: size * 0.7),
+        ),
+      );
 }

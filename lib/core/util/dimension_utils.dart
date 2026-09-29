@@ -30,8 +30,10 @@ class Dim {
 
   static String _f(double n) {
     if (n == n.roundToDouble()) return n.toStringAsFixed(0);
-    if (n < 0.01) return n.toStringAsFixed(3);
-    return n.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+    return n
+        .toStringAsFixed(4)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
   }
 }
 

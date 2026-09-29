@@ -1,4 +1,3 @@
-import '../entities/sale_entity.dart';
 import '../entities/sale_order_entity.dart';
 
 abstract class SalesRepository {
@@ -12,7 +11,6 @@ abstract class SalesRepository {
     required bool isMismatch,
     String? mismatchNote,
   });
-
   Future<void> markDebtAsPaid(String id);
 
   Future<void> payDebt(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../domain/entities/sale_order_entity.dart';
 import '../controllers/sales_controller.dart';
@@ -119,226 +120,344 @@ class _SalesListPageState extends State<SalesListPage>
     final isAdminUser = Get.find<AuthController>().isAdmin;
 
     return Scaffold(
-      backgroundColor: Colors.brown[50],
-      body: Column(
+      backgroundColor: const Color(0xFFF5F0EA),
+      body: Stack(
         children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(8, 2, 8, 4),
-            child: Obx(
-              () => Row(
-                children: [
-                  _filterChip(controller, 'ທັງໝົດ', DateFilter.all),
-                  _filterChip(controller, 'ມື້ນີ້', DateFilter.today),
-                  _filterChip(controller, 'ອາທິດນີ້', DateFilter.week),
-                  _filterChip(controller, 'ເດືອນນີ້', DateFilter.month),
-                  _filterChip(controller, 'ປີນີ້', DateFilter.year),
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            child: Obx(() {
-              if (controller.isLoading.value &&
-                  controller.allSalesList.isEmpty) {
-                return const SalesListSkeleton(count: 5);
-              }
-
-              final rev = controller.salesRevision.value;
-              final sales = controller.filteredSalesList;
-
-              if (sales.isEmpty) {
-                return RefreshIndicator(
-                  color: Colors.brown,
-                  onRefresh: () async {
-                    setState(() => _displayLimit = _perPage);
-                    await controller.fetchSales();
-                  },
-                  child: ListView(
-                    children: const [
-                      SizedBox(height: 120),
-                      Center(child: Text('ບໍ່ມີລາຍການຂາຍໃນຊ່ວງເວລານີ້')),
-                    ],
-                  ),
-                );
-              }
-
-              final grouped = _groupCached(
-                sales,
-                controller.selectedFilter.value,
-                rev,
-              );
-              final groupKeys = _cachedKeys;
-              final displayKeys = groupKeys.take(_displayLimit).toList();
-              final hasMore = groupKeys.length > displayKeys.length;
-
-              return RefreshIndicator(
-                color: Colors.brown,
-                onRefresh: () async {
-                  setState(() => _displayLimit = _perPage);
-                  await controller.fetchSales();
-                },
-                child: ListView.builder(
-                  controller: _scroll,
-                  padding: const EdgeInsets.only(
-                    bottom: 120,
-                    left: 12,
-                    right: 12,
-                  ),
-                  itemCount: displayKeys.length + (hasMore ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == displayKeys.length) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 20),
-                        child: Center(
-                          child: CircularProgressIndicator(color: Colors.brown),
-                        ),
-                      );
-                    }
-
-                    final dateKey = displayKeys[index];
-                    final salesInGroup = grouped[dateKey]!;
-                    final headerTitle = _formatDateHeader(
-                      salesInGroup.first.date,
-                    );
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          Column(
+            children: [
+              // ══════════════════════════════════════════
+              // 🔘 Filter chips
+              // ══════════════════════════════════════════
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.only(top: 4, bottom: 4),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Obx(
+                    () => Row(
                       children: [
-                        Card(
-                          color: Colors.brown[100],
-                          elevation: 1,
-                          margin: const EdgeInsets.only(top: 6.0, bottom: 6.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                        _filterChip(controller, 'ທັງໝົດ', DateFilter.all),
+                        _filterChip(controller, 'ມື້ນີ້', DateFilter.today),
+                        _filterChip(controller, 'ອາທິດນີ້', DateFilter.week),
+                        _filterChip(controller, 'ເດືອນນີ້', DateFilter.month),
+                        _filterChip(controller, 'ປີນີ້', DateFilter.year),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // ══════════════════════════════════════════
+              // 📋 List
+              // ══════════════════════════════════════════
+              Expanded(
+                child: Obx(() {
+                  if (controller.isLoading.value &&
+                      controller.allSalesList.isEmpty) {
+                    return const SalesListSkeleton(count: 5);
+                  }
+
+                  final rev = controller.salesRevision.value;
+                  final sales = controller.filteredSalesList;
+
+                  if (sales.isEmpty) {
+                    return RefreshIndicator(
+                      color: Colors.brown,
+                      onRefresh: () async {
+                        setState(() => _displayLimit = _perPage);
+                        await controller.fetchSales();
+                      },
+                      child: ListView(
+                        children: const [
+                          SizedBox(height: 120),
+                          Center(
+                            child: Text('ບໍ່ມີລາຍການຂາຍໃນຊ່ວງເວລານີ້'),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14.0,
-                              vertical: 10.0,
+                        ],
+                      ),
+                    );
+                  }
+
+                  final grouped = _groupCached(
+                    sales,
+                    controller.selectedFilter.value,
+                    rev,
+                  );
+                  final groupKeys = _cachedKeys;
+                  final displayKeys = groupKeys.take(_displayLimit).toList();
+                  final hasMore = groupKeys.length > displayKeys.length;
+
+                  return RefreshIndicator(
+                    color: Colors.brown,
+                    onRefresh: () async {
+                      setState(() => _displayLimit = _perPage);
+                      await controller.fetchSales();
+                    },
+                    child: ListView.builder(
+                      controller: _scroll,
+                      padding: const EdgeInsets.only(
+                        bottom: 200, // ✅ ເພີ່ມໃຫ້ FAB ບໍ່ທັບ card
+                        left: 12,
+                        right: 12,
+                      ),
+                      itemCount: displayKeys.length + (hasMore ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == displayKeys.length) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.brown,
+                              ),
                             ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.calendar_today,
-                                        size: 18,
-                                        color: Colors.brown[800],
+                          );
+                        }
+
+                        final dateKey = displayKeys[index];
+                        final salesInGroup = grouped[dateKey]!;
+                        final headerTitle = _formatDateHeader(
+                          salesInGroup.first.date,
+                        );
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // ── Date header ──
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                  4, 10, 4, 6),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today,
+                                    size: 13,
+                                    color: Colors.brown.shade700,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      headerTitle,
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.brown.shade800,
+                                        letterSpacing: 0.2,
                                       ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          headerTitle,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                            color: Colors.brown[900],
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.brown[800],
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    '${salesInGroup.length} ອໍເດີ',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                ),
-                              ],
+                                  Text(
+                                    '${salesInGroup.length} ອໍເດີ',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ),
 
-                        ...salesInGroup.map(
-                          (sale) => RepaintBoundary(
-                            key: ValueKey('rb-${sale.id}'),
-                            child: SaleCard(
-                              key: ValueKey('sale-${sale.id}'),
-                              sale: sale,
-                              isAdmin: isAdminUser,
+                            // ── Sale cards ──
+                            ...salesInGroup.map(
+                              (sale) => RepaintBoundary(
+                                key: ValueKey('rb-${sale.id}'),
+                                child: SaleCard(
+                                  key: ValueKey('sale-${sale.id}'),
+                                  sale: sale,
+                                  isAdmin: isAdminUser,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              );
-            }),
+                          ],
+                        );
+                      },
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+
+          // ══════════════════════════════════════════
+          // 🌫️ Backdrop
+          // ══════════════════════════════════════════
+          _FabBackdrop(
+            visible: _isFabOpen,
+            onTap: () => setState(() => _isFabOpen = false),
           ),
         ],
       ),
 
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (_isFabOpen) ...[
-            FloatingActionButton.extended(
-              heroTag: 'btnSummary',
-              onPressed: () {
-                setState(() => _isFabOpen = false);
-                Get.to(() => const SalesSummaryPage());
-              },
-              backgroundColor: Colors.brown[700],
-              icon: const Icon(Icons.assessment_outlined, color: Colors.white),
-              label: const Text(
-                'ສະຫຼຸບການຂາຍ',
-                style: TextStyle(color: Colors.white),
+      floatingActionButton: _buildFabGroup(),
+    );
+  }
+
+  // ══════════════════════════════════════════════
+  // 🎯 FAB Group — ອອກແບບໃໝ່: ເປັນປຸ່ມຂະໜາດກາງ ສີເຂັ້ມ
+  // ══════════════════════════════════════════════
+  Widget _buildFabGroup() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // ── Action buttons ──
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 240),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeIn,
+          transitionBuilder: (child, anim) {
+            return FadeTransition(
+              opacity: anim,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.85, end: 1.0).animate(
+                  CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
+                ),
+                alignment: Alignment.bottomRight,
+                child: child,
               ),
-            ),
-            const SizedBox(height: 10),
-            FloatingActionButton.extended(
-              heroTag: 'btnAddPayment',
-              onPressed: () {
-                setState(() => _isFabOpen = false);
-                Get.to(() => const AddPaymentPage());
-              },
-              backgroundColor: Colors.brown[700],
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text(
-                'ບັນທຶກການຂາຍ',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-            const SizedBox(height: 10),
+            );
+          },
+          child: _isFabOpen
+              ? Column(
+                  key: const ValueKey('open'),
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _fabAction(
+                      icon: Icons.assessment_outlined,
+                      label: 'ສະຫຼຸບການຂາຍ',
+                      color: Colors.blueGrey.shade700,
+                      onTap: () {
+                        setState(() => _isFabOpen = false);
+                        Get.to(() => const SalesSummaryPage());
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    _fabAction(
+                      icon: Icons.add_shopping_cart_outlined,
+                      label: 'ບັນທຶກການຂາຍ',
+                      color: Colors.green.shade700,
+                      onTap: () {
+                        setState(() => _isFabOpen = false);
+                        Get.to(() => const AddPaymentPage());
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                )
+              : const SizedBox.shrink(key: ValueKey('closed')),
+        ),
+
+        // ── Main FAB ──
+        _mainFab(),
+      ],
+    );
+  }
+
+  // ══════════════════════════════════════════════
+  // 🎯 Main FAB — ວົງມົນ gradient + ເງົາ
+  // ══════════════════════════════════════════════
+  Widget _mainFab() {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [
+            Colors.brown.shade600,
+            Colors.brown.shade800,
           ],
-          FloatingActionButton(
-            heroTag: 'btnMainFab',
-            backgroundColor: Colors.brown[800],
-            onPressed: () {
-              setState(() => _isFabOpen = !_isFabOpen);
-            },
-            child: Icon(
-              _isFabOpen ? Icons.close : Icons.add,
-              color: Colors.white,
-            ),
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.brown.shade800.withOpacity(0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
           ),
         ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            setState(() => _isFabOpen = !_isFabOpen);
+          },
+          customBorder: const CircleBorder(),
+          child: Center(
+            child: AnimatedRotation(
+              turns: _isFabOpen ? 0.125 : 0,
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutCubic,
+              child: Icon(
+                _isFabOpen ? Icons.close : Icons.add,
+                color: Colors.white,
+                size: 26,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
 
+  // ══════════════════════════════════════════════
+  // 💊 FAB Action — ປຸ່ມຍ່ອຍ ຮູບໝອນສີດຽວ
+  // ══════════════════════════════════════════════
+  Widget _fabAction({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: color,
+      borderRadius: BorderRadius.circular(28),
+      elevation: 4,
+      shadowColor: color.withOpacity(0.5),
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(28),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 12,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
+  // ══════════════════════════════════════════════
+  // 🔘 Filter chip
+  // ══════════════════════════════════════════════
   Widget _filterChip(
     SalesController controller,
     String label,
@@ -351,25 +470,57 @@ class _SalesListPageState extends State<SalesListPage>
         showCheckmark: false,
         avatar: Icon(
           Icons.check_circle,
-          color: isSelected ? Colors.blue : Colors.grey[400],
-          size: 18,
+          color: isSelected ? Colors.brown.shade700 : Colors.grey.shade400,
+          size: 16,
         ),
         label: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.brown[900] : Colors.brown[800],
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color:
+                isSelected ? Colors.brown.shade900 : Colors.brown.shade700,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            fontSize: 12.5,
           ),
         ),
         selected: isSelected,
-        selectedColor: Colors.brown[200],
-        backgroundColor: Colors.brown[100],
+        selectedColor: Colors.brown.shade100,
+        backgroundColor: Colors.brown.shade50,
         onSelected: (selected) {
           if (selected) {
             setState(() => _displayLimit = _perPage);
             controller.applyDateFilter(filter);
           }
         },
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════
+// 🌫️ Backdrop
+// ══════════════════════════════════════════════
+class _FabBackdrop extends StatelessWidget {
+  final bool visible;
+  final VoidCallback onTap;
+
+  const _FabBackdrop({
+    required this.visible,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: visible ? 1 : 0,
+      duration: const Duration(milliseconds: 200),
+      child: IgnorePointer(
+        ignoring: !visible,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            color: Colors.black.withOpacity(0.2),
+          ),
+        ),
       ),
     );
   }

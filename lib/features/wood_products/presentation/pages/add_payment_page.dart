@@ -12,6 +12,7 @@ import 'package:wood/features/wood_products/presentation/widgets/animated_number
 import '../controllers/sales_controller.dart';
 import '../../domain/entities/sale_item_entity.dart';
 import '../../domain/entities/sale_order_entity.dart';
+import 'package:wood/features/wood_products/presentation/widgets/sale_order_preview_card.dart';
 
 // ══════════════════════════════════════════════
 // 🧩 Helpers
@@ -81,8 +82,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   double get _short => (_net - _paid).clamp(0, double.infinity);
   double get _change => (_paid - _net).clamp(0, double.infinity);
   double get _debtReal => (_net - _debtPaid).clamp(0, double.infinity);
-  double get _billsTot =>
-      _bills.entries.fold(0, (s, e) => s + e.key * e.value);
+  double get _billsTot => _bills.entries.fold(0, (s, e) => s + e.key * e.value);
 
   // ─── ຄຳນວນ ຟອມປັດຈຸບັນ (preview ກ່ອນເພີ່ມ) ───
   double get _curUnit => c.selectedProduct.value?.price ?? 0;
@@ -101,16 +101,67 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       addrC.text.trim().isEmpty;
   bool get _missDebtBill => _debtBillImg == null;
 
+  // ✅ ເງື່ອນໄຂສະແດງ preview
+  bool get _previewReady {
+    if (_items.isEmpty) return false;
+    if (_isDebt) return _doneDebt;
+    return _donePay;
+  }
+
+  // ══════════════════════════════════════════════
+  // ✅ ເງື່ອນໄຂ done ຂອງແຕ່ລະ section
+  // ══════════════════════════════════════════════
+  bool get _done1 => _items.isNotEmpty;
+  bool get _done2 => _items.isNotEmpty;
+  bool get _done3 => _payImg != null || _billImg != null;
+  bool get _doneDebt =>
+      nameC.text.trim().isNotEmpty &&
+      phoneC.text.trim().isNotEmpty &&
+      addrC.text.trim().isNotEmpty &&
+      _debtBillImg != null;
+  bool get _donePay {
+    if (_paid <= 0) return false;
+    if (_isCash) {
+      return _bills.isNotEmpty && _billsTot == _paid;
+    }
+    return true; // ໂອນ → ປ້ອນຈຳນວນພໍແລ້ວ
+  }
+
+  bool get _doneNote => noteC.text.trim().isNotEmpty;
+
   @override
   void initState() {
     super.initState();
     c.resetForm();
+
+    // ✅ ຟັງການປ່ຽນແປງ text ເພື່ອ update title ສີຂຽວ
+    noteC.addListener(_onTextChanged);
+    nameC.addListener(_onTextChanged);
+    phoneC.addListener(_onTextChanged);
+    addrC.addListener(_onTextChanged);
+  }
+
+  void _onTextChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    noteC.removeListener(_onTextChanged);
+    nameC.removeListener(_onTextChanged);
+    phoneC.removeListener(_onTextChanged);
+    addrC.removeListener(_onTextChanged);
+
     for (final x in [
-      noteC, qtyC, discC, paidC, nameC, addrC, phoneC, debtNoteC, debtPaidC,
+      noteC,
+      qtyC,
+      discC,
+      paidC,
+      nameC,
+      addrC,
+      phoneC,
+      debtNoteC,
+      debtPaidC,
     ]) {
       x.dispose();
     }
@@ -125,15 +176,16 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     final bg = type == _A.success
         ? Colors.green.shade700
         : type == _A.error
-            ? Colors.red.shade700
-            : Colors.orange.shade800;
+        ? Colors.red.shade700
+        : Colors.orange.shade800;
     final ic = type == _A.success
         ? Icons.check_circle
         : type == _A.error
-            ? Icons.error_outline
-            : Icons.warning_amber_rounded;
+        ? Icons.error_outline
+        : Icons.warning_amber_rounded;
     Get.snackbar(
-      t, m,
+      t,
+      m,
       backgroundColor: bg,
       colorText: Colors.white,
       icon: Icon(ic, color: Colors.white, size: 26),
@@ -175,20 +227,22 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     }
 
     setState(() {
-      _items.add(SaleItemEntity(
-        itemId: 'i_${DateTime.now().microsecondsSinceEpoch}',
-        productId: p.id,
-        productName: p.name,
-        woodType: p.woodType,
-        productWidth: p.width,
-        productLength: p.length,
-        productThickness: p.thickness,
-        productSizeUnit: p.sizeUnit,
-        unitPrice: p.price,
-        quantity: _qty,
-        unit: p.unit,
-        discountPerUnit: _disc,
-      ));
+      _items.add(
+        SaleItemEntity(
+          itemId: 'i_${DateTime.now().microsecondsSinceEpoch}',
+          productId: p.id,
+          productName: p.name,
+          woodType: p.woodType,
+          productWidth: p.width,
+          productLength: p.length,
+          productThickness: p.thickness,
+          productSizeUnit: p.sizeUnit,
+          unitPrice: p.price,
+          quantity: _qty,
+          unit: p.unit,
+          discountPerUnit: _disc,
+        ),
+      );
 
       // reset ຟອມ
       c.selectedProduct.value = null;
@@ -199,6 +253,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       qtyC.text = '1';
       discC.text = '0';
     });
+
+    debugPrint('ADD ITEM → _items.length = ${_items.length}');
+    debugPrint('ADD ITEM → _done1 = $_done1 (should be true)');
     _ok('ເພີ່ມແລ້ວ', 'ລາຍການທີ ${_items.length}');
   }
 
@@ -243,7 +300,15 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       _bills.clear();
       c.paymentType.value = 'cash';
       for (final x in [
-        noteC, qtyC, discC, paidC, nameC, addrC, phoneC, debtNoteC, debtPaidC,
+        noteC,
+        qtyC,
+        discC,
+        paidC,
+        nameC,
+        addrC,
+        phoneC,
+        debtNoteC,
+        debtPaidC,
       ]) {
         x.clear();
       }
@@ -261,18 +326,32 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     Future<void> h(ImageSource s) async {
       Get.back();
       final p = await picker.pickImage(
-        source: s, maxWidth: 1600, maxHeight: 1600, imageQuality: 80,
+        source: s,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 80,
       );
       if (p == null) return;
       setState(() {
         final f = File(p.path);
         switch (which) {
-          case 'bill': _billImg = f; break;
-          case 'topSlip': _topUpSlip = f; break;
-          case 'topCash': _topUpCash = f; break;
-          case 'debt': _debtImg = f; break;
-          case 'debtBill': _debtBillImg = f; break;
-          default: _payImg = f;
+          case 'bill':
+            _billImg = f;
+            break;
+          case 'topSlip':
+            _topUpSlip = f;
+            break;
+          case 'topCash':
+            _topUpCash = f;
+            break;
+          case 'debt':
+            _debtImg = f;
+            break;
+          case 'debtBill':
+            _debtBillImg = f;
+            break;
+          default:
+            _payImg = f;
         }
       });
     }
@@ -353,7 +432,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: Text('ບັນທຶກການຂາຍ${_items.isNotEmpty ? " (${_items.length})" : ""}'),
+        title: Text(
+          'ບັນທຶກການຂາຍ${_items.isNotEmpty ? " (${_items.length})" : ""}',
+        ),
         backgroundColor: Colors.brown,
         foregroundColor: Colors.white,
       ),
@@ -370,6 +451,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                 title: 'ເລືອກສິນຄ້າໄມ້',
                 icon: Icons.inventory_2_outlined,
                 color: Colors.brown,
+                done: _done1,
                 child: _woodPicker(),
               ),
 
@@ -383,53 +465,28 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               if (_items.isNotEmpty) ...[
                 const SizedBox(height: 16),
 
-                // ② ຈຳນວນ + ສ່ວນລົດ ຂອງຟອມປັດຈຸບັນ
-                Obx(() {
-                  if (c.selectedProduct.value == null) {
-                    return const SizedBox.shrink();
-                  }
-                  return Column(
-                    children: [
-                      _section(
-                        number: '2',
-                        title: 'ຈຳນວນ ແລະ ສ່ວນລົດ',
-                        icon: Icons.straighten,
-                        color: Colors.brown,
-                        child: Column(
-                          children: [
-                            _qtyRow(),
-                            if (_disc > 0) ...[
-                              const SizedBox(height: 12),
-                              _discView(),
-                            ],
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  );
-                }),
-
-                // ③ ປະເພດການຊຳລະ
+                // ② ປະເພດການຊຳລະ
                 _section(
-                  number: '3',
+                  number: '2',
                   title: 'ປະເພດການຊຳລະ',
                   icon: Icons.payments_outlined,
                   color: Colors.brown,
+                  done: _done2,
                   child: _payTypeRow(),
                 ),
                 const SizedBox(height: 16),
 
-                // ④ ຮູບພາບ
+                // ③ ຮູບພາບ (ບໍ່ສະແດງຕອນ debt)
                 Obx(() {
                   if (_isDebt) return const SizedBox.shrink();
                   return Column(
                     children: [
                       _section(
-                        number: '4',
+                        number: '3',
                         title: 'ຮູບພາບຢືນຢັນ',
                         icon: Icons.photo_library_outlined,
                         color: Colors.brown,
+                        done: _done3,
                         child: _imgPickers(),
                       ),
                       const SizedBox(height: 16),
@@ -437,22 +494,24 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                   );
                 }),
 
-                // ⑤ ການຈ່າຍເງິນ / ຂໍ້ມູນຕິດໜີ້
+                // ④ ການຈ່າຍເງິນ / ຂໍ້ມູນຕິດໜີ້
                 Obx(() {
                   if (_isDebt) {
                     return _section(
-                      number: '4',
+                      number: '3',
                       title: 'ຂໍ້ມູນການຕິດໜີ້',
                       icon: Icons.receipt_long_outlined,
                       color: Colors.orange.shade800,
+                      done: _doneDebt,
                       child: _debtForm(),
                     );
                   }
                   return _section(
-                    number: '5',
+                    number: '4',
                     title: 'ການຈ່າຍເງິນ',
                     icon: Icons.account_balance_wallet_outlined,
                     color: Colors.brown,
+                    done: _donePay,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -466,12 +525,13 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                 }),
                 const SizedBox(height: 16),
 
-                // ⑥ ໝາຍເຫດ
+                // ⑤ ໝາຍເຫດ
                 _section(
-                  number: _isDebt ? '5' : '6',
+                  number: _isDebt ? '4' : '5',
                   title: 'ໝາຍເຫດ',
                   icon: Icons.sticky_note_2_outlined,
                   color: Colors.brown,
+                  done: _doneNote,
                   child: TextField(
                     controller: noteC,
                     maxLines: 2,
@@ -484,11 +544,49 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // ⑦ ສະຫຼຸບ
+                // ⑥ ສະຫຼຸບ
+                // ⑥ ສະຫຼຸບ
                 _summary(),
+
+                // ✅ Preview Card — ສະແດງເມື່ອປ້ອນຄົບ
+                if (_previewReady) ...[
+                  const SizedBox(height: 16),
+                  SaleOrderPreviewCard(
+                    items: List<SaleItemEntity>.from(_items),
+                    paymentType: c.paymentType.value,
+                    cashPaid: _isDebt
+                        ? (_debtType == 'cash' ? _debtPaid : 0)
+                        : (_isCash ? (_net < _paid ? _net : _paid) : 0),
+                    transferPaid: _isDebt
+                        ? (_debtType == 'transfer' ? _debtPaid : 0)
+                        : (_isCash ? 0 : (_net < _paid ? _net : _paid)),
+                    debt: _isDebt ? _debtReal : 0,
+                    received: _isDebt ? _debtPaid : _paid,
+                    bills: _isCash ? Map<int, int>.from(_bills) : {},
+                    customerName: _isDebt ? nameC.text.trim() : null,
+                    customerPhone: _isDebt ? phoneC.text.trim() : null,
+                    customerAddress: _isDebt ? addrC.text.trim() : null,
+                    debtNote: _isDebt && debtNoteC.text.trim().isNotEmpty
+                        ? debtNoteC.text.trim()
+                        : null,
+                    appointmentDate: _isDebt ? _apptDate : null,
+                    note: noteC.text.trim().isEmpty ? null : noteC.text.trim(),
+                    payImgCount:
+                        (_payImg != null ? 1 : 0) + (_debtImg != null ? 1 : 0),
+                    billImgCount:
+                        (_billImg != null ? 1 : 0) +
+                        (_debtBillImg != null ? 1 : 0),
+                    topUpImgCount:
+                        (_topUpSlip != null ? 1 : 0) +
+                        (_topUpCash != null ? 1 : 0),
+                    debtPayImgCount: _debtImg != null ? 1 : 0,
+                    debtBillCount: _debtBillImg != null ? 1 : 0,
+                  ),
+                ],
+
                 const SizedBox(height: 16),
 
-                // ⑧ ປຸ່ມ
+                // ⑦ ປຸ່ມ
                 _buttons(),
               ],
               const SizedBox(height: 20),
@@ -500,7 +598,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   }
 
   // ══════════════════════════════════════════════
-  // 🎴 Section wrapper
+  // 🎴 Section wrapper — ✅ ຮອງຮັບ done
   // ══════════════════════════════════════════════
   Widget _section({
     required String number,
@@ -508,16 +606,22 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     required IconData icon,
     required Color color,
     required Widget child,
+    bool done = false,
   }) {
+    final effectiveColor = done ? Colors.green.shade700 : color;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.25), width: 1.2),
+        border: Border.all(
+          color: effectiveColor.withOpacity(done ? 0.5 : 0.25),
+          width: done ? 1.8 : 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.06),
-            blurRadius: 8,
+            color: effectiveColor.withOpacity(done ? 0.12 : 0.06),
+            blurRadius: done ? 10 : 8,
             offset: const Offset(0, 2),
           ),
         ],
@@ -528,15 +632,21 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           Container(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.08),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(13)),
+              color: effectiveColor.withOpacity(0.08),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(13),
+              ),
             ),
             child: Row(
               children: [
+                // ✅ ສະແດງເລກສະເໝີ — ບໍ່ລຶບ
                 Container(
-                  width: 26, height: 26,
-                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    color: effectiveColor,
+                    shape: BoxShape.circle,
+                  ),
                   child: Center(
                     child: Text(
                       number,
@@ -549,7 +659,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Icon(icon, color: color, size: 18),
+                Icon(icon, color: effectiveColor, size: 18),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -557,11 +667,38 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                     style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w900,
-                      color: color,
+                      color: effectiveColor,
                       letterSpacing: 0.2,
                     ),
                   ),
                 ),
+                // ✅ ປ້າຍ ✓ ສຳເລັດ ຕອນ done
+                if (done)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade700,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.check, color: Colors.white, size: 11),
+                        SizedBox(width: 3),
+                        Text(
+                          'ສຳເລັດ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -595,8 +732,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             decoration: BoxDecoration(
               color: Colors.green.shade50,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(13)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(13),
+              ),
             ),
             child: Row(
               children: [
@@ -606,8 +744,11 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                     color: Colors.green.shade700,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.list_alt,
-                      color: Colors.white, size: 16),
+                  child: const Icon(
+                    Icons.list_alt,
+                    color: Colors.white,
+                    size: 16,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -647,7 +788,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 24, height: 24,
+            width: 24,
+            height: 24,
             decoration: BoxDecoration(
               color: Colors.green.shade100,
               shape: BoxShape.circle,
@@ -671,15 +813,16 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                 Text(
                   it.productName,
                   style: const TextStyle(
-                      fontSize: 13.5, fontWeight: FontWeight.bold),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (it.hasSize)
                   Text(
                     'ຂະໜາດ ${it.dimensionText}',
-                    style:
-                        TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                   ),
                 const SizedBox(height: 3),
                 Row(
@@ -693,7 +836,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                       Text(
                         'ລົດ ${fmt.format(it.discountPerUnit)}',
                         style: TextStyle(
-                            fontSize: 11, color: Colors.red.shade700),
+                          fontSize: 11,
+                          color: Colors.red.shade700,
+                        ),
                       ),
                     ],
                   ],
@@ -751,8 +896,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       if (pc.isLoading.value) {
         return const Padding(
           padding: EdgeInsets.symmetric(vertical: 16),
-          child: Center(
-              child: CircularProgressIndicator(color: Colors.brown)),
+          child: Center(child: CircularProgressIndicator(color: Colors.brown)),
         );
       }
       final names = pc.uniqueProductNames;
@@ -766,14 +910,16 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           ),
           child: Row(
             children: [
-              Icon(Icons.inventory_2_outlined,
-                  color: Colors.grey.shade500, size: 24),
+              Icon(
+                Icons.inventory_2_outlined,
+                color: Colors.grey.shade500,
+                size: 24,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'ຍັງບໍ່ມີລາຍການໄມ້ໃນຄັງ',
-                  style:
-                      TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
                 ),
               ),
             ],
@@ -781,21 +927,23 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         );
       }
 
-      final List<String> types = _wood == null
-          ? <String>[]
-          : pc
-              .variantsForName(_wood!)
-              .map((p) =>
-                  p.woodType.trim().isEmpty ? 'ບໍ່ລະບຸ' : p.woodType)
-              .toSet()
-              .toList()
-        ..sort();
+      final List<String> types =
+          _wood == null
+                ? <String>[]
+                : pc
+                      .variantsForName(_wood!)
+                      .map(
+                        (p) =>
+                            p.woodType.trim().isEmpty ? 'ບໍ່ລະບຸ' : p.woodType,
+                      )
+                      .toSet()
+                      .toList()
+            ..sort();
 
       final List<WoodProductModel> list = (_wood == null || _type == null)
           ? <WoodProductModel>[]
           : pc.variantsForName(_wood!).where((p) {
-              final t =
-                  p.woodType.trim().isEmpty ? 'ບໍ່ລະບຸ' : p.woodType;
+              final t = p.woodType.trim().isEmpty ? 'ບໍ່ລະບຸ' : p.woodType;
               return t == _type;
             }).toList();
 
@@ -810,17 +958,22 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.category, color: Colors.brown),
               isDense: true,
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 14,
+              ),
             ),
             hint: const Text('ເລືອກຊື່ໄມ້'),
             items: names
-                .map((n) => DropdownMenuItem<String>(
-                      value: n,
-                      child: Text(n,
-                          style:
-                              const TextStyle(fontWeight: FontWeight.bold)),
-                    ))
+                .map(
+                  (n) => DropdownMenuItem<String>(
+                    value: n,
+                    child: Text(
+                      n,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                )
                 .toList(),
             onChanged: (v) => setState(() {
               _wood = v;
@@ -836,21 +989,25 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               decoration: const InputDecoration(
                 labelText: 'ຊະນິດໄມ້ *',
                 border: OutlineInputBorder(),
-                prefixIcon:
-                    Icon(Icons.local_florist, color: Colors.brown),
+                prefixIcon: Icon(Icons.local_florist, color: Colors.brown),
                 isDense: true,
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 14,
+                ),
               ),
               hint: const Text('ເລືອກຊະນິດ'),
               items: types
-                  .map((t) => DropdownMenuItem<String>(
-                        value: t,
-                        child: Text(t,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold)),
-                      ))
+                  .map(
+                    (t) => DropdownMenuItem<String>(
+                      value: t,
+                      child: Text(
+                        t,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  )
                   .toList(),
               onChanged: (v) => setState(() {
                 _type = v;
@@ -866,26 +1023,28 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               decoration: const InputDecoration(
                 labelText: 'ຂະໜາດ / ລາຄາ *',
                 border: OutlineInputBorder(),
-                prefixIcon:
-                    Icon(Icons.straighten, color: Colors.brown),
+                prefixIcon: Icon(Icons.straighten, color: Colors.brown),
                 isDense: true,
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 14,
+                ),
               ),
               hint: const Text('ເລືອກຂະໜາດ'),
               items: list
-                  .map((p) => DropdownMenuItem<String>(
-                        value: p.id,
-                        child: Text(
-                          '${p.width}x${p.length}x${p.thickness} ${p.sizeUnit} · ${fmt.format(p.price)} ກີບ',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ))
+                  .map(
+                    (p) => DropdownMenuItem<String>(
+                      value: p.id,
+                      child: Text(
+                        '${p.width}x${p.length}x${p.thickness} ${p.sizeUnit} · ${fmt.format(p.price)} ກີບ',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  )
                   .toList(),
               onChanged: (id) {
                 if (id == null) return;
-                c.selectedProduct.value =
-                    list.firstWhere((p) => p.id == id);
+                c.selectedProduct.value = list.firstWhere((p) => p.id == id);
                 setState(() {});
               },
             ),
@@ -894,7 +1053,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
             const SizedBox(height: 12),
             _selectedProductPreview(c.selectedProduct.value!),
             const SizedBox(height: 12),
-            // 🆕 ປຸ່ມເພີ່ມລາຍການ
+            _qtyRow(),
+            if (_disc > 0) ...[const SizedBox(height: 12), _discView()],
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -903,13 +1064,17 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 onPressed: _addCurrentItem,
                 icon: const Icon(Icons.add_shopping_cart),
-                label: const Text(
-                  'ເພີ່ມລາຍການນີ້',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                label: Text(
+                  'ເພີ່ມລາຍການນີ້ · $_qty ${c.selectedProduct.value?.unit ?? ""}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -934,13 +1099,13 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       child: Row(
         children: [
           Container(
-            width: 40, height: 40,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: Colors.brown.shade700,
               shape: BoxShape.circle,
             ),
-            child:
-                const Icon(Icons.check, color: Colors.white, size: 22),
+            child: const Icon(Icons.check, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -961,7 +1126,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                 Text(
                   '${p.width}x${p.length}x${p.thickness} ${p.sizeUnit} · ຄົງເຫຼືອ ${p.quantity} ${p.unit}',
                   style: TextStyle(
-                      fontSize: 11.5, color: Colors.brown.shade700),
+                    fontSize: 11.5,
+                    color: Colors.brown.shade700,
+                  ),
                 ),
               ],
             ),
@@ -983,7 +1150,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   }
 
   // ══════════════════════════════════════════════
-  // Qty + Discount (ຂອງຟອມປັດຈຸບັນ)
+  // Qty + Discount
   // ══════════════════════════════════════════════
   Widget _qtyRow() {
     return Obx(() {
@@ -1000,13 +1167,12 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               decoration: InputDecoration(
                 labelText: 'ຈຳນວນ *',
                 border: const OutlineInputBorder(),
-                prefixIcon:
-                    const Icon(Icons.numbers, color: Colors.brown),
+                prefixIcon: const Icon(Icons.numbers, color: Colors.brown),
                 suffixText: p.unit,
                 isDense: true,
               ),
-              onChanged: (v) => setState(
-                  () => _qty = (int.tryParse(v) ?? 1).clamp(1, 99999)),
+              onChanged: (v) =>
+                  setState(() => _qty = (int.tryParse(v) ?? 1).clamp(1, 99999)),
             ),
           ),
           const SizedBox(width: 10),
@@ -1022,14 +1188,14 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               decoration: const InputDecoration(
                 labelText: 'ລົດ/ຕົວ',
                 border: OutlineInputBorder(),
-                prefixIcon:
-                    Icon(Icons.discount, color: Colors.brown, size: 18),
+                prefixIcon: Icon(Icons.discount, color: Colors.brown, size: 18),
                 suffixText: 'ກີບ',
                 isDense: true,
               ),
-              onChanged: (v) => setState(() => _disc =
-                  (double.tryParse(v.replaceAll(',', '')) ?? 0)
-                      .clamp(0, double.infinity)),
+              onChanged: (v) => setState(
+                () => _disc = (double.tryParse(v.replaceAll(',', '')) ?? 0)
+                    .clamp(0, double.infinity),
+              ),
             ),
           ),
         ],
@@ -1052,21 +1218,29 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
             children: [
               Icon(Icons.discount, color: Colors.red.shade700, size: 18),
               const SizedBox(width: 6),
-              Text('ສ່ວນລົດຂອງລາຍການນີ້',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red.shade700,
-                  )),
+              Text(
+                'ສ່ວນລົດຂອງລາຍການນີ້',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red.shade700,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
-          _discRow('${fmt.format(_curUnit)} × $_qty',
-              '${fmt.format(_curGross)} ກີບ', Colors.black87),
+          _discRow(
+            '${fmt.format(_curUnit)} × $_qty',
+            '${fmt.format(_curGross)} ກີບ',
+            Colors.black87,
+          ),
           const SizedBox(height: 4),
-          _discRow('ລົດ ${fmt.format(_disc)} × $_qty',
-              '-${fmt.format(_curDiscTot)} ກີບ', Colors.red.shade700,
-              bold: true),
+          _discRow(
+            'ລົດ ${fmt.format(_disc)} × $_qty',
+            '-${fmt.format(_curDiscTot)} ກີບ',
+            Colors.red.shade700,
+            bold: true,
+          ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
             child: Divider(height: 1),
@@ -1074,12 +1248,14 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           Row(
             children: [
               const Expanded(
-                child: Text('ຍອດສຸດທິ',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    )),
+                child: Text(
+                  'ຍອດສຸດທິ',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
               ),
               AnimatedNumber(
                 value: _curNet,
@@ -1098,24 +1274,32 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     );
   }
 
-  Widget _discRow(String label, String value, Color color,
-      {bool bold = false}) {
+  Widget _discRow(
+    String label,
+    String value,
+    Color color, {
+    bool bold = false,
+  }) {
     return Row(
       children: [
         Expanded(
-          child: Text(label,
-              style: TextStyle(
-                fontSize: 12,
-                color: color,
-                fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-              )),
-        ),
-        Text(value,
+          child: Text(
+            label,
             style: TextStyle(
               fontSize: 12,
               color: color,
-              fontWeight: bold ? FontWeight.bold : FontWeight.w600,
-            )),
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12,
+            color: color,
+            fontWeight: bold ? FontWeight.bold : FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
@@ -1124,70 +1308,79 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   // Payment type
   // ══════════════════════════════════════════════
   Widget _payTypeRow() {
-    Widget chip(String l, IconData icon, String v, Color active) =>
-        Obx(() {
-          final sel = c.paymentType.value == v;
-          return InkWell(
-            onTap: () {
-              setState(() {
-                c.paymentType.value = v;
-                _choice = null;
-                _topUpSlip = _topUpCash = null;
-                _bills.clear();
-                if (v == 'debt') {
-                  _paid = 0;
-                  paidC.clear();
-                }
-              });
-            },
+    Widget chip(String l, IconData icon, String v, Color active) => Obx(() {
+      final sel = c.paymentType.value == v;
+      return InkWell(
+        onTap: () {
+          setState(() {
+            c.paymentType.value = v;
+            _choice = null;
+            _topUpSlip = _topUpCash = null;
+            _bills.clear();
+            if (v == 'debt') {
+              _paid = 0;
+              paidC.clear();
+            }
+          });
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+          decoration: BoxDecoration(
+            color: sel ? active : Colors.white,
             borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-              decoration: BoxDecoration(
-                color: sel ? active : Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: sel ? active : Colors.grey.shade300,
-                  width: sel ? 2 : 1.2,
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon,
-                      color: sel ? Colors.white : active, size: 22),
-                  const SizedBox(height: 4),
-                  Text(
-                    l,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      color: sel ? Colors.white : active,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+            border: Border.all(
+              color: sel ? active : Colors.grey.shade300,
+              width: sel ? 2 : 1.2,
             ),
-          );
-        });
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: sel ? Colors.white : active, size: 22),
+              const SizedBox(height: 4),
+              Text(
+                l,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: sel ? Colors.white : active,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      );
+    });
 
     return Row(
       children: [
         Expanded(
-          child: chip('ສົດ', Icons.payments_outlined, 'cash',
-              Colors.brown.shade700),
+          child: chip(
+            'ສົດ',
+            Icons.payments_outlined,
+            'cash',
+            Colors.brown.shade700,
+          ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: chip('ໂອນ', Icons.account_balance, 'transfer',
-              Colors.brown.shade700),
+          child: chip(
+            'ໂອນ',
+            Icons.account_balance,
+            'transfer',
+            Colors.brown.shade700,
+          ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: chip('ຕິດໜີ້', Icons.receipt_long_outlined, 'debt',
-              Colors.orange.shade800),
+          child: chip(
+            'ຕິດໜີ້',
+            Icons.receipt_long_outlined,
+            'debt',
+            Colors.orange.shade800,
+          ),
         ),
       ],
     );
@@ -1223,8 +1416,13 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     });
   }
 
-  Widget _imgTile(String title, File? f, VoidCallback onTap,
-      VoidCallback onRm, {double h = 110}) {
+  Widget _imgTile(
+    String title,
+    File? f,
+    VoidCallback onTap,
+    VoidCallback onRm, {
+    double h = 110,
+  }) {
     return InkWell(
       onTap: f == null ? onTap : null,
       borderRadius: BorderRadius.circular(10),
@@ -1243,13 +1441,16 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: Image.file(f,
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.cover),
+                    child: Image.file(
+                      f,
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                   Positioned(
-                    top: 4, right: 4,
+                    top: 4,
+                    right: 4,
                     child: GestureDetector(
                       onTap: onRm,
                       child: Container(
@@ -1258,8 +1459,11 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                           color: Colors.black54,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.close,
-                            color: Colors.white, size: 16),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
                     ),
                   ),
@@ -1268,15 +1472,20 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_a_photo_outlined,
-                      size: 32, color: Colors.brown.shade400),
+                  Icon(
+                    Icons.add_a_photo_outlined,
+                    size: 32,
+                    color: Colors.brown.shade400,
+                  ),
                   const SizedBox(height: 6),
-                  Text(title,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.brown.shade700,
-                      )),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.brown.shade700,
+                    ),
+                  ),
                 ],
               ),
       ),
@@ -1300,10 +1509,11 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           color: Colors.brown,
         ),
         suffixText: 'ກີບ',
-        helperText:
-            _net > 0 ? 'ຍອດຕ້ອງຈ່າຍ ${fmt.format(_net)} ກີບ' : null,
+        helperText: _net > 0 ? 'ຍອດຕ້ອງຈ່າຍ ${fmt.format(_net)} ກີບ' : null,
         helperStyle: const TextStyle(
-            color: Colors.brown, fontWeight: FontWeight.bold),
+          color: Colors.brown,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       onChanged: (v) => setState(() {
         _paid = double.tryParse(v.replaceAll(',', '')) ?? 0;
@@ -1335,30 +1545,36 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               const Icon(Icons.list_alt, color: Colors.brown, size: 18),
               const SizedBox(width: 6),
               const Expanded(
-                child: Text('ນັບແຍກໃບເງິນ (ບັງຄັບ)',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.brown,
-                    )),
+                child: Text(
+                  'ນັບແຍກໃບເງິນ (ບັງຄັບ)',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.brown,
+                  ),
+                ),
               ),
               if (_bills.isNotEmpty)
                 GestureDetector(
                   onTap: () => setState(() => _bills.clear()),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 3),
+                      horizontal: 10,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.red.shade50,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Colors.red.shade200),
                     ),
-                    child: Text('ລ້າງ',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red.shade700,
-                        )),
+                    child: Text(
+                      'ລ້າງ',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red.shade700,
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -1384,23 +1600,28 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.brown.shade100,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.brown.shade300),
                   ),
-                  child: Text('$totalBills ໃບ',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.brown.shade800,
-                      )),
+                  child: Text(
+                    '$totalBills ໃບ',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.brown.shade800,
+                    ),
+                  ),
                 ),
                 const Spacer(),
-                Text('ນັບໄດ້: ',
-                    style: TextStyle(
-                        fontSize: 12, color: Colors.grey.shade700)),
+                Text(
+                  'ນັບໄດ້: ',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                ),
                 AnimatedNumber(
                   value: _billsTot,
                   suffix: ' ກີບ',
@@ -1446,47 +1667,57 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                 children: [
                   FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text(fmt.format(d),
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          color:
-                              on ? Colors.white : Colors.brown.shade800,
-                        )),
+                    child: Text(
+                      fmt.format(d),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: on ? Colors.white : Colors.brown.shade800,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 1),
+                      horizontal: 6,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       color: on ? Colors.white : Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text('×$n',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: on
-                              ? Colors.brown.shade800
-                              : Colors.grey.shade600,
-                        )),
+                    child: Text(
+                      '×$n',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        color: on
+                            ? Colors.brown.shade800
+                            : Colors.grey.shade600,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
             if (on)
               Positioned(
-                top: 2, right: 2,
+                top: 2,
+                right: 2,
                 child: GestureDetector(
                   onTap: () => _delBill(d),
                   child: Container(
-                    width: 18, height: 18,
+                    width: 18,
+                    height: 18,
                     decoration: BoxDecoration(
                       color: Colors.red.shade600,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.remove,
-                        size: 12, color: Colors.white),
+                    child: const Icon(
+                      Icons.remove,
+                      size: 12,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -1530,12 +1761,14 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               children: [
                 Icon(Icons.redeem, color: Colors.white, size: 22),
                 SizedBox(width: 6),
-                Text('ເງິນທອນລູກຄ້າ',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    )),
+                Text(
+                  'ເງິນທອນລູກຄ້າ',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -1555,9 +1788,10 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               ),
             ),
             const SizedBox(height: 6),
-            Text('ຮັບມາ ${fmt.format(_paid)} − ຍອດ ${fmt.format(_net)}',
-                style: const TextStyle(
-                    fontSize: 11, color: Colors.white70)),
+            Text(
+              'ຮັບມາ ${fmt.format(_paid)} − ຍອດ ${fmt.format(_net)}',
+              style: const TextStyle(fontSize: 11, color: Colors.white70),
+            ),
           ],
         ),
       );
@@ -1577,12 +1811,14 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
             Icon(Icons.check_circle, color: Colors.green, size: 24),
             SizedBox(width: 8),
             Expanded(
-              child: Text('ຈ່າຍຄົບພໍດີ',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2E7D32),
-                  )),
+              child: Text(
+                'ຈ່າຍຄົບພໍດີ',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2E7D32),
+                ),
+              ),
             ),
           ],
         ),
@@ -1614,16 +1850,15 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         children: [
           Row(
             children: [
-              Icon(Icons.help_outline,
-                  color: Colors.orange.shade900, size: 22),
+              Icon(Icons.help_outline, color: Colors.orange.shade900, size: 22),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   debtOnly
                       ? 'ລູກຄ້າຍັງບໍ່ຈ່າຍ — ຕ້ອງການຕິດໜີ້ບໍ?'
                       : _isCash
-                          ? 'ຍອດບໍ່ຄົບ — ຕ້ອງການໂອນເຕີມບໍ?'
-                          : 'ຍອດບໍ່ຄົບ — ຕ້ອງການສົດເຕີມບໍ?',
+                      ? 'ຍອດບໍ່ຄົບ — ຕ້ອງການໂອນເຕີມບໍ?'
+                      : 'ຍອດບໍ່ຄົບ — ຕ້ອງການສົດເຕີມບໍ?',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -1688,15 +1923,19 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     );
   }
 
-  Widget _choiceBtn(IconData icon, String label, String sub, Color color,
-      String val) {
+  Widget _choiceBtn(
+    IconData icon,
+    String label,
+    String sub,
+    Color color,
+    String val,
+  ) {
     final sel = _choice == val;
     return InkWell(
       onTap: () => setState(() => _choice = sel ? null : val),
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: sel ? color : Colors.white,
           borderRadius: BorderRadius.circular(10),
@@ -1708,35 +1947,39 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         child: Row(
           children: [
             Container(
-              width: 44, height: 44,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: sel
                     ? Colors.white.withOpacity(0.25)
                     : color.withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child:
-                  Icon(icon, color: sel ? Colors.white : color, size: 24),
+              child: Icon(icon, color: sel ? Colors.white : color, size: 24),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: sel ? Colors.white : color,
-                      )),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: sel ? Colors.white : color,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(sub,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: sel
-                            ? Colors.white.withOpacity(0.9)
-                            : Colors.grey.shade600,
-                      )),
+                  Text(
+                    sub,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: sel
+                          ? Colors.white.withOpacity(0.9)
+                          : Colors.grey.shade600,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1766,8 +2009,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           children: [
             Expanded(child: _dChip('ສົດ', Icons.payments_outlined, 'cash')),
             const SizedBox(width: 8),
-            Expanded(
-                child: _dChip('ໂອນ', Icons.account_balance, 'transfer')),
+            Expanded(child: _dChip('ໂອນ', Icons.account_balance, 'transfer')),
             const SizedBox(width: 8),
             Expanded(child: _dChip('ຍັງບໍ່ຈ່າຍ', Icons.schedule, 'none')),
           ],
@@ -1783,13 +2025,11 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               FilteringTextInputFormatter.digitsOnly,
               _NumFmt(),
             ],
-            style:
-                const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             decoration: InputDecoration(
               hintText: '0',
               border: const OutlineInputBorder(),
-              prefixIcon:
-                  const Icon(Icons.payments, color: Colors.brown),
+              prefixIcon: const Icon(Icons.payments, color: Colors.brown),
               suffixText: 'ກີບ',
               helperText:
                   'ຍອດ ${fmt.format(_net)} · ເຫຼືອ ${fmt.format(_debtReal)}',
@@ -1829,8 +2069,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           onTap: _pickAppt,
           borderRadius: BorderRadius.circular(10),
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
@@ -1871,12 +2110,18 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                       _apptDate = null;
                       _apptTime = null;
                     }),
-                    child: Icon(Icons.close,
-                        color: Colors.grey.shade600, size: 18),
+                    child: Icon(
+                      Icons.close,
+                      color: Colors.grey.shade600,
+                      size: 18,
+                    ),
                   )
                 else
-                  Icon(Icons.arrow_forward_ios,
-                      color: Colors.grey.shade400, size: 14),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.grey.shade400,
+                    size: 14,
+                  ),
               ],
             ),
           ),
@@ -1886,15 +2131,17 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         const SizedBox(height: 8),
         _tf(nameC, 'ຊື່ລູກຄ້າ *', Icons.person_outline),
         const SizedBox(height: 8),
-        _tf(phoneC, 'ເບີໂທ *', Icons.phone_outlined,
-            type: TextInputType.phone),
+        _tf(phoneC, 'ເບີໂທ *', Icons.phone_outlined, type: TextInputType.phone),
         const SizedBox(height: 8),
         _tf(addrC, 'ທີ່ຢູ່ *', Icons.home_outlined, lines: 2),
         const SizedBox(height: 8),
-        _tf(debtNoteC, 'ໝາຍເຫດໜີ້ (ຖ້າມີ)',
-            Icons.sticky_note_2_outlined, lines: 2),
+        _tf(
+          debtNoteC,
+          'ໝາຍເຫດໜີ້ (ຖ້າມີ)',
+          Icons.sticky_note_2_outlined,
+          lines: 2,
+        ),
 
-        // ✅ ຮູບໃບບິນໜີ້ (ບັງຄັບ)
         const SizedBox(height: 16),
         const _RowLabel(Icons.receipt_long_outlined, 'ຮູບໃບບິນໜີ້ *'),
         const SizedBox(height: 4),
@@ -1916,7 +2163,6 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         ),
 
         const SizedBox(height: 16),
-        // ── ສະຫຼຸບໜີ້ ──
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -1933,8 +2179,11 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               _sumRow('ຍອດຂາຍທັງໝົດ', '${fmt.format(_net)} ກີບ'),
               if (_debtPaid > 0) ...[
                 const SizedBox(height: 4),
-                _sumRow('ຈ່າຍກ່ອນ', '-${fmt.format(_debtPaid)} ກີບ',
-                    color: Colors.green.shade700),
+                _sumRow(
+                  'ຈ່າຍກ່ອນ',
+                  '-${fmt.format(_debtPaid)} ກີບ',
+                  color: Colors.green.shade700,
+                ),
               ],
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8),
@@ -1943,12 +2192,14 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               Row(
                 children: [
                   const Expanded(
-                    child: Text('ຍອດຕິດໜີ້ຕົວຈິງ',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
-                        )),
+                    child: Text(
+                      'ຍອດຕິດໜີ້ຕົວຈິງ',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange,
+                      ),
+                    ),
                   ),
                   FittedBox(
                     fit: BoxFit.scaleDown,
@@ -1985,39 +2236,46 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       }),
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
         decoration: BoxDecoration(
           color: sel ? Colors.orange.shade700 : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color:
-                sel ? Colors.orange.shade800 : Colors.grey.shade300,
+            color: sel ? Colors.orange.shade800 : Colors.grey.shade300,
             width: sel ? 2 : 1.2,
           ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                color: sel ? Colors.white : Colors.brown.shade700,
-                size: 20),
+            Icon(
+              icon,
+              color: sel ? Colors.white : Colors.brown.shade700,
+              size: 20,
+            ),
             const SizedBox(height: 4),
-            Text(label,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.bold,
-                  color: sel ? Colors.white : Colors.brown.shade800,
-                ),
-                overflow: TextOverflow.ellipsis),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.bold,
+                color: sel ? Colors.white : Colors.brown.shade800,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _tf(TextEditingController ctrl, String label, IconData icon,
-      {TextInputType? type, int lines = 1}) {
+  Widget _tf(
+    TextEditingController ctrl,
+    String label,
+    IconData icon, {
+    TextInputType? type,
+    int lines = 1,
+  }) {
     return TextField(
       controller: ctrl,
       keyboardType: type,
@@ -2031,17 +2289,24 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     );
   }
 
-  Widget _subImg(String title, File? f, IconData icon, VoidCallback onPick,
-      VoidCallback onRm) {
+  Widget _subImg(
+    String title,
+    File? f,
+    IconData icon,
+    VoidCallback onPick,
+    VoidCallback onRm,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.brown,
-            )),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.brown,
+          ),
+        ),
         const SizedBox(height: 8),
         _imgTile('', f, onPick, onRm, h: 120),
       ],
@@ -2049,20 +2314,23 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   }
 
   Widget _sumRow(String label, String value, {Color? color}) => Row(
-        children: [
-          Expanded(
-            child: Text(label,
-                style: const TextStyle(
-                    fontSize: 12.5, color: Colors.black54)),
-          ),
-          Text(value,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: color ?? Colors.black87,
-              )),
-        ],
-      );
+    children: [
+      Expanded(
+        child: Text(
+          label,
+          style: const TextStyle(fontSize: 12.5, color: Colors.black54),
+        ),
+      ),
+      Text(
+        value,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          color: color ?? Colors.black87,
+        ),
+      ),
+    ],
+  );
 
   // ══════════════════════════════════════════════
   // Summary
@@ -2092,28 +2360,33 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           Row(
             children: [
               Container(
-                width: 26, height: 26,
+                width: 26,
+                height: 26,
                 decoration: BoxDecoration(
                   color: Colors.green.shade700,
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
-                  child: Icon(Icons.receipt_long,
-                      color: Colors.white, size: 15),
+                  child: Icon(
+                    Icons.receipt_long,
+                    color: Colors.white,
+                    size: 15,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
-              Text('ສະຫຼຸບຍອດຂາຍ (${_items.length} ລາຍການ)',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.green,
-                    letterSpacing: 0.2,
-                  )),
+              Text(
+                'ສະຫຼຸບຍອດຂາຍ (${_items.length} ລາຍການ)',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.green,
+                  letterSpacing: 0.2,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          // ລາຍການແຕ່ລະອັນ
           ..._items.asMap().entries.map((e) {
             final i = e.key;
             final it = e.value;
@@ -2133,15 +2406,18 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('ສ່ວນລົດລວມ',
-                    style: TextStyle(
-                        fontSize: 12, color: Colors.red.shade700)),
-                Text('-${fmt.format(_discTot)} ກີບ',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red.shade700,
-                    )),
+                Text(
+                  'ສ່ວນລົດລວມ',
+                  style: TextStyle(fontSize: 12, color: Colors.red.shade700),
+                ),
+                Text(
+                  '-${fmt.format(_discTot)} ກີບ',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red.shade700,
+                  ),
+                ),
               ],
             ),
           ],
@@ -2152,12 +2428,14 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           Row(
             children: [
               const Expanded(
-                child: Text('ຍອດຂາຍລວມ',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    )),
+                child: Text(
+                  'ຍອດຂາຍລວມ',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
               ),
               FittedBox(
                 fit: BoxFit.scaleDown,
@@ -2189,13 +2467,15 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               side: const BorderSide(color: Colors.red),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: _clear,
             icon: const Icon(Icons.clear_all),
-            label: const Text('ລ້າງຟອມ',
-                style:
-                    TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            label: const Text(
+              'ລ້າງຟອມ',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
         const SizedBox(width: 10),
@@ -2207,14 +2487,16 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
               elevation: 2,
             ),
             onPressed: _save,
             icon: const Icon(Icons.save),
-            label: const Text('ບັນທຶກການຂາຍ',
-                style:
-                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            label: const Text(
+              'ບັນທຶກການຂາຍ',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       ],
@@ -2226,8 +2508,10 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   // ══════════════════════════════════════════════
   Future<String?> _upload(File? f, String folder, String label) async {
     if (f == null) return null;
-    final url = await CloudinaryService.uploadImage(f, folder: folder)
-        .timeout(const Duration(seconds: 60));
+    final url = await CloudinaryService.uploadImage(
+      f,
+      folder: folder,
+    ).timeout(const Duration(seconds: 60));
     if (url == null || url.isEmpty) {
       throw Exception('ອັບໂຫຼດ$labelບໍ່ສຳເລັດ');
     }
@@ -2261,8 +2545,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         return;
       }
       if (_debtPaid > _net) {
-        _warn('ຜິດພາດ',
-            'ຈ່າຍກ່ອນ ຕ້ອງບໍ່ເກີນ ${fmt.format(_net)} ກີບ');
+        _warn('ຜິດພາດ', 'ຈ່າຍກ່ອນ ຕ້ອງບໍ່ເກີນ ${fmt.format(_net)} ກີບ');
         return;
       }
       await _doSave(
@@ -2370,8 +2653,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
 
     try {
       final res = await Future.wait<String?>([
-        _upload(_payImg, 'sales/payments',
-            isCash ? 'ຮູບສົດ' : 'ຮູບສະລິບ'),
+        _upload(_payImg, 'sales/payments', isCash ? 'ຮູບສົດ' : 'ຮູບສະລິບ'),
         _upload(_billImg, 'sales/bills', 'ຮູບໃບບິນ'),
         _upload(_topUpSlip, 'sales/topup_transfer', 'ສະລິບເຕີມ'),
         _upload(_topUpCash, 'sales/topup_cash', 'ຮູບສົດເຕີມ'),
@@ -2458,15 +2740,17 @@ class _RowLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        children: [
-          Icon(icon, color: Colors.brown, size: 16),
-          const SizedBox(width: 6),
-          Text(text,
-              style: const TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.bold,
-                color: Colors.brown,
-              )),
-        ],
-      );
+    children: [
+      Icon(icon, color: Colors.brown, size: 16),
+      const SizedBox(width: 6),
+      Text(
+        text,
+        style: const TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.bold,
+          color: Colors.brown,
+        ),
+      ),
+    ],
+  );
 }

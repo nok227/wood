@@ -66,5 +66,29 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+
+	<!-- ═══════════════════════════════════════════ -->
+	<!-- 📷 ສິດທິການເຂົ້າເຖິງຮູບພາບ (Gal + Image Picker) -->
+	<!-- ═══════════════════════════════════════════ -->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>ຕ້ອງການບັນທຶກຮູບລາຍງານການຂາຍລົງຄັງຮູບ</string>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ຕ້ອງການເຂົ້າເຖິງຄັງຮູບເພື່ອເລືອກ ແລະ ບັນທຶກຮູບ</string>
+
+	<!-- ═══════════════════════════════════════════ -->
+	<!-- 📸 ສິດທິການໃຊ້ກ້ອງຖ່າຍຮູບ -->
+	<!-- ═══════════════════════════════════════════ -->
+	<key>NSCameraUsageDescription</key>
+	<string>ຕ້ອງການເຂົ້າເຖິງກ້ອງເພື່ອຖ່າຍຮູບສິນຄ້າ ແລະ ການຊຳລະ</string>
+
+	<!-- ═══════════════════════════════════════════ -->
+	<!-- 🎤 ສິດທິການໃຊ້ໄມ (Speech-to-Text ພາສາລາວ) -->
+	<!-- ═══════════════════════════════════════════ -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>ຕ້ອງການເຂົ້າເຖິງໄມໂຄຣໂຟນເພື່ອປ້ອນສູດອາຫານດ້ວຍສຽງ</string>
+
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>ຕ້ອງການໃຊ້ການຮັບຮູ້ສຽງເພື່ອແປງສຽງເປັນຂໍ້ຄວາມ</string>
 </dict>
 </plist>

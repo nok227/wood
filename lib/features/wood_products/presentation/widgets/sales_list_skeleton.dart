@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// 🦴 Skeleton ສຳລັບໜ້າລາຍການຂາຍ
+/// 🦴 Skeleton ສຳລັບໜ້າລາຍການຂາຍ — ຕົງກັບ SaleCard ຈິງ
 class SalesListSkeleton extends StatefulWidget {
   const SalesListSkeleton({super.key, this.count = 5});
 
@@ -27,75 +27,152 @@ class _SalesListSkeletonState extends State<SalesListSkeleton>
   Widget build(BuildContext context) {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: widget.count,
-      itemBuilder: (_, i) => _buildCard(),
+      itemBuilder: (_, i) => AnimatedBuilder(
+        animation: _ctrl,
+        builder: (_, child) {
+          final t = 0.5 + _ctrl.value * 0.5;
+          return Opacity(opacity: t, child: child);
+        },
+        child: const _ShimmerCard(),
+      ),
     );
   }
+}
 
-  Widget _buildCard() {
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (_, child) {
-        // 🌊 Shimmer effect — ສີປ່ຽນ 0.5 → 1.0
-        final t = 0.5 + _ctrl.value * 0.5;
-        return Opacity(opacity: t, child: child);
-      },
-      child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: Colors.grey.shade300, width: 1.5),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
+class _ShimmerCard extends StatelessWidget {
+  const _ShimmerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── 2 ຮູບຈຳລອງ ──
-              Column(
+              // ── 3 ຮູບ 76×76 ──
+              const Column(
                 children: [
-                  _box(76, 76),
-                  const SizedBox(height: 8),
-                  _box(76, 76),
+                  _Box(w: 76, h: 76),
+                  SizedBox(height: 4),
+                  _Box(w: 76, h: 76),
+                  SizedBox(height: 4),
+                  _Box(w: 76, h: 76),
                 ],
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
 
-              // ── ຂໍ້ມູນຈຳລອງ ──
+              // ── ຂໍ້ມູນ ──
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _box(double.infinity, 14), // ຊື່ສິນຄ້າ
-                    const SizedBox(height: 6),
-                    _box(80, 12), // ຈຳນວນ
-                    const SizedBox(height: 6),
-                    _box(130, 16), // ລາຄາ
-                    const SizedBox(height: 6),
-                    _box(100, 12), // ວິທີ
+                    // ຊື່ / summary
+                    const _Box(w: double.infinity, h: 14),
                     const SizedBox(height: 4),
-                    _box(120, 10), // ວັນທີ
-                    const SizedBox(height: 10),
-                    _box(140, 22), // badge
-                    const SizedBox(height: 8),
-                    _box(double.infinity, 32), // status button
+
+                    // ລາຍການຍ່ອຍ (2 ແຖວ)
+                    const _Box(w: 160, h: 11),
+                    const SizedBox(height: 4),
+                    const _Box(w: 140, h: 11),
+                    const SizedBox(height: 6),
+
+                    // ຈຳນວນ
+                    const _Box(w: 110, h: 11),
+                    const SizedBox(height: 6),
+
+                    // ລວມ
+                    const _Box(w: 130, h: 15),
+                    const SizedBox(height: 4),
+
+                    // ວິທີ
+                    const _Box(w: 80, h: 11),
+                    const SizedBox(height: 4),
+
+                    // ວັນທີ
+                    const _Box(w: 130, h: 10),
+                    const SizedBox(height: 6),
+
+                    // payment badge
+                    const _Box(w: 120, h: 13),
+                    const SizedBox(height: 6),
+
+                    // ✅ Spacer → ດັນປຸ່ມລົງລຸ່ມ
+                    const Spacer(),
+
+                    // ປຸ່ມສະຖານະ (border, ບໍ່ shimmer — ສີຄ້າຍຈິງ)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.grey.shade300,
+                          width: 1.0,
+                        ),
+                      ),
+                      child: const Center(
+                        child: _Box(w: 140, h: 12),
+                      ),
+                    ),
                   ],
                 ),
               ),
+
+              // ── Admin menu (⋮) ──
+              const SizedBox(width: 4),
+              const _Box(w: 28, h: 28, radius: 4),
             ],
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _box(double w, double h) {
+// ══════════════════════════════════════════════
+// ✨ Shimmer Box Helper
+// ══════════════════════════════════════════════
+class _Box extends StatelessWidget {
+  final double w;
+  final double h;
+  final double radius;
+  final Color? color;
+
+  const _Box({
+    required this.w,
+    required this.h,
+    this.radius = 4,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: w,
       height: h,
       decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(6),
+        color: color ?? Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(radius),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:wood/features/wood_products/presentation/widgets/custom_app_bar.dart';
+import 'package:wood/features/wood_products/presentation/widgets/wood_product_preview_card.dart';
 import '../controllers/wood_product_controller.dart';
 import '../../data/models/wood_product_model.dart';
 import 'package:wood/core/util/currency_formatter.dart';
@@ -21,6 +22,20 @@ class WoodProductFormPage extends StatefulWidget {
 class _WoodProductFormPageState extends State<WoodProductFormPage>
     with AutomaticKeepAliveClientMixin {
   final WoodProductController controller = Get.find<WoodProductController>();
+
+  // ══════════════════════════════════════════════
+  // ✅ Listenable ລວມ text controllers
+  //    ໃຊ້ ListenableBuilder ແທນ setState → rebuild ໄວ + track ທັນທີ
+  // ══════════════════════════════════════════════
+  late final Listenable _formListenable = Listenable.merge([
+    controller.woodTypeController,
+    controller.nameController,
+    controller.widthController,
+    controller.lengthController,
+    controller.thicknessController,
+    controller.priceController,
+    controller.customUnitController,
+  ]);
 
   @override
   bool get wantKeepAlive => true;
@@ -75,6 +90,34 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     return (a - b).abs() < 0.001;
   }
 
+  // ══════════════════════════════════════════════
+  // ✅ ເງື່ອນໄຂ done
+  // ══════════════════════════════════════════════
+  bool get _doneImages =>
+      controller.existingImageUrls.isNotEmpty ||
+      controller.selectedImages.isNotEmpty;
+
+  bool get _doneWoodType =>
+      controller.woodTypeController.text.trim().isNotEmpty;
+
+  bool get _doneName => controller.nameController.text.trim().isNotEmpty;
+
+  bool get _doneSize {
+    final w = double.tryParse(controller.widthController.text.trim());
+    final l = double.tryParse(controller.lengthController.text.trim());
+    final t = double.tryParse(controller.thicknessController.text.trim());
+    return w != null && w > 0 && l != null && l > 0 && t != null && t > 0;
+  }
+
+  bool get _donePrice {
+    final p = double.tryParse(
+        controller.priceController.text.replaceAll(',', '').trim());
+    return p != null && p > 0;
+  }
+
+  bool get _previewReady =>
+      _doneImages && _doneWoodType && _doneName && _doneSize && _donePrice;
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -97,338 +140,521 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
             )
           : null,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'ຮູບໄມ້ ສູງສຸດ 6 ຮູບ',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Obx(() => _buildImagesPicker(controller)),
+        padding: const EdgeInsets.all(16),
+        // ✅ ListenableBuilder rebuild ເມື່ອ text ໃດກໍ່ຕາມປ່ຽນ
+        child: ListenableBuilder(
+          listenable: _formListenable,
+          builder: (context, _) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ① ຮູບໄມ້
+              Obx(() => _section(
+                    number: '1',
+                    title: 'ຮູບໄມ້ (ສູງສຸດ 6 ຮູບ)',
+                    icon: Icons.photo_library_outlined,
+                    color: Colors.brown,
+                    done: _doneImages,
+                    child: _buildImagesPicker(controller),
+                  )),
+              const SizedBox(height: 14),
 
-            // ══════════════════════════════════════════
-            // ✅ ຊະນິດໄມ້ + ຄຳແນະນຳ
-            // ══════════════════════════════════════════
-            const SizedBox(height: 16),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'ຊະນິດໄມ້ (ເຊັ່ນ: ໄມ້ຍາງ, ໄມ້ດູ່)',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              // ② ຊະນິດໄມ້
+              _section(
+                number: '2',
+                title: 'ຊະນິດໄມ້',
+                icon: Icons.local_florist,
+                color: Colors.brown,
+                done: _doneWoodType,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: controller.woodTypeController,
+                      decoration: _minimalInputDecoration('ຊະນິດໄມ້'),
+                    ),
+                    Obx(() => _suggestionChips(
+                          items: controller.uniqueWoodTypes,
+                          onTap: (t) {
+                            controller.woodTypeController.text = t;
+                            controller.woodTypeController.selection =
+                                TextSelection.collapsed(offset: t.length);
+                          },
+                        )),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: controller.woodTypeController,
-              decoration: _minimalInputDecoration('ຊະນິດໄມ້'),
-            ),
-            Obx(() => _suggestionChips(
-                  items: controller.uniqueWoodTypes,
-                  onTap: (t) {
-                    controller.woodTypeController.text = t;
-                    controller.woodTypeController.selection =
-                        TextSelection.collapsed(offset: t.length);
-                  },
-                )),
+              const SizedBox(height: 14),
 
-            // ══════════════════════════════════════════
-            // ✅ ຊື່ໄມ້ + ຄຳແນະນຳ
-            // ══════════════════════════════════════════
-            const SizedBox(height: 16),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'ຊື່ໄມ້',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              // ③ ຊື່ໄມ້
+              _section(
+                number: '3',
+                title: 'ຊື່ໄມ້',
+                icon: Icons.inventory_2_outlined,
+                color: Colors.brown,
+                done: _doneName,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: controller.nameController,
+                      decoration: _minimalInputDecoration('ຊື່ໄມ້'),
+                    ),
+                    Obx(() => _suggestionChips(
+                          items: controller.uniqueProductNames,
+                          onTap: (t) {
+                            controller.nameController.text = t;
+                            controller.nameController.selection =
+                                TextSelection.collapsed(offset: t.length);
+                          },
+                        )),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: controller.nameController,
-              decoration: _minimalInputDecoration('ຊື່ໄມ້'),
-            ),
-            Obx(() => _suggestionChips(
-                  items: controller.uniqueProductNames,
-                  onTap: (t) {
-                    controller.nameController.text = t;
-                    controller.nameController.selection =
-                        TextSelection.collapsed(offset: t.length);
-                  },
-                )),
+              const SizedBox(height: 14),
 
-            const SizedBox(height: 16),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'ຂະໜາດ',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: controller.widthController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: _minimalInputDecoration('ກວ້າງ'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: controller.lengthController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: _minimalInputDecoration('ຍາວ'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: controller.thicknessController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: _minimalInputDecoration('ໜາ'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Obx(
-              () => DropdownButtonFormField<String>(
-                value: controller.selectedSizeUnit.value,
-                decoration: _minimalInputDecoration('ໜ່ວຍຂະໜາດ'),
-                items: controller.sizeUnitOptions
-                    .map((u) => DropdownMenuItem(value: u, child: Text(u)))
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) controller.selectedSizeUnit.value = v;
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: controller.quantityController,
-                    readOnly: true,
-                    enabled: false,
-                    decoration: _minimalInputDecoration(
-                      'ຈຳນວນ',
-                    ).copyWith(filled: true, fillColor: Colors.grey.shade100),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Obx(
-                    () => DropdownButtonFormField<String>(
-                      value: controller.selectedUnit.value,
-                      decoration: _minimalInputDecoration('ໜ່ວຍນັບ'),
-                      items: controller.unitOptions
-                          .map(
-                            (u) => DropdownMenuItem(value: u, child: Text(u)),
-                          )
-                          .toList(),
-                      onChanged: (v) {
-                        if (v != null) controller.selectedUnit.value = v;
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Obx(
-              () => controller.selectedUnit.value == 'ອື່ນໆ'
-                  ? Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: TextField(
-                        controller: controller.customUnitController,
-                        decoration: _minimalInputDecoration('ລະບຸໜ່ວຍນັບ'),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller.priceController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                CurrencyFormatter(),
-              ],
-              decoration: _minimalInputDecoration(
-                'ລາຄາຂາຍ xxx ກີບ',
-              ).copyWith(suffixText: 'ກີບ '),
-            ),
-            const SizedBox(height: 24),
-
-            // ══════════════════════════════════════════════
-            // 🚀 ປຸ່ມ ບັນທຶກ/ຍົກເລີກ + Progress Bar
-            // ══════════════════════════════════════════════
-            Obx(() {
-              if (controller.isSaving.value) {
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.brown.shade200),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.brown.withOpacity(0.08),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: controller.saveProgress.value > 0
-                              ? controller.saveProgress.value / 100
-                              : null,
-                          backgroundColor: Colors.brown.shade50,
-                          color: Colors.brown,
-                          minHeight: 8,
+              // ④ ຂະໜາດ
+              _section(
+                number: '4',
+                title: 'ຂະໜາດ',
+                icon: Icons.straighten,
+                color: Colors.brown,
+                done: _doneSize,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: controller.widthController,
+                            keyboardType:
+                                const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            decoration: _minimalInputDecoration('ກວ້າງ'),
+                          ),
                         ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: controller.lengthController,
+                            keyboardType:
+                                const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            decoration: _minimalInputDecoration('ຍາວ'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: controller.thicknessController,
+                            keyboardType:
+                                const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            decoration: _minimalInputDecoration('ໜາ'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Obx(
+                      () => DropdownButtonFormField<String>(
+                        value: controller.selectedSizeUnit.value,
+                        decoration: _minimalInputDecoration('ໜ່ວຍຂະໜາດ'),
+                        items: controller.sizeUnitOptions
+                            .map((u) =>
+                                DropdownMenuItem(value: u, child: Text(u)))
+                            .toList(),
+                        onChanged: (v) {
+                          if (v != null) {
+                            controller.selectedSizeUnit.value = v;
+                          }
+                        },
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.2,
-                              color: Colors.brown,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // ⑤ ຈຳນວນ ແລະ ໜ່ວຍນັບ
+              Obx(() => _section(
+                    number: '5',
+                    title: 'ຈຳນວນ ແລະ ໜ່ວຍນັບ',
+                    icon: Icons.numbers,
+                    color: Colors.brown,
+                    done: false,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: controller.quantityController,
+                                readOnly: true,
+                                enabled: false,
+                                decoration: _minimalInputDecoration(
+                                  'ຈຳນວນ',
+                                ).copyWith(
+                                  filled: true,
+                                  fillColor: Colors.grey.shade100,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: controller.selectedUnit.value,
+                                decoration:
+                                    _minimalInputDecoration('ໜ່ວຍນັບ'),
+                                items: controller.unitOptions
+                                    .map((u) => DropdownMenuItem(
+                                          value: u,
+                                          child: Text(u),
+                                        ))
+                                    .toList(),
+                                onChanged: (v) {
+                                  if (v != null) {
+                                    controller.selectedUnit.value = v;
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (controller.selectedUnit.value == 'ອື່ນໆ')
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: TextField(
+                              controller: controller.customUnitController,
+                              decoration:
+                                  _minimalInputDecoration('ລະບຸໜ່ວຍນັບ'),
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              controller.saveStep.value.isEmpty
-                                  ? 'ກຳລັງບັນທຶກ...'
-                                  : controller.saveStep.value,
+                      ],
+                    ),
+                  )),
+              const SizedBox(height: 14),
+
+              // ⑥ ລາຄາຂາຍ
+              _section(
+                number: '6',
+                title: 'ລາຄາຂາຍ',
+                icon: Icons.sell_outlined,
+                color: Colors.brown,
+                done: _donePrice,
+                child: TextField(
+                  controller: controller.priceController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    CurrencyFormatter(),
+                  ],
+                  decoration: _minimalInputDecoration(
+                    'ລາຄາຂາຍ xxx ກີບ',
+                  ).copyWith(suffixText: 'ກີບ '),
+                ),
+              ),
+
+              // ══════════════════════════════════════════
+              // ✅ Preview Card — Obx ຄຸມ obs ພາຍໃນ
+              //    ສ່ວນ text ອັບເດດຜ່ານ ListenableBuilder ທາງເທິງ
+              // ══════════════════════════════════════════
+              Obx(() {
+                if (!_previewReady) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: WoodProductPreviewCard(
+                    existingImages:
+                        controller.existingImageUrls.toList(),
+                    newImages: controller.selectedImages.toList(),
+                    woodType: controller.woodTypeController.text.trim(),
+                    name: controller.nameController.text.trim(),
+                    width: double.tryParse(
+                            controller.widthController.text.trim()) ??
+                        0,
+                    length: double.tryParse(
+                            controller.lengthController.text.trim()) ??
+                        0,
+                    thickness: double.tryParse(
+                            controller.thicknessController.text.trim()) ??
+                        0,
+                    sizeUnit: controller.selectedSizeUnit.value,
+                    unit: controller.selectedUnit.value == 'ອື່ນໆ'
+                        ? controller.customUnitController.text.trim()
+                        : controller.selectedUnit.value,
+                    price: double.tryParse(controller.priceController.text
+                            .replaceAll(',', '')
+                            .trim()) ??
+                        0,
+                    isEditing: controller.editingProductId.value != null,
+                  ),
+                );
+              }),
+
+              const SizedBox(height: 20),
+
+              // ══════════════════════════════════════════
+              // 🚀 ປຸ່ມ ບັນທຶກ/ຍົກເລີກ
+              // ══════════════════════════════════════════
+              Obx(() {
+                if (controller.isSaving.value) {
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.brown.shade200),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.brown.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: controller.saveProgress.value > 0
+                                ? controller.saveProgress.value / 100
+                                : null,
+                            backgroundColor: Colors.brown.shade50,
+                            color: Colors.brown,
+                            minHeight: 8,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: Colors.brown,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                controller.saveStep.value.isEmpty
+                                    ? 'ກຳລັງບັນທຶກ...'
+                                    : controller.saveStep.value,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.brown.shade800,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${controller.saveProgress.value}%',
                               style: TextStyle(
                                 fontSize: 13,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w900,
                                 color: Colors.brown.shade800,
                               ),
                             ),
-                          ),
-                          Text(
-                            '${controller.saveProgress.value}%',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.brown.shade800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              }
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
-              return Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                        elevation: 0,
-                        backgroundColor: Colors.blueAccent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                return Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          elevation: 0,
+                          backgroundColor: Colors.blueAccent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () async {
+                          final dup = _findDuplicate();
+                          if (dup != null) {
+                            _showDuplicateDialog(dup);
+                            return;
+                          }
+
+                          final isEditing =
+                              controller.editingProductId.value != null;
+                          final isSuccess = await controller.saveProduct();
+                          if (isSuccess) {
+                            Get.back();
+                            Get.snackbar(
+                              'ສຳເລັດ',
+                              isEditing
+                                  ? 'ແກ້ໄຂຂໍ້ມູນແລ້ວ'
+                                  : 'ບັນທຶກຂໍ້ມູນແລ້ວ',
+                            );
+                          }
+                        },
+                        child: Text(
+                          controller.editingProductId.value == null
+                              ? 'ບັນທຶກ'
+                              : 'ບັນທຶກແກ້ໄຂ',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
-                      onPressed: () async {
-                        // ✅ ກວດສອບສິນຄ້າຊ້ຳກ່ອນ
-                        final dup = _findDuplicate();
-                        if (dup != null) {
-                          _showDuplicateDialog(dup);
-                          return;
-                        }
-
-                        final isEditing =
-                            controller.editingProductId.value != null;
-                        final isSuccess = await controller.saveProduct();
-                        if (isSuccess) {
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          backgroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          controller.cancelEdit();
                           Get.back();
-                          Get.snackbar(
-                            'ສຳເລັດ',
-                            isEditing
-                                ? 'ແກ້ໄຂຂໍ້ມູນແລ້ວ'
-                                : 'ບັນທຶກຂໍ້ມູນແລ້ວ',
-                          );
-                        }
-                      },
-                      child: Text(
-                        controller.editingProductId.value == null
-                            ? 'ບັນທຶກ'
-                            : 'ບັນທຶກແກ້ໄຂ',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
+                        },
+                        child: Text(
+                          'ຍົກເລີກ',
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                        side: BorderSide(color: Colors.grey.shade300),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        backgroundColor: Colors.white,
-                      ),
-                      onPressed: () {
-                        controller.cancelEdit();
-                        Get.back();
-                      },
-                      child: Text(
-                        'ຍົກເລີກ',
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            }),
-          ],
+                  ],
+                );
+              }),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // ══════════════════════════════════════════════
-  // ⚠️ Dialog ແຈ້ງເຕືອນສິນຄ້າຊ້ຳ
-  // ══════════════════════════════════════════════
+  // ─── Section wrapper (ຄົງເດີມ) ───
+  Widget _section({
+    required String number,
+    required String title,
+    required IconData icon,
+    required Color color,
+    required Widget child,
+    bool done = false,
+  }) {
+    final effectiveColor = done ? Colors.green.shade700 : color;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: effectiveColor.withOpacity(done ? 0.5 : 0.25),
+          width: done ? 1.8 : 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: effectiveColor.withOpacity(done ? 0.12 : 0.06),
+            blurRadius: done ? 10 : 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            decoration: BoxDecoration(
+              color: effectiveColor.withOpacity(0.08),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(13)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    color: effectiveColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      number,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Icon(icon, color: effectiveColor, size: 18),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w900,
+                      color: effectiveColor,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ),
+                if (done)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade700,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.check, color: Colors.white, size: 11),
+                        SizedBox(width: 3),
+                        Text(
+                          'ສຳເລັດ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Padding(padding: const EdgeInsets.all(12), child: child),
+        ],
+      ),
+    );
+  }
+
+  // ─── Dialog duplicate (ຄົງເດີມ) ───
   void _showDuplicateDialog(WoodProductModel dup) {
     Get.defaultDialog(
       title: 'ມີສິນຄ້ານີ້ແລ້ວ',
@@ -504,7 +730,8 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
       labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14),
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
@@ -518,8 +745,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
 }
 
 // ══════════════════════════════════════════════
-// 📋 ແຖວສະແດງຂໍ້ມູນສິນຄ້າຊ້ຳ
+// Helper widgets (top-level) — ຄົງເດີມ
 // ══════════════════════════════════════════════
+
 Widget _dupRow(String label, String value) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 2),
@@ -530,19 +758,13 @@ Widget _dupRow(String label, String value) {
           width: 78,
           child: Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade700,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
           ),
         ),
         Expanded(
           child: Text(
             value.isEmpty ? '-' : value,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
           ),
         ),
       ],
@@ -550,9 +772,6 @@ Widget _dupRow(String label, String value) {
   );
 }
 
-// ══════════════════════════════════════════════
-// ✅ ຄຳແນະນຳ — Chips ໃຕ້ input
-// ══════════════════════════════════════════════
 Widget _suggestionChips({
   required List<String> items,
   required ValueChanged<String> onTap,
@@ -609,9 +828,6 @@ Widget _suggestionChips({
   );
 }
 
-// ══════════════════════════════════════════════
-// 📷 Image Picker
-// ══════════════════════════════════════════════
 Widget _buildImagesPicker(WoodProductController controller) {
   final totalCount =
       controller.existingImageUrls.length + controller.selectedImages.length;
@@ -658,7 +874,8 @@ Widget _buildImagesPicker(WoodProductController controller) {
             border: Border.all(color: Colors.grey.shade300),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(Icons.add_a_photo_outlined, color: Colors.grey.shade600),
+          child:
+              Icon(Icons.add_a_photo_outlined, color: Colors.grey.shade600),
         ),
       ),
     );

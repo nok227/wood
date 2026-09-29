@@ -20,6 +20,14 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
+    <!-- ✅ ສຳລັບການບັນທຶກຮູບລົງຄັງຮູບ (Gal package) -->
+    <!-- Android ≤ 9 (API ≤ 28) ຕ້ອງການ WRITE_EXTERNAL_STORAGE -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <!-- Android 13+ (API 33+) ໃຊ້ READ_MEDIA_IMAGES ແທນ -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
     <application
         android:label="ລາຄາໄມ້"
         android:name="${applicationName}"

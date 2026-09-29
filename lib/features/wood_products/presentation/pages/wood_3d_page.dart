@@ -21,9 +21,10 @@ class _Wood3DPageState extends State<Wood3DPage> {
   String? focusedDimension;
   bool showColor = false;
 
-  // ══════════════════════════════════════════════
-  // ✅ Memoization cache
-  // ══════════════════════════════════════════════
+  // ✅ ໃໝ່: ສະຖານະຂອງ panel ລຸ່ມ
+  bool _panelExpanded = true;
+
+  // Memoization cache
   List<WoodProductModel> _cachedProducts = const [];
   String _cachedWoodType = '__none__';
   List<WoodProductModel> _cachedFiltered = const [];
@@ -31,7 +32,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
   List<String> _cachedNames = const [];
   List<WoodProductModel> _cachedVariants = const [];
 
-  // ✅ ປ້ອງກັນ _syncSwipeLock schedule ຊ້ຳ
   bool? _lastLockValue;
 
   String _fmt(num v) =>
@@ -64,13 +64,10 @@ class _Wood3DPageState extends State<Wood3DPage> {
       selectedName = null;
       selectedVariant = null;
       focusedDimension = null;
-      _cachedWoodType = '__none__'; // ✅ invalidate
+      _cachedWoodType = '__none__';
     });
   }
 
-  // ══════════════════════════════════════════════
-  // ✅ ຄຳນວນໃໝ່ສະເພາະເວລາຂໍ້ມູນ ຫຼື filter ປ່ຽນ
-  // ══════════════════════════════════════════════
   void _recomputeIfNeeded(List<WoodProductModel> products) {
     final sourceChanged = !identical(_cachedProducts, products);
     final filterChanged = _cachedWoodType != selectedWoodType;
@@ -79,7 +76,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
       _cachedProducts = products;
       _cachedWoodType = selectedWoodType;
 
-      // Wood types
       final types = products
           .map((p) => p.woodType.trim())
           .where((t) => t.isNotEmpty)
@@ -87,24 +83,20 @@ class _Wood3DPageState extends State<Wood3DPage> {
           .toList();
       _cachedWoodTypeOptions = ['ທັງໝົດ', ...types];
 
-      // Filtered products
       _cachedFiltered = selectedWoodType == 'ທັງໝົດ'
           ? products
           : products
               .where((p) => p.woodType.trim() == selectedWoodType)
               .toList();
 
-      // Names
       _cachedNames = _cachedFiltered.map((p) => p.name).toSet().toList();
 
-      // Validate selectedName
       if (selectedName != null && !_cachedNames.contains(selectedName)) {
         selectedName = null;
         selectedVariant = null;
       }
     }
 
-    // Variants — ຄຳນວນທຸກຄັ້ງທີ່ selectedName ປ່ຽນ (ໄວ ເພາະ _cachedFiltered ຖືກ cache)
     if (selectedName == null) {
       _cachedVariants = const [];
       selectedVariant = null;
@@ -135,14 +127,7 @@ class _Wood3DPageState extends State<Wood3DPage> {
 
         return Column(
           children: [
-            if (hasSelection)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: _colorButton(),
-                ),
-              ),
+            // ✅ ລຶບປຸ່ມສີທີ່ຢູ່ຂ້າງເທິງອອກແລ້ວ
             Expanded(
               child: hasSelection
                   ? RepaintBoundary(
@@ -156,6 +141,8 @@ class _Wood3DPageState extends State<Wood3DPage> {
                         unit: selectedVariant!.unit,
                         focusedDimension: focusedDimension,
                         showColor: showColor,
+                        onToggleColor: () =>
+                            setState(() => showColor = !showColor),
                       ),
                     )
                   : Container(
@@ -170,135 +157,231 @@ class _Wood3DPageState extends State<Wood3DPage> {
                       ),
                     ),
             ),
-            if (hasSelection)
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    Expanded(child: _dimButton('ກວ້າງ', 'width')),
-                    const SizedBox(width: 8),
-                    Expanded(child: _dimButton('ຍາວ', 'length')),
-                    const SizedBox(width: 8),
-                    Expanded(child: _dimButton('ໜາ', 'thickness')),
-                  ],
-                ),
-              ),
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: allProducts.isEmpty
-                  ? const Text(
-                      'ຍັງບໍ່ມີຂໍ້ມູນໃນຄັງ ກະລຸນາເພີ່ມຂໍ້ມູນກ່ອນ',
-                      style: TextStyle(color: Colors.black54),
-                    )
-                  : Column(
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                value: selectedWoodType,
-                                isExpanded: true,
-                                decoration: const InputDecoration(
-                                  labelText: 'ຊະນິດໄມ້',
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 10),
-                                ),
-                                items: _cachedWoodTypeOptions
-                                    .map((type) => DropdownMenuItem(
-                                          value: type,
-                                          child: Text(
-                                            type == 'ທັງໝົດ'
-                                                ? 'ທັງໝົດ (ສະແດງທັງໝົດ)'
-                                                : type,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ))
-                                    .toList(),
-                                onChanged: (v) => setState(() {
-                                  selectedWoodType = v ?? 'ທັງໝົດ';
-                                  selectedName = null;
-                                  selectedVariant = null;
-                                  focusedDimension = null;
-                                }),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            _clearButton(),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                value: selectedName,
-                                isExpanded: true,
-                                decoration: const InputDecoration(
-                                  labelText: 'ຊື່ໄມ້',
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 10),
-                                ),
-                                hint: const Text('ເລືອກຊື່ໄມ້'),
-                                items: _cachedNames
-                                    .map((n) => DropdownMenuItem(
-                                          value: n,
-                                          child: Text(n,
-                                              overflow:
-                                                  TextOverflow.ellipsis),
-                                        ))
-                                    .toList(),
-                                onChanged: (v) => setState(() {
-                                  selectedName = v;
-                                  focusedDimension = null;
-                                  // selectedVariant ຈະຖືກອັບເດດໃນ _recomputeIfNeeded
-                                }),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child:
-                                  DropdownButtonFormField<WoodProductModel>(
-                                value: selectedVariant,
-                                isExpanded: true,
-                                decoration: const InputDecoration(
-                                  labelText: 'ຂະໜາດ',
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 10),
-                                ),
-                                hint: const Text('ເລືອກຂະໜາດ'),
-                                items: _cachedVariants
-                                    .map((v) =>
-                                        DropdownMenuItem<WoodProductModel>(
-                                          value: v,
-                                          child: Text(
-                                            '${_fmt(v.width)}×${_fmt(v.length)}×${_fmt(v.thickness)} ${v.sizeUnit}',
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ))
-                                    .toList(),
-                                onChanged: selectedName == null
-                                    ? null
-                                    : (v) => setState(() {
-                                          selectedVariant = v;
-                                          focusedDimension = null;
-                                        }),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-            ),
+
+            // ✅ Panel ລຸ່ມ — ຊ່ອນ/ສະແດງໄດ້
+            _buildBottomPanel(hasSelection, allProducts),
           ],
         );
       }),
+    );
+  }
+
+  // ══════════════════════════════════════════════
+  // ✅ Panel ລຸ່ມ — ປັດຂຶ້ນ/ລົງ ຫຼື ແຕະ ເພື່ອຊ່ອນ/ສະແດງ
+  // ══════════════════════════════════════════════
+  Widget _buildBottomPanel(
+    bool hasSelection,
+    List<WoodProductModel> allProducts,
+  ) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOutCubic,
+      alignment: Alignment.topCenter,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _panelHandle(),
+            if (_panelExpanded) ...[
+              // dim buttons (ກວ້າງ/ຍາວ/ໜາ)
+              if (hasSelection)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Row(
+                    children: [
+                      Expanded(child: _dimButton('ກວ້າງ', 'width')),
+                      const SizedBox(width: 8),
+                      Expanded(child: _dimButton('ຍາວ', 'length')),
+                      const SizedBox(width: 8),
+                      Expanded(child: _dimButton('ໜາ', 'thickness')),
+                    ],
+                  ),
+                ),
+              // Dropdowns
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                child: allProducts.isEmpty
+                    ? const Text(
+                        'ຍັງບໍ່ມີຂໍ້ມູນໃນຄັງ ກະລຸນາເພີ່ມຂໍ້ມູນກ່ອນ',
+                        style: TextStyle(color: Colors.black54),
+                      )
+                    : Column(
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: selectedWoodType,
+                                  isExpanded: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'ຊະນິດໄມ້',
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 10),
+                                  ),
+                                  items: _cachedWoodTypeOptions
+                                      .map((type) => DropdownMenuItem(
+                                            value: type,
+                                            child: Text(
+                                              type == 'ທັງໝົດ'
+                                                  ? 'ທັງໝົດ (ສະແດງທັງໝົດ)'
+                                                  : type,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ))
+                                      .toList(),
+                                  onChanged: (v) => setState(() {
+                                    selectedWoodType = v ?? 'ທັງໝົດ';
+                                    selectedName = null;
+                                    selectedVariant = null;
+                                    focusedDimension = null;
+                                  }),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _clearButton(),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: selectedName,
+                                  isExpanded: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'ຊື່ໄມ້',
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 10),
+                                  ),
+                                  hint: const Text('ເລືອກຊື່ໄມ້'),
+                                  items: _cachedNames
+                                      .map((n) => DropdownMenuItem(
+                                            value: n,
+                                            child: Text(n,
+                                                overflow:
+                                                    TextOverflow.ellipsis),
+                                          ))
+                                      .toList(),
+                                  onChanged: (v) => setState(() {
+                                    selectedName = v;
+                                    focusedDimension = null;
+                                  }),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child:
+                                    DropdownButtonFormField<WoodProductModel>(
+                                  value: selectedVariant,
+                                  isExpanded: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'ຂະໜາດ',
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 10),
+                                  ),
+                                  hint: const Text('ເລືອກຂະໜາດ'),
+                                  items: _cachedVariants
+                                      .map((v) => DropdownMenuItem<
+                                              WoodProductModel>(
+                                            value: v,
+                                            child: Text(
+                                              '${_fmt(v.width)}×${_fmt(v.length)}×${_fmt(v.thickness)} ${v.sizeUnit}',
+                                              overflow:
+                                                  TextOverflow.ellipsis,
+                                            ),
+                                          ))
+                                      .toList(),
+                                  onChanged: selectedName == null
+                                      ? null
+                                      : (v) => setState(() {
+                                            selectedVariant = v;
+                                            focusedDimension = null;
+                                          }),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ✅ Handle bar — ແຕະ ຫຼື ປັດ ເພື່ອຊ່ອນ/ສະແດງ
+  Widget _panelHandle() {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() => _panelExpanded = !_panelExpanded),
+      onVerticalDragEnd: (d) {
+        final v = d.primaryVelocity ?? 0;
+        if (v > 200 && _panelExpanded) {
+          setState(() => _panelExpanded = false);
+        } else if (v < -200 && !_panelExpanded) {
+          setState(() => _panelExpanded = true);
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        color: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade400,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  _panelExpanded
+                      ? Icons.keyboard_arrow_down
+                      : Icons.keyboard_arrow_up,
+                  size: 14,
+                  color: Colors.grey.shade500,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _panelExpanded
+                      ? 'ປັດລົງ ຫຼື ແຕະ ເພື່ອຊ່ອນ'
+                      : 'ປັດຂຶ້ນ ຫຼື ແຕະ ເພື່ອສະແດງ',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -315,19 +398,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
         icon: const Icon(Icons.clear_all, size: 18),
         label: const Text('ລ້າງ'),
       ),
-    );
-  }
-
-  Widget _colorButton() {
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        backgroundColor: showColor ? Colors.brown : null,
-        foregroundColor: showColor ? Colors.white : Colors.brown,
-        side: const BorderSide(color: Colors.brown),
-      ),
-      onPressed: () => setState(() => showColor = !showColor),
-      icon: const Icon(Icons.palette, size: 18),
-      label: const Text('ສີ'),
     );
   }
 

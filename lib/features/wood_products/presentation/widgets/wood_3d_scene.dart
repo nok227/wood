@@ -41,6 +41,7 @@ class Wood3DScene extends StatefulWidget {
   final String? unit;
   final String? focusedDimension;
   final bool showColor;
+  final VoidCallback? onToggleColor; // ✅ ໃໝ່
 
   const Wood3DScene({
     super.key,
@@ -52,6 +53,7 @@ class Wood3DScene extends StatefulWidget {
     this.unit,
     this.focusedDimension,
     this.showColor = false,
+    this.onToggleColor, // ✅ ໃໝ່
   });
 
   @override
@@ -74,7 +76,7 @@ class _Wood3DSceneState extends State<Wood3DScene> {
   double _zoomStart = _defaultZoom;
   Offset _offset = Offset.zero;
   bool _dragging = false;
-  bool _showQuickViews = false; // สถานะเปิด/ปิดเมนู
+  bool _showQuickViews = false;
   Timer? _stopTimer;
 
   @override
@@ -99,11 +101,10 @@ class _Wood3DSceneState extends State<Wood3DScene> {
     });
   }
 
-  // 🎯 ฟังก์ชันตั้งค่ามุมมองตรง
   void _setView(Rot3 targetOrientation) {
     setState(() {
       _orientation = targetOrientation;
-      _offset = Offset.zero; // รีเซ็ตตำแหน่งกึ่งกลาง
+      _offset = Offset.zero;
     });
   }
 
@@ -363,7 +364,7 @@ class _Wood3DSceneState extends State<Wood3DScene> {
     return [CustomPaint(size: size, painter: _ArrowsPainter(arrows)), ...texts];
   }
 
-  // 🧭 วิดเจ็ตกลุ่มปุ่มเปลี่ยนมุมมอง ตอบสนองรวดเร็ว ไร้ Delay (120ms)
+  // 🧭 ปุ่มเปลี่ยนมุมมอง + ปุ่มสี
   Widget _buildQuickViewButtons() {
     return Positioned(
       right: 12,
@@ -372,7 +373,6 @@ class _Wood3DSceneState extends State<Wood3DScene> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // 🎬 เมนูปุ่มย่อย (ปรับ Duration เหลือ 120ms กระชับติดมือ)
           AnimatedOpacity(
             opacity: _showQuickViews ? 1.0 : 0.0,
             duration: const Duration(milliseconds: 120),
@@ -382,26 +382,42 @@ class _Wood3DSceneState extends State<Wood3DScene> {
               duration: const Duration(milliseconds: 120),
               curve: Curves.fastOutSlowIn,
               child: IgnorePointer(
-                ignoring: !_showQuickViews, // ป้องกันการกดโดนปุ่มขณะซ่อนเมนู
+                ignoring: !_showQuickViews,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    _viewBtn('ด้านบน', Icons.navigation, () => _setView(Rot3.top)),
+                    _viewBtn('ດ້ານເທິງ', Icons.navigation,
+                        () => _setView(Rot3.top)),
                     const SizedBox(height: 6),
-                    _viewBtn('ด้านหน้า', Icons.crop_square, () => _setView(Rot3.front)),
+                    _viewBtn('ດ້ານໜ້າ', Icons.crop_square,
+                        () => _setView(Rot3.front)),
                     const SizedBox(height: 6),
-                    _viewBtn('ด้านข้าง', Icons.view_column, () => _setView(Rot3.side)),
+                    _viewBtn('ດ້ານຂ້າງ', Icons.view_column,
+                        () => _setView(Rot3.side)),
                     const SizedBox(height: 6),
-                    _viewBtn('เฉียง (ตั้งต้น)', Icons.restart_alt, _resetView),
+                    _viewBtn('ດ້ານສະຫຼຽງ (ເລີ່ມຕົ້ນ)',
+                        Icons.restart_alt, _resetView),
+
+                    // ✅ ປຸ່ມສີ — ຢູ່ໃນເມນູນີ້
+                    if (widget.onToggleColor != null) ...[
+                      const SizedBox(height: 6),
+                      _viewBtn(
+                        widget.showColor ? 'ປິດສີ' : 'ສີ',
+                        widget.showColor
+                            ? Icons.format_color_reset
+                            : Icons.palette,
+                        widget.onToggleColor!,
+                        autoClose: false, // ✅ ບໍ່ປິດເມນູ ຫຼັງກົດ
+                        active: widget.showColor,
+                      ),
+                    ],
                     const SizedBox(height: 8),
                   ],
                 ),
               ),
             ),
           ),
-
-          // 🧭 ปุ่มหลักสำหรับแตะเปิด/ปิดเมนู
           FloatingActionButton.small(
             heroTag: 'toggle_3d_quick_views',
             backgroundColor: Colors.brown[700],
@@ -413,7 +429,7 @@ class _Wood3DSceneState extends State<Wood3DScene> {
               });
             },
             child: AnimatedRotation(
-              turns: _showQuickViews ? 0.125 : 0, // หมุนไอคอนนุ่มๆ 45 องศา
+              turns: _showQuickViews ? 0.125 : 0,
               duration: const Duration(milliseconds: 120),
               curve: Curves.fastOutSlowIn,
               child: Icon(
@@ -427,14 +443,29 @@ class _Wood3DSceneState extends State<Wood3DScene> {
     );
   }
 
-  // 🔘 ปุ่มย่อยที่ใช้ InkWell ตอบสนองการกดทันที + ปิดเมนูอัตโนมัติ
-  Widget _viewBtn(String label, IconData icon, VoidCallback onPressed) {
+  // 🔘 ปุ่มย่อย — ✅ ເພີ່ມ autoClose + active
+  Widget _viewBtn(
+    String label,
+    IconData icon,
+    VoidCallback onPressed, {
+    bool autoClose = true,
+    bool active = false,
+  }) {
+    final bgColor = active
+        ? Colors.brown.shade700
+        : Colors.white.withOpacity(0.95);
+    final fgColor = active ? Colors.white : Colors.brown.shade700;
+    final textColor = active ? Colors.white : Colors.brown.shade900;
+
     return Container(
       height: 32,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
+        color: bgColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.brown, width: 0.8),
+        border: Border.all(
+          color: active ? Colors.brown.shade800 : Colors.brown,
+          width: active ? 1.4 : 0.8,
+        ),
         boxShadow: const [
           BoxShadow(
             color: Colors.black12,
@@ -448,24 +479,26 @@ class _Wood3DSceneState extends State<Wood3DScene> {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            onPressed(); // เปลี่ยนมุมมอง 3D ทันที
-            setState(() {
-              _showQuickViews = false; // ปิดเมนูอัตโนมัติ
-            });
+            onPressed();
+            if (autoClose) {
+              setState(() {
+                _showQuickViews = false;
+              });
+            }
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 14, color: Colors.brown[700]),
+                Icon(icon, size: 14, color: fgColor),
                 const SizedBox(width: 4),
                 Text(
                   label,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Colors.brown[900],
+                    color: textColor,
                   ),
                 ),
               ],
@@ -516,7 +549,7 @@ class _Wood3DSceneState extends State<Wood3DScene> {
                       ),
                     ),
                     if (!_dragging) ..._buildLabels(geometry, size),
-                    _buildQuickViewButtons(), // ปุ่มเข็มทิศลอยขวาล่าง
+                    _buildQuickViewButtons(),
                   ],
                 ),
               );

@@ -67,14 +67,13 @@ class _AccountPageState extends State<AccountPage> {
     final isAdmin = Get.find<AuthController>().isAdmin;
 
     return Scaffold(
-      backgroundColor: Colors.brown[50],
+      backgroundColor: const Color(0xFFF5F0EA),
       body: Column(
         children: [
           _balanceBanner(),
           _actionButtons(),
           Expanded(
             child: Obx(() {
-              // ✅ Skeleton ແທນ spinner
               if (controller.isLoading.value &&
                   controller.allTransactions.isEmpty) {
                 return const AccountPageSkeleton();
@@ -88,7 +87,7 @@ class _AccountPageState extends State<AccountPage> {
               }
               return ListView.builder(
                 padding: const EdgeInsets.only(
-                    bottom: 100, left: 10, right: 10, top: 4),
+                    bottom: 100, left: 12, right: 12, top: 4),
                 itemCount: groups.length,
                 itemBuilder: (_, i) => _sessionSection(groups[i], isAdmin),
               );
@@ -100,26 +99,26 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   // ══════════════════════════════════════════════
-  // 💰 ຍອດຄົງເຫຼືອ
+  // 💰 ຍອດຄົງເຫຼືອ — Hero card
   // ══════════════════════════════════════════════
   Widget _balanceBanner() {
     return Obx(() {
       final bal = controller.balance;
       return Container(
-        margin: const EdgeInsets.fromLTRB(10, 8, 10, 0),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.brown.shade800, Colors.brown.shade600],
+            colors: [Colors.brown.shade700, Colors.brown.shade500],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.brown.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              color: Colors.brown.withOpacity(0.25),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
@@ -129,13 +128,17 @@ class _AccountPageState extends State<AccountPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.account_balance_wallet,
-                    color: Colors.white70, size: 13),
-                SizedBox(width: 4),
+                    color: Colors.white70, size: 14),
+                SizedBox(width: 5),
                 Text('ຍອດຄົງເຫຼືອ',
-                    style: TextStyle(color: Colors.white70, fontSize: 11)),
+                    style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5)),
               ],
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 6),
             FittedBox(
               fit: BoxFit.scaleDown,
               child: AnimatedNumber(
@@ -144,22 +147,34 @@ class _AccountPageState extends State<AccountPage> {
                 duration: 1200,
                 style: TextStyle(
                   color: bal < 0 ? Colors.red.shade200 : Colors.white,
-                  fontSize: 24,
+                  fontSize: 28,
                   fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 12),
+            // ── ສົດ / ໂອນ — ແບບບາງໆ ──
             Row(
               children: [
                 Expanded(
-                  child: _balTile(Icons.payments_outlined, 'ສົດ',
-                      controller.cashBalance, Colors.amber.shade200),
+                  child: _balTile(
+                    Icons.payments_outlined,
+                    'ສົດ',
+                    controller.cashBalance,
+                  ),
                 ),
-                Container(width: 1, height: 20, color: Colors.white24),
+                Container(
+                  width: 1,
+                  height: 24,
+                  color: Colors.white24,
+                ),
                 Expanded(
-                  child: _balTile(Icons.account_balance, 'ໂອນ',
-                      controller.transferBalance, Colors.lightBlue.shade200),
+                  child: _balTile(
+                    Icons.account_balance,
+                    'ໂອນ',
+                    controller.transferBalance,
+                  ),
                 ),
               ],
             ),
@@ -169,26 +184,32 @@ class _AccountPageState extends State<AccountPage> {
     });
   }
 
-  Widget _balTile(IconData i, String l, double v, Color c) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+  Widget _balTile(IconData i, String l, double v) {
+    return Column(
       children: [
-        Icon(i, color: c, size: 11),
-        const SizedBox(width: 3),
-        Text(l, style: TextStyle(color: c, fontSize: 10)),
-        const SizedBox(width: 4),
-        Flexible(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: AnimatedNumber(
-              value: v,
-              suffix: ' ກີບ',
-              duration: 1100,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(i, color: Colors.white70, size: 12),
+            const SizedBox(width: 4),
+            Text(l,
+                style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600)),
+          ],
+        ),
+        const SizedBox(height: 2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: AnimatedNumber(
+            value: v,
+            suffix: ' ກີບ',
+            duration: 1100,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ),
@@ -197,175 +218,254 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   // ══════════════════════════════════════════════
-  // 🎯 2 ປຸ່ມ
+  // 🎯 2 ປຸ່ມ — ບາງໆ ໃຊ້ gradient
   // ══════════════════════════════════════════════
   Widget _actionButtons() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 2),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
       child: Row(
         children: [
           Expanded(
-            child: _bigBtn(Icons.arrow_downward, 'ຮັບເງິນ', 'ເງິນເຂົ້າ',
-                Colors.green.shade700, () => _openForm('in')),
+            child: _bigBtn(
+              Icons.arrow_downward_rounded,
+              'ຮັບເງິນ',
+              'ເງິນເຂົ້າ',
+              Colors.green.shade600,
+              Colors.green.shade700,
+              () => _openForm('in'),
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
-            child: _bigBtn(Icons.arrow_upward, 'ຈ່າຍເງິນ', 'ເບີກໄປໃຊ້',
-                Colors.red.shade700, () => _openForm('out')),
+            child: _bigBtn(
+              Icons.arrow_upward_rounded,
+              'ຈ່າຍເງິນ',
+              'ເບີກໄປໃຊ້',
+              Colors.red.shade600,
+              Colors.red.shade700,
+              () => _openForm('out'),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _bigBtn(IconData i, String t, String s, Color c, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-        decoration: BoxDecoration(
-          color: c,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-                color: c.withOpacity(0.3),
-                blurRadius: 6,
-                offset: const Offset(0, 3))
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
-                  shape: BoxShape.circle),
-              child: Icon(i, color: Colors.white, size: 18),
+  Widget _bigBtn(
+    IconData i,
+    String t,
+    String s,
+    Color c1,
+    Color c2,
+    VoidCallback onTap,
+  ) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [c1, c2],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(t,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold)),
-                  Text(s,
-                      style: TextStyle(
-                          color: Colors.white.withOpacity(0.85),
-                          fontSize: 10)),
-                ],
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: c2.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-            ),
-          ],
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(i, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(t,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.2)),
+                    const SizedBox(height: 1),
+                    Text(s,
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.85),
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   // ══════════════════════════════════════════════
-  // 📅 Session section
+  // 📅 Session section — ສະອາດ
   // ══════════════════════════════════════════════
   Widget _sessionSection(SessionGroup g, bool isAdmin) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Card(
-          color: Colors.brown[100],
-          elevation: 1,
-          margin: const EdgeInsets.only(top: 8, bottom: 4),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(9)),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ── Header ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
             child: Column(
               children: [
                 Row(
                   children: [
+                    Icon(Icons.calendar_today,
+                        size: 13, color: Colors.brown.shade700),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '${_day(g.date)}, ${_dateShort(g.date)}',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.brown.shade800,
+                          letterSpacing: 0.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    // ── Session badge ──
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Colors.brown.shade800,
-                        borderRadius: BorderRadius.circular(6),
+                        color: Colors.brown.shade50,
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Column(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(_day(g.date),
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w900)),
-                          Text(_dateShort(g.date),
-                              style: const TextStyle(
-                                  color: Colors.white70, fontSize: 9)),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(g.icon,
-                                  style: const TextStyle(fontSize: 14)),
-                              const SizedBox(width: 3),
-                              Text(g.label,
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.brown[900])),
-                            ],
-                          ),
-                          Text('ເວລາ ${g.range}',
+                          Text(g.icon,
+                              style: const TextStyle(fontSize: 11)),
+                          const SizedBox(width: 3),
+                          Text(g.label,
                               style: TextStyle(
                                   fontSize: 10,
-                                  color: Colors.brown.shade600)),
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.brown.shade800)),
                         ],
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                          color: Colors.brown[800],
-                          borderRadius: BorderRadius.circular(8)),
-                      child: Text('${g.transactions.length}',
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold)),
-                    ),
+                    const SizedBox(width: 4),
+                    Text('${g.transactions.length}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.grey.shade500,
+                        )),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Expanded(
-                        child: _stat(Icons.arrow_downward, 'ຮັບ',
-                            g.income, Colors.green.shade700)),
-                    Expanded(
-                        child: _stat(Icons.arrow_upward, 'ຈ່າຍ',
-                            g.expense, Colors.red.shade700)),
-                    Expanded(
-                        child: _stat(Icons.savings_outlined, 'ຄົງເຫຼືອ',
-                            g.endingBalance, Colors.brown.shade800,
-                            bold: true)),
-                  ],
-                ),
+                const SizedBox(height: 4),
+                Text('ເວລາ ${g.range}',
+                    style: TextStyle(
+                        fontSize: 10.5,
+                        color: Colors.grey.shade500,
+                        fontWeight: FontWeight.w600)),
               ],
             ),
           ),
-        ),
-        ...g.transactions.map((t) => _txCard(t, isAdmin)),
-      ],
+
+          _dashedDivider(),
+
+          // ── Stats row ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+            child: Row(
+              children: [
+                Expanded(
+                    child: _stat(
+                        Icons.arrow_downward_rounded,
+                        'ຮັບ',
+                        g.income,
+                        Colors.green.shade700)),
+                Expanded(
+                    child: _stat(
+                        Icons.arrow_upward_rounded,
+                        'ຈ່າຍ',
+                        g.expense,
+                        Colors.red.shade700)),
+                Expanded(
+                    child: _stat(
+                        Icons.savings_outlined,
+                        'ຄົງເຫຼືອ',
+                        g.endingBalance,
+                        Colors.brown.shade800,
+                        bold: true)),
+              ],
+            ),
+          ),
+
+          _dashedDivider(),
+
+          // ── Transactions ──
+          ...g.transactions.map((t) => _txTile(t, isAdmin, g)),
+        ],
+      ),
+    );
+  }
+
+  // ── Dashed divider ──
+  Widget _dashedDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const dashWidth = 4.0;
+          const dashSpace = 4.0;
+          final count =
+              (constraints.maxWidth / (dashWidth + dashSpace)).floor();
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(
+              count,
+              (_) => Container(
+                width: dashWidth,
+                height: 1,
+                color: Colors.grey.shade200,
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -376,22 +476,27 @@ class _AccountPageState extends State<AccountPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(i, color: c, size: 10),
-            const SizedBox(width: 2),
+            Icon(i, color: c, size: 11),
+            const SizedBox(width: 3),
             Text(l,
                 style: TextStyle(
-                    color: c, fontSize: 9, fontWeight: FontWeight.bold)),
+                    color: c,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.2)),
           ],
         ),
+        const SizedBox(height: 2),
         FittedBox(
           fit: BoxFit.scaleDown,
           child: AnimatedNumber(
             value: v,
             duration: 1100,
             style: TextStyle(
-              fontSize: bold ? 12 : 11,
-              fontWeight: bold ? FontWeight.w900 : FontWeight.bold,
+              fontSize: bold ? 13 : 12,
+              fontWeight: bold ? FontWeight.w900 : FontWeight.w800,
               color: c,
+              letterSpacing: 0.2,
             ),
           ),
         ),
@@ -400,159 +505,186 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   // ══════════════════════════════════════════════
-  // 📝 ກາດລາຍການ
+  // 📝 Transaction tile — ບໍ່ມີ border ໃຊ້ເສັ້ນປະ
   // ══════════════════════════════════════════════
-  Widget _txCard(AccountTransaction t, bool isAdmin) {
+  Widget _txTile(AccountTransaction t, bool isAdmin, SessionGroup g) {
     final isIn = t.isIncome;
     final c = isIn ? Colors.green.shade700 : Colors.red.shade700;
-    final bg = isIn ? Colors.green.shade50 : Colors.red.shade50;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 3),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(9),
-        side: BorderSide(color: c.withOpacity(0.3), width: 1.2),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                  color: bg,
+    return Column(
+      children: [
+        // ── Dashed separator (ບໍ່ມີຢູ່ອັນທຳອິດ) ──
+        if (t.id != g.transactions.first.id) _dashedDivider(),
+
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Icon ──
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: c.withOpacity(0.1),
                   shape: BoxShape.circle,
-                  border: Border.all(color: c.withOpacity(0.5))),
-              child: Icon(
-                  isIn ? Icons.arrow_downward : Icons.arrow_upward,
-                  color: c,
-                  size: 16),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ...t.items.map((i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 1),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(i.name,
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: isIn
-                                          ? FontWeight.bold
-                                          : FontWeight.w600),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis),
-                            ),
-                            if (!isIn)
-                              Text('${fmt.format(i.price)}',
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey.shade700)),
-                          ],
-                        ),
-                      )),
-                  if (t.items.length > 1 && !isIn)
-                    const Divider(height: 6),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: t.isCash
-                              ? Colors.amber.shade100
-                              : Colors.blue.shade100,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                                t.isCash
-                                    ? Icons.payments_outlined
-                                    : Icons.account_balance,
-                                size: 8,
-                                color: t.isCash
-                                    ? Colors.amber.shade900
-                                    : Colors.blue.shade900),
-                            const SizedBox(width: 2),
-                            Text(t.isCash ? 'ສົດ' : 'ໂອນ',
-                                style: TextStyle(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.bold,
-                                    color: t.isCash
-                                        ? Colors.amber.shade900
-                                        : Colors.blue.shade900)),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      Icon(Icons.access_time,
-                          size: 9, color: Colors.grey.shade600),
-                      const SizedBox(width: 2),
-                      Text(controller.formatTime(t.date),
-                          style: TextStyle(
-                              fontSize: 10, color: Colors.grey.shade600)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 4),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                AnimatedNumber(
-                  value: t.totalAmount,
-                  prefix: isIn ? '+' : '-',
-                  duration: 1000,
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                      color: c),
                 ),
-                if (isAdmin)
-                  SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: PopupMenuButton<String>(
-                      padding: EdgeInsets.zero,
-                      iconSize: 16,
-                      icon: const Icon(Icons.more_vert,
-                          color: Colors.black54),
-                      onSelected: (v) {
-                        if (v == 'delete') _deleteDialog(t);
-                      },
-                      itemBuilder: (_) => [
-                        const PopupMenuItem(
-                          value: 'delete',
+                child: Icon(
+                  isIn
+                      ? Icons.arrow_downward_rounded
+                      : Icons.arrow_upward_rounded,
+                  color: c,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 10),
+
+              // ── Info ──
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Items ──
+                    ...t.items.map((i) => Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
                           child: Row(
                             children: [
-                              Icon(Icons.delete,
-                                  color: Colors.red, size: 18),
-                              SizedBox(width: 8),
-                              Text('ລຶບ',
+                              Expanded(
+                                child: Text(
+                                  i.name,
                                   style: TextStyle(
-                                      color: Colors.red,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13)),
+                                    fontSize: 12.5,
+                                    fontWeight: isIn
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (!isIn)
+                                Text(
+                                  '${fmt.format(i.price)}',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: Colors.grey.shade600,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                             ],
                           ),
+                        )),
+
+                    const SizedBox(height: 4),
+
+                    // ── Meta row (ສົດ/ໂອນ + ເວລາ) ──
+                    Row(
+                      children: [
+                        Icon(
+                          t.isCash
+                              ? Icons.payments_outlined
+                              : Icons.account_balance,
+                          size: 11,
+                          color: t.isCash
+                              ? Colors.amber.shade800
+                              : Colors.blue.shade700,
                         ),
+                        const SizedBox(width: 3),
+                        Text(
+                          t.isCash ? 'ສົດ' : 'ໂອນ',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: t.isCash
+                                ? Colors.amber.shade800
+                                : Colors.blue.shade700,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Icon(Icons.access_time,
+                            size: 10, color: Colors.grey.shade500),
+                        const SizedBox(width: 3),
+                        Text(
+                          controller.formatTime(t.date),
+                          style: TextStyle(
+                              fontSize: 10.5,
+                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.w600),
+                        ),
+                        if ((t.note ?? '').trim().isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              '· ${t.note}',
+                              style: TextStyle(
+                                  fontSize: 10.5,
+                                  color: Colors.grey.shade500,
+                                  fontStyle: FontStyle.italic),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
+                  ],
+                ),
+              ),
+
+              // ── Amount + menu ──
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  AnimatedNumber(
+                    value: t.totalAmount,
+                    prefix: isIn ? '+' : '-',
+                    duration: 1000,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: c,
+                      letterSpacing: 0.2,
+                    ),
                   ),
-              ],
-            ),
-          ],
+                  if (isAdmin)
+                    SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: PopupMenuButton<String>(
+                        padding: EdgeInsets.zero,
+                        iconSize: 16,
+                        icon: Icon(Icons.more_vert,
+                            color: Colors.grey.shade400, size: 16),
+                        onSelected: (v) {
+                          if (v == 'delete') _deleteDialog(t);
+                        },
+                        itemBuilder: (_) => [
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_outline,
+                                    color: Color(0xFFB71C1C), size: 18),
+                                SizedBox(width: 8),
+                                Text('ລຶບ',
+                                    style: TextStyle(
+                                        color: Color(0xFFB71C1C),
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -585,7 +717,7 @@ class _AccountPageState extends State<AccountPage> {
 }
 
 // ══════════════════════════════════════════════
-// 🎯 ຟອມ
+// 🎯 ຟອມ — ສະອາດ
 // ══════════════════════════════════════════════
 class _FormSheet extends StatefulWidget {
   final String initialType;
@@ -640,7 +772,7 @@ class _FormSheetState extends State<_FormSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       constraints: BoxConstraints(maxHeight: Get.height * 0.9),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -651,11 +783,25 @@ class _FormSheetState extends State<_FormSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // ── Handle ──
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // ── Header ──
             Row(
               children: [
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
                     color: _isIn
                         ? Colors.green.shade50
@@ -663,55 +809,69 @@ class _FormSheetState extends State<_FormSheet> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                      _isIn ? Icons.arrow_downward : Icons.arrow_upward,
-                      color: _isIn
-                          ? Colors.green.shade700
-                          : Colors.red.shade700,
-                      size: 18),
+                    _isIn
+                        ? Icons.arrow_downward_rounded
+                        : Icons.arrow_upward_rounded,
+                    color: _isIn
+                        ? Colors.green.shade700
+                        : Colors.red.shade700,
+                    size: 20,
+                  ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Text(_isIn ? 'ຮັບເງິນ' : 'ຈ່າຍເງິນ',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: _isIn
-                              ? Colors.green.shade700
-                              : Colors.red.shade700)),
+                  child: Text(
+                    _isIn ? 'ຮັບເງິນ' : 'ຈ່າຍເງິນ',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      color: _isIn
+                          ? Colors.green.shade800
+                          : Colors.red.shade800,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
                 ),
                 IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Get.back()),
+                  icon: Icon(Icons.close,
+                      color: Colors.grey.shade600, size: 22),
+                  onPressed: () => Get.back(),
+                ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
+
+            // ── Type toggle ──
             Row(
               children: [
                 Expanded(
-                    child: _tBtn('ຮັບເຂົ້າ', Icons.arrow_downward,
+                    child: _tBtn('ຮັບເຂົ້າ', Icons.arrow_downward_rounded,
                         Colors.green.shade700, _isIn,
                         () => setState(() => type = 'in'))),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Expanded(
-                    child: _tBtn('ຈ່າຍອອກ', Icons.arrow_upward,
+                    child: _tBtn('ຈ່າຍອອກ', Icons.arrow_upward_rounded,
                         Colors.red.shade700, !_isIn,
                         () => setState(() => type = 'out'))),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
+
             Flexible(
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (_isIn) _recvContent() else _payContent(),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 14),
+
                     const Text('ປະເພດເງິນ *',
                         style: TextStyle(
                             fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black54)),
-                    const SizedBox(height: 4),
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black54,
+                            letterSpacing: 0.5)),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         Expanded(
@@ -720,7 +880,7 @@ class _FormSheetState extends State<_FormSheet> {
                                 Colors.amber.shade800,
                                 payType == 'cash',
                                 () => setState(() => payType = 'cash'))),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Expanded(
                             child: _tBtn('ເງິນໂອນ',
                                 Icons.account_balance,
@@ -729,37 +889,61 @@ class _FormSheetState extends State<_FormSheet> {
                                 () => setState(() => payType = 'transfer'))),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 14),
+
                     TextField(
                       controller: noteC,
                       maxLines: 2,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'ໝາຍເຫດ (ຖ້າມີ)',
-                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(
+                            fontSize: 13, color: Colors.grey.shade600),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide:
+                              BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide:
+                              BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                              color: Colors.brown.shade400, width: 1.5),
+                        ),
                         isDense: true,
                         prefixIcon: Icon(Icons.sticky_note_2_outlined,
-                            color: Colors.brown, size: 20),
+                            color: Colors.brown.shade400, size: 20),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                   ],
                 ),
               ),
             ),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    _isIn ? Colors.green.shade700 : Colors.red.shade700,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+
+            // ── Save button ──
+            SizedBox(
+              height: 50,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _isIn
+                      ? Colors.green.shade700
+                      : Colors.red.shade700,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: _onSave,
+                icon: const Icon(Icons.save_outlined, size: 20),
+                label: Text(
+                    _isIn ? 'ບັນທຶກຮັບເງິນ' : 'ບັນທຶກຈ່າຍເງິນ',
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w900)),
               ),
-              onPressed: _onSave,
-              icon: const Icon(Icons.save, size: 20),
-              label: Text(_isIn ? 'ບັນທຶກຮັບເງິນ' : 'ບັນທຶກຈ່າຍເງິນ',
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -774,9 +958,10 @@ class _FormSheetState extends State<_FormSheet> {
         const Text('ຈຳນວນເງິນທີ່ຮັບ *',
             style: TextStyle(
                 fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: Colors.black54)),
-        const SizedBox(height: 4),
+                fontWeight: FontWeight.w800,
+                color: Colors.black54,
+                letterSpacing: 0.5)),
+        const SizedBox(height: 6),
         TextField(
           controller: recvC,
           keyboardType: TextInputType.number,
@@ -784,12 +969,29 @@ class _FormSheetState extends State<_FormSheet> {
             FilteringTextInputFormatter.digitsOnly,
             _NumFmt(),
           ],
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          decoration: const InputDecoration(
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+          decoration: InputDecoration(
             hintText: '0',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.numbers, color: Colors.brown),
+            hintStyle: TextStyle(
+                color: Colors.grey.shade400, fontWeight: FontWeight.w600),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide:
+                  BorderSide(color: Colors.green.shade400, width: 2),
+            ),
+            prefixIcon:
+                Icon(Icons.numbers, color: Colors.green.shade600),
             suffixText: 'ກີບ',
+            suffixStyle: TextStyle(
+                fontWeight: FontWeight.bold, color: Colors.grey.shade600),
           ),
         ),
       ],
@@ -803,14 +1005,15 @@ class _FormSheetState extends State<_FormSheet> {
         const Text('ລາຍການທີ່ຈ່າຍ *',
             style: TextStyle(
                 fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: Colors.black54)),
-        const SizedBox(height: 4),
+                fontWeight: FontWeight.w800,
+                color: Colors.black54,
+                letterSpacing: 0.5)),
+        const SizedBox(height: 6),
         ...rows.asMap().entries.map((e) {
           final idx = e.key;
           final r = e.value;
           return Padding(
-            padding: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.only(bottom: 8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -820,14 +1023,30 @@ class _FormSheetState extends State<_FormSheet> {
                     controller: r['name'],
                     decoration: InputDecoration(
                       labelText: 'ລາຍການ ${idx + 1}',
+                      labelStyle: TextStyle(
+                          fontSize: 13, color: Colors.grey.shade600),
                       isDense: true,
-                      border: const OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                            color: Colors.red.shade400, width: 1.5),
+                      ),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 12),
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
                 Expanded(
                   flex: 4,
                   child: TextField(
@@ -837,12 +1056,28 @@ class _FormSheetState extends State<_FormSheet> {
                       FilteringTextInputFormatter.digitsOnly,
                       _NumFmt(),
                     ],
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'ລາຄາ',
+                      labelStyle: TextStyle(
+                          fontSize: 13, color: Colors.grey.shade600),
                       suffixText: 'ກີບ',
                       isDense: true,
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                            color: Colors.red.shade400, width: 1.5),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 12),
                     ),
                     onChanged: (_) => setState(() {}),
@@ -857,18 +1092,21 @@ class _FormSheetState extends State<_FormSheet> {
                         rows.removeAt(idx);
                       });
                     },
-                    icon: Icon(Icons.remove_circle,
-                        color: Colors.red.shade600, size: 20),
+                    icon: Icon(Icons.remove_circle_outline,
+                        color: Colors.red.shade600, size: 22),
                   ),
               ],
             ),
           );
         }),
+        const SizedBox(height: 4),
         OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.brown,
-            side: const BorderSide(color: Colors.brown),
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            foregroundColor: Colors.brown.shade700,
+            side: BorderSide(color: Colors.brown.shade300),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)),
           ),
           onPressed: () => setState(() {
             rows.add({
@@ -878,34 +1116,37 @@ class _FormSheetState extends State<_FormSheet> {
           }),
           icon: const Icon(Icons.add, size: 16),
           label: const Text('ເພີ່ມລາຍການ',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
+
+        // ── Total (ແບບບາງໆ ໃຊ້ພື້ນສີອ່ອນ) ──
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.red.shade50,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Colors.red.shade200),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             children: [
-              const Icon(Icons.summarize, color: Colors.red, size: 16),
-              const SizedBox(width: 5),
-              const Expanded(
+              Icon(Icons.summarize_outlined,
+                  color: Colors.red.shade700, size: 18),
+              const SizedBox(width: 6),
+              Expanded(
                 child: Text('ລວມທັງໝົດ',
                     style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red)),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.red.shade700)),
               ),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text('${fmt.format(_payTotal)} ກີບ',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
-                        color: Colors.red)),
+                        color: Colors.red.shade700,
+                        letterSpacing: 0.2)),
               ),
             ],
           ),
@@ -915,29 +1156,34 @@ class _FormSheetState extends State<_FormSheet> {
   }
 
   Widget _tBtn(String l, IconData i, Color c, bool sel, VoidCallback tap) {
-    return InkWell(
-      onTap: tap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: sel ? c : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: tap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: sel ? c : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
               color: sel ? c : Colors.grey.shade300,
-              width: sel ? 2 : 1.2),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(i, color: sel ? Colors.white : c, size: 16),
-            const SizedBox(width: 4),
-            Text(l,
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: sel ? Colors.white : c)),
-          ],
+              width: sel ? 0 : 1.2,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(i, color: sel ? Colors.white : c, size: 16),
+              const SizedBox(width: 5),
+              Text(l,
+                  style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: sel ? Colors.white : c,
+                      letterSpacing: 0.2)),
+            ],
+          ),
         ),
       ),
     );

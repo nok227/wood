@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
 import '../../domain/entities/sale_order_entity.dart';
 import '../widgets/sale_card.dart';
-
-import 'package:get/get.dart';
 import '../../../auth/auth_controller.dart';
 
 enum SummaryDetailType { list, change, discount, cashBills }
 
-class SalesSummaryDetailPage extends StatelessWidget {
+class SalesSummaryDetailPage extends StatefulWidget {
   final String title;
   final List<SaleOrderEntity> sales;
   final IconData icon;
@@ -26,71 +26,138 @@ class SalesSummaryDetailPage extends StatelessWidget {
   });
 
   @override
+  State<SalesSummaryDetailPage> createState() =>
+      _SalesSummaryDetailPageState();
+}
+
+class _SalesSummaryDetailPageState extends State<SalesSummaryDetailPage> {
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    final v = details.primaryVelocity ?? 0;
+    if (v.abs() > 300) {
+      HapticFeedback.lightImpact();
+      Get.back();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat('#,###');
-    final total = sales.fold<double>(0, (s, e) => s + e.totalAmount);
-    final totalItems = sales.fold<int>(0, (s, e) => s + e.itemCount);
+    final total = widget.sales.fold<double>(0, (s, e) => s + e.totalAmount);
+    final totalItems = widget.sales.fold<int>(0, (s, e) => s + e.itemCount);
 
-    return Scaffold(
-      backgroundColor: Colors.brown[50],
-      appBar: AppBar(
-        backgroundColor: accentColor,
-        foregroundColor: Colors.white,
-        title: Text(title),
-      ),
-      body: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            color: accentColor.withOpacity(0.1),
-            child: Row(
-              children: [
-                Icon(icon, color: accentColor, size: 26),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${sales.length} ອໍເດີ · $totalItems ລາຍການ',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: accentColor,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'ລວມ ${fmt.format(total)} ກີບ',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: accentColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+    return GestureDetector(
+      onHorizontalDragEnd: _onHorizontalDragEnd,
+      behavior: HitTestBehavior.translucent,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F0EA),
+        appBar: AppBar(
+          backgroundColor: Colors.brown.shade700,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: Text(
+            widget.title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
             ),
           ),
-          Expanded(
-            child: detailType == SummaryDetailType.cashBills
-                ? _cashBillsView(fmt)
-                : _listWithDateGroup(),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'ກັບ',
+            onPressed: () => Get.back(),
           ),
-        ],
+        ),
+        body: Column(
+          children: [
+            // ══════════════════════════════════════════
+            // 🎯 Header (compact)
+            // ══════════════════════════════════════════
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              color: Colors.white,
+              child: Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: widget.accentColor.withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      widget.icon,
+                      color: widget.accentColor,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${widget.sales.length} ອໍເດີ · $totalItems ລາຍການ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${fmt.format(total)} ກີບ',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: widget.accentColor,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.swipe,
+                          color: Colors.grey.shade400, size: 16),
+                      Text('ປັດກັບ',
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: Colors.grey.shade500,
+                          )),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // ══════════════════════════════════════════
+            // 📋 Content
+            // ══════════════════════════════════════════
+            Expanded(
+              child: widget.detailType == SummaryDetailType.cashBills
+                  ? _cashBillsView(fmt)
+                  : _listWithDateGroup(),
+            ),
+          ],
+        ),
       ),
     );
   }
 
+  // ══════════════════════════════════════════════
+  // 📋 List with date group
+  // ══════════════════════════════════════════════
   Widget _listWithDateGroup() {
-    List<SaleOrderEntity> filtered = sales;
-    if (detailType == SummaryDetailType.change) {
-      filtered = sales.where((e) => e.changeAmount > 0).toList();
-    } else if (detailType == SummaryDetailType.discount) {
-      filtered = sales.where((e) => e.hasDiscount).toList();
+    List<SaleOrderEntity> filtered = widget.sales;
+    if (widget.detailType == SummaryDetailType.change) {
+      filtered = widget.sales.where((e) => e.changeAmount > 0).toList();
+    } else if (widget.detailType == SummaryDetailType.discount) {
+      filtered = widget.sales.where((e) => e.hasDiscount).toList();
     }
 
     if (filtered.isEmpty) {
@@ -106,8 +173,7 @@ class SalesSummaryDetailPage extends StatelessWidget {
     final sortedKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
 
     return ListView.builder(
-      padding:
-          const EdgeInsets.only(bottom: 20, left: 12, right: 12, top: 4),
+      padding: const EdgeInsets.fromLTRB(10, 4, 10, 20),
       itemCount: sortedKeys.length,
       itemBuilder: (context, index) {
         final dateKey = sortedKeys[index];
@@ -118,62 +184,43 @@ class SalesSummaryDetailPage extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Card(
-              color: Colors.brown[100],
-              elevation: 1,
-              margin: const EdgeInsets.only(top: 6.0, bottom: 6.0),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14.0,
-                  vertical: 10.0,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Icon(Icons.calendar_today,
-                              size: 18, color: Colors.brown[800]),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              headerTitle,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: Colors.brown[900],
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+            // ── Date header (สะอาด) ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 8, 4, 6),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    size: 13,
+                    color: Colors.brown.shade700,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      headerTitle,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.brown.shade800,
+                        letterSpacing: 0.2,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.brown[800],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '${salesInGroup.length} ອໍເດີ',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                  ),
+                  Text(
+                    '${salesInGroup.length} ອໍເດີ',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade600,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
+
+            // ── Cards ──
             ...salesInGroup.map(
               (s) => SaleCard(
                 key: ValueKey('sale-${s.id}'),
@@ -187,9 +234,12 @@ class SalesSummaryDetailPage extends StatelessWidget {
     );
   }
 
+  // ══════════════════════════════════════════════
+  // 💰 Cash Bills View
+  // ══════════════════════════════════════════════
   Widget _cashBillsView(NumberFormat fmt) {
     final Map<int, int> totalBills = {};
-    for (final s in sales) {
+    for (final s in widget.sales) {
       s.cashDenominations?.forEach((d, n) {
         totalBills[d] = (totalBills[d] ?? 0) + n;
       });
@@ -200,30 +250,50 @@ class SalesSummaryDetailPage extends StatelessWidget {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(10, 4, 10, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // ── Hero card ──
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.brown.shade800,
-              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.brown.shade700,
+                  Colors.brown.shade500,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.brown.withOpacity(0.25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               children: [
-                const Text('ໃບເງິນສົດທີ່ໄດ້ຮັບທັງໝົດ',
-                    style:
-                        TextStyle(color: Colors.white70, fontSize: 13)),
+                const Icon(Icons.receipt_long,
+                    color: Colors.white70, size: 20),
                 const SizedBox(height: 4),
+                const Text(
+                  'ໃບເງິນສົດທີ່ໄດ້ຮັບທັງໝົດ',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+                const SizedBox(height: 6),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
                     '${fmt.format(_billsTotal(totalBills))} ກີບ',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 30,
+                      fontSize: 28,
                       fontWeight: FontWeight.w900,
+                      letterSpacing: 0.3,
                     ),
                   ),
                 ),
@@ -231,12 +301,21 @@ class SalesSummaryDetailPage extends StatelessWidget {
                 Text(
                   '${totalBills.values.fold<int>(0, (s, e) => s + e)} ໃບ ທັງໝົດ',
                   style: const TextStyle(
-                      color: Colors.white, fontSize: 12),
+                    color: Colors.white70,
+                    fontSize: 11.5,
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: 14),
+
+          // ── Section label ──
+          _sectionLabel(Icons.list_alt, 'ແຍກຕາມໃບລະ'),
+          const SizedBox(height: 8),
+
+          // ── Bills summary ──
           _billsSummary(totalBills, fmt, showHeader: true),
         ],
       ),
@@ -276,6 +355,54 @@ class SalesSummaryDetailPage extends StatelessWidget {
     return t;
   }
 
+  // ── Section label ──
+  Widget _sectionLabel(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 13, color: Colors.brown.shade700),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w900,
+            color: Colors.brown.shade700,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Dashed divider ──
+  Widget _dashedDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const dashWidth = 4.0;
+          const dashSpace = 4.0;
+          final count =
+              (constraints.maxWidth / (dashWidth + dashSpace)).floor();
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(
+              count,
+              (_) => Container(
+                width: dashWidth,
+                height: 1,
+                color: Colors.grey.shade200,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════
+  // 💵 Bills Summary (Table)
+  // ══════════════════════════════════════════════
   Widget _billsSummary(
     Map<int, int> bills,
     NumberFormat fmt, {
@@ -291,151 +418,160 @@ class SalesSummaryDetailPage extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.brown.shade200),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      child: Column(
-        children: [
-          if (showHeader)
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.brown.shade100,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(12)),
-              ),
-              child: Row(
-                children: const [
-                  Expanded(
-                    flex: 3,
-                    child: Text('ໃບລະ',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.brown,
-                        )),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text('ຈຳນວນໃບ',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.brown,
-                        )),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Text('ລວມ',
-                        textAlign: TextAlign.right,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.brown,
-                        )),
-                  ),
-                ],
-              ),
-            ),
-          ...all.map((d) {
-            final count = bills[d] ?? 0;
-            final sub = d * count;
-            final isEmpty = count == 0;
-            return Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                border:
-                    Border(top: BorderSide(color: Colors.grey.shade200)),
-                color: isEmpty ? Colors.grey.shade50 : Colors.white,
-              ),
-              child: Row(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        child: Column(
+          children: [
+            // ── Header ──
+            if (showHeader) ...[
+              Row(
                 children: [
                   Expanded(
                     flex: 3,
-                    child: Row(
-                      children: [
-                        Icon(Icons.payments_outlined,
-                            size: 14,
-                            color: isEmpty
-                                ? Colors.grey.shade400
-                                : Colors.brown),
-                        const SizedBox(width: 6),
-                        Text(
-                          fmt.format(d),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: isEmpty
-                                ? Colors.grey.shade400
-                                : Colors.black87,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'ໃບລະ',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.grey.shade500,
+                        letterSpacing: 1,
+                      ),
                     ),
                   ),
                   Expanded(
                     flex: 2,
                     child: Text(
-                      '$count',
+                      'ຈຳນວນ',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: isEmpty
-                            ? Colors.grey.shade400
-                            : Colors.brown.shade700,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.grey.shade500,
+                        letterSpacing: 1,
                       ),
                     ),
                   ),
                   Expanded(
                     flex: 3,
                     child: Text(
-                      '${fmt.format(sub)} ກີບ',
+                      'ລວມ',
                       textAlign: TextAlign.right,
                       style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isEmpty
-                            ? Colors.grey.shade400
-                            : Colors.black87,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.grey.shade500,
+                        letterSpacing: 1,
                       ),
                     ),
                   ),
                 ],
               ),
-            );
-          }),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.brown.shade800,
-              borderRadius:
-                  const BorderRadius.vertical(bottom: Radius.circular(12)),
-            ),
-            child: Row(
+              const SizedBox(height: 4),
+              _dashedDivider(),
+            ],
+
+            // ── Rows ──
+            ...all.map((d) {
+              final count = bills[d] ?? 0;
+              final sub = d * count;
+              final isEmpty = count == 0;
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.payments_outlined,
+                            size: 13,
+                            color: isEmpty
+                                ? Colors.grey.shade400
+                                : Colors.brown.shade600,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            fmt.format(d),
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w800,
+                              color: isEmpty
+                                  ? Colors.grey.shade400
+                                  : Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        '$count',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: isEmpty
+                              ? Colors.grey.shade400
+                              : Colors.brown.shade700,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        '${fmt.format(sub)}',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: isEmpty
+                              ? Colors.grey.shade400
+                              : Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+
+            _dashedDivider(),
+
+            // ── Total ──
+            Row(
               children: [
-                const Expanded(
+                Expanded(
                   flex: 3,
-                  child: Text('ລວມທັງໝົດ',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      )),
+                  child: Text(
+                    'ລວມທັງໝົດ',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.brown.shade800,
+                    ),
+                  ),
                 ),
                 Expanded(
                   flex: 2,
                   child: Text(
                     '$totalBills ໃບ',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.grey.shade700,
                     ),
                   ),
                 ),
@@ -444,17 +580,18 @@ class SalesSummaryDetailPage extends StatelessWidget {
                   child: Text(
                     '${fmt.format(total)} ກີບ',
                     textAlign: TextAlign.right,
-                    style: const TextStyle(
-                      fontSize: 13,
+                    style: TextStyle(
+                      fontSize: 13.5,
                       fontWeight: FontWeight.w900,
-                      color: Colors.white,
+                      color: Colors.brown.shade800,
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
