@@ -17,7 +17,9 @@ class WoodProductPreviewCard extends StatelessWidget {
   final String sizeUnit;
   final String unit;
   final double price;
+  final List<String> zones;
   final bool isEditing;
+  final String note; // 🆕
 
   const WoodProductPreviewCard({
     super.key,
@@ -31,7 +33,9 @@ class WoodProductPreviewCard extends StatelessWidget {
     required this.sizeUnit,
     required this.unit,
     required this.price,
+    this.zones = const [],
     this.isEditing = false,
+    this.note = '', // 🆕
   });
 
   String _fmtNum(num v) =>
@@ -41,6 +45,7 @@ class WoodProductPreviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final fmt = NumberFormat('#,###');
     final totalImages = existingImages.length + newImages.length;
+    final hasNote = note.trim().isNotEmpty;
 
     return Container(
       decoration: BoxDecoration(
@@ -171,8 +176,17 @@ class WoodProductPreviewCard extends StatelessWidget {
                   '${_fmtNum(width)} × ${_fmtNum(length)} × ${_fmtNum(thickness)} $sizeUnit',
                 ),
                 const SizedBox(height: 6),
+                _zoneRow(zones),
+                const SizedBox(height: 6),
                 _row(Icons.numbers, 'ໜ່ວຍນັບ',
                     unit.isEmpty ? '-' : unit),
+
+                // 🆕 ໝາຍເຫດ — ສະແດງສະເພາະຕອນມີ
+                if (hasNote) ...[
+                  const SizedBox(height: 8),
+                  _noteBox(note.trim()),
+                ],
+
                 const SizedBox(height: 14),
 
                 // ── ລາຄາ ──
@@ -227,6 +241,108 @@ class WoodProductPreviewCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  // 🆕 ກ່ອງໝາຍເຫດ
+  Widget _noteBox(String text) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.sticky_note_2_outlined,
+                  size: 14, color: Colors.amber.shade900),
+              const SizedBox(width: 5),
+              Text(
+                'ໝາຍເຫດ',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.amber.shade900,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12.5,
+              color: Colors.brown.shade900,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ແຖວໂຊນ
+  Widget _zoneRow(List<String> zones) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.place_outlined,
+            size: 14, color: Colors.brown.shade400),
+        const SizedBox(width: 6),
+        SizedBox(
+          width: 78,
+          child: Text(
+            'ໂຊນ',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ),
+        Expanded(
+          child: zones.isEmpty
+              ? Text(
+                  'ບໍ່ລະບຸ',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.grey.shade500,
+                  ),
+                )
+              : Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: zones
+                      .map(
+                        (z) => Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(
+                                color: Colors.green.shade400),
+                          ),
+                          child: Text(
+                            z,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green.shade800,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+        ),
+      ],
     );
   }
 

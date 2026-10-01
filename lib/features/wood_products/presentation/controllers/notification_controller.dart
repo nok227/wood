@@ -13,6 +13,9 @@ class NotificationController extends GetxController {
   final allNotifications = <AppNotification>[].obs;
   final isLoading = false.obs;
 
+  // ✅ uid ຂອງຜູ້ໃຊ້ປັດຈຸບັນ (reactive)
+  String? get _uid => FirebaseAuth.instance.currentUser?.uid;
+
   @override
   void onInit() {
     super.onInit();
@@ -20,25 +23,17 @@ class NotificationController extends GetxController {
     _bindBadgeToUnreadCount();
   }
 
-  // ✅ ຜູກ Badge ກັບ unreadCount (ຜ່ານ allNotifications)
   void _bindBadgeToUnreadCount() {
     _updateBadge(unreadCount);
-
-    ever(allNotifications, (_) {
-      _updateBadge(unreadCount);
-    });
+    ever(allNotifications, (_) => _updateBadge(unreadCount));
   }
 
   Future<void> _updateBadge(int count) async {
     try {
-      // ✅ ແກ້: ໃຊ້ AppBadgePlus ແທນ FlutterAppBadger
       final supported = await AppBadgePlus.isSupported();
       if (!supported) return;
-
-      // ✅ ແກ້: ລວມເປັນບັນທັດດຽວ (0 ກໍ່ລຶບ badge ໄດ້ເລີຍ)
       await AppBadgePlus.updateBadge(count);
     } catch (e) {
-      // ✅ ແກ້: ລຶບການເອີ້ນຊ້ຳທີ່ຜິດພາດ
       debugPrint('Badge update error: $e');
     }
   }
@@ -49,12 +44,14 @@ class NotificationController extends GetxController {
       final list = await repository.getNotifications();
       allNotifications.assignAll(list);
     } catch (_) {
-      // silent
     } finally {
       isLoading.value = false;
     }
   }
 
+  // ══════════════════════════════════════════════
+  // ✅ _visible — ກັ່ນຕາມ audience + ຕັດ deletedBy
+  // ══════════════════════════════════════════════
   List<AppNotification> get _visible {
     bool isAdmin = false;
     if (Get.isRegistered<AuthController>()) {
@@ -64,7 +61,14 @@ class NotificationController extends GetxController {
         isAdmin = false;
       }
     }
+
+    final uid = _uid;
+
     return allNotifications.where((n) {
+      // ① ຕັດຄົນທີ່ user ນີ້ລຶບໄປແລ້ວ
+      if (n.isDeletedBy(uid)) return false;
+
+      // ② ກັ່ນຕາມ audience
       if (isAdmin) {
         return n.audience == NotificationAudience.admin ||
             n.audience == NotificationAudience.all;
@@ -76,7 +80,14 @@ class NotificationController extends GetxController {
 
   List<AppNotification> get visibleNotifications => _visible;
 
-  int get unreadCount => _visible.where((n) => !n.isRead).length;
+  // ✅ ນັບສະເພາະຄົນທີ່ user ນີ້ຍັງບໍ່ອ່ານ
+  int get unreadCount {
+    final uid = _uid;
+    return _visible.where((n) => !n.isReadBy(uid)).length;
+  }
+
+  // ✅ ຊ່ວຍ UI ກວດສອບວ່າ notification ນີ້ອ່ານແລ້ວບໍ່ (ຕາມ uid)
+  bool isReadByMe(AppNotification n) => n.isReadBy(_uid);
 
   Future<void> push({
     required AppNotificationType type,
@@ -110,45 +121,81 @@ class NotificationController extends GetxController {
 
       allNotifications.insert(0, n);
       await repository.add(n);
-    } catch (_) {
-      // silent
-    }
+    } catch (_) {}
   }
 
+  // ══════════════════════════════════════════════
+  // ✅ ອ່ານ — ເພີ່ມ uid ເຂົ້າ readBy (local + remote)
+  // ══════════════════════════════════════════════
   Future<void> markRead(String id) async {
+    final uid = _uid;
+    if (uid == null) return;
+
     final i = allNotifications.indexWhere((n) => n.id == id);
-    if (i == -1 || allNotifications[i].isRead) return;
-    allNotifications[i] = allNotifications[i].copyWith(isRead: true);
+    if (i == -1) return;
+    if (allNotifications[i].readBy.contains(uid)) return;
+
+    allNotifications[i] = allNotifications[i].copyWith(
+      readBy: [...allNotifications[i].readBy, uid],
+    );
     try {
-      await repository.markRead(id);
+      await repository.markRead(id, uid);
     } catch (_) {}
   }
 
   Future<void> markAllRead() async {
-    final ids = _visible.where((n) => !n.isRead).map((n) => n.id).toList();
+    final uid = _uid;
+    if (uid == null) return;
+
+    final ids = _visible
+        .where((n) => !n.readBy.contains(uid))
+        .map((n) => n.id)
+        .toList();
     if (ids.isEmpty) return;
+
     for (var i = 0; i < allNotifications.length; i++) {
-      if (ids.contains(allNotifications[i].id)) {
-        allNotifications[i] = allNotifications[i].copyWith(isRead: true);
+      final n = allNotifications[i];
+      if (ids.contains(n.id) && !n.readBy.contains(uid)) {
+        allNotifications[i] = n.copyWith(readBy: [...n.readBy, uid]);
       }
     }
+
     try {
-      await repository.markAllRead(ids);
+      await repository.markAllRead(ids, uid);
     } catch (_) {}
   }
 
+  // ══════════════════════════════════════════════
+  // ✅ ລຶບ (soft) — ເພີ່ມ uid ເຂົ້າ deletedBy
+  // ══════════════════════════════════════════════
   Future<void> deleteOne(String id) async {
+    final uid = _uid;
+    if (uid == null) return;
+
+    // local: ຕັດອອກຈາກ list ທັນທີ (UI ໄວ)
     allNotifications.removeWhere((n) => n.id == id);
+
     try {
-      await repository.delete(id);
-    } catch (_) {}
+      await repository.delete(id, uid);
+    } catch (_) {
+      // ຖ້າ fail → ໂຫຼດຄືນ
+      fetchNotifications();
+    }
   }
 
   Future<void> clearVisible() async {
+    final uid = _uid;
+    if (uid == null) return;
+
     final ids = _visible.map((n) => n.id).toList();
+    if (ids.isEmpty) return;
+
     allNotifications.removeWhere((n) => ids.contains(n.id));
+
     try {
-      await repository.clearAll(ids);
-    } catch (_) {}
+      await repository.clearAll(ids, uid);
+    } catch (_) {
+      fetchNotifications();
+    }
   }
 }

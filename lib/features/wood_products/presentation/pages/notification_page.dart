@@ -51,7 +51,6 @@ class _NotificationPageState extends State<NotificationPage> {
         ],
       ),
       body: Obx(() {
-        // ✅ Skeleton ແທນ spinner
         if (ctrl.isLoading.value && ctrl.allNotifications.isEmpty) {
           return const NotificationSkeleton();
         }
@@ -88,7 +87,8 @@ class _NotificationPageState extends State<NotificationPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 8, bottom: 6, left: 4),
+                    padding:
+                        const EdgeInsets.only(top: 8, bottom: 6, left: 4),
                     child: Text(
                       g.label,
                       style: TextStyle(
@@ -99,7 +99,7 @@ class _NotificationPageState extends State<NotificationPage> {
                       ),
                     ),
                   ),
-                  ...g.items.map(_tile),
+                  ...g.items.map((n) => _tile(n)),
                 ],
               );
             },
@@ -130,8 +130,13 @@ class _NotificationPageState extends State<NotificationPage> {
     return map.entries.map((e) => _Group(e.key, e.value)).toList();
   }
 
+  // ══════════════════════════════════════════════
+  // ✅ ແກ້: ຮັບ 1 ຕົວ — ອ່ານ isRead ຈາກ ctrl ພາຍໃນ
+  // ══════════════════════════════════════════════
   Widget _tile(AppNotification n) {
     final c = n.color;
+    final isRead = ctrl.isReadByMe(n); // ✅ ກວດ per-user
+
     return Dismissible(
       key: ValueKey(n.id),
       direction: DismissDirection.endToStart,
@@ -149,17 +154,18 @@ class _NotificationPageState extends State<NotificationPage> {
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: () {
-          if (!n.isRead) ctrl.markRead(n.id);
+          if (!isRead) ctrl.markRead(n.id); // ✅ ໃຊ້ isRead
         },
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 4),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: n.isRead ? Colors.white : c.withOpacity(0.06),
+            color: isRead ? Colors.white : c.withOpacity(0.06), // ✅
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: n.isRead ? Colors.grey.shade200 : c.withOpacity(0.35),
-              width: n.isRead ? 1 : 1.4,
+              color:
+                  isRead ? Colors.grey.shade200 : c.withOpacity(0.35), // ✅
+              width: isRead ? 1 : 1.4,
             ),
           ),
           child: Row(
@@ -187,14 +193,14 @@ class _NotificationPageState extends State<NotificationPage> {
                             n.title,
                             style: TextStyle(
                               fontSize: 13.5,
-                              fontWeight: n.isRead
+                              fontWeight: isRead // ✅
                                   ? FontWeight.w600
                                   : FontWeight.w900,
                               color: Colors.brown.shade900,
                             ),
                           ),
                         ),
-                        if (!n.isRead)
+                        if (!isRead) // ✅
                           Container(
                             width: 8,
                             height: 8,
@@ -270,7 +276,8 @@ class _NotificationPageState extends State<NotificationPage> {
   void _confirmClear() {
     Get.defaultDialog(
       title: 'ລ້າງແຈ້ງເຕືອນ',
-      middleText: 'ຕ້ອງການລ້າງແຈ້ງເຕືອນທັງໝົດທີ່ສະແດງຢູ່ບໍ?',
+      middleText: 'ຕ້ອງການລ້າງແຈ້ງເຕືອນທັງໝົດທີ່ສະແດງຢູ່ບໍ?\n'
+          '(ຈະລ້າງສະເພາະບັນຊີຂອງທ່ານເທົ່ານັ້ນ)',
       textConfirm: 'ລ້າງ',
       textCancel: 'ຍົກເລີກ',
       confirmTextColor: Colors.white,

@@ -1,3 +1,5 @@
+// lib/features/wood_products/presentation/pages/wood_3d_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/wood_product_controller.dart';
@@ -16,19 +18,21 @@ class _Wood3DPageState extends State<Wood3DPage> {
   final controller = Get.find<WoodProductController>();
 
   String selectedWoodType = 'ທັງໝົດ';
+  String selectedUnitFilter = 'ທັງໝົດ'; // 🆕 unit filter
   String? selectedName;
   WoodProductModel? selectedVariant;
   String? focusedDimension;
   bool showColor = false;
 
-  // ✅ ໃໝ່: ສະຖານະຂອງ panel ລຸ່ມ
   bool _panelExpanded = true;
 
   // Memoization cache
   List<WoodProductModel> _cachedProducts = const [];
   String _cachedWoodType = '__none__';
+  String _cachedUnitFilter = '__none__'; // 🆕
   List<WoodProductModel> _cachedFiltered = const [];
   List<String> _cachedWoodTypeOptions = const ['ທັງໝົດ'];
+  List<String> _cachedUnitOptions = const ['ທັງໝົດ']; // 🆕
   List<String> _cachedNames = const [];
   List<WoodProductModel> _cachedVariants = const [];
 
@@ -39,6 +43,7 @@ class _Wood3DPageState extends State<Wood3DPage> {
 
   bool get _hasAnyChoice =>
       selectedWoodType != 'ທັງໝົດ' ||
+      selectedUnitFilter != 'ທັງໝົດ' ||
       selectedName != null ||
       selectedVariant != null;
 
@@ -61,21 +66,27 @@ class _Wood3DPageState extends State<Wood3DPage> {
   void _clearAll() {
     setState(() {
       selectedWoodType = 'ທັງໝົດ';
+      selectedUnitFilter = 'ທັງໝົດ';
       selectedName = null;
       selectedVariant = null;
       focusedDimension = null;
       _cachedWoodType = '__none__';
+      _cachedUnitFilter = '__none__';
     });
   }
 
   void _recomputeIfNeeded(List<WoodProductModel> products) {
     final sourceChanged = !identical(_cachedProducts, products);
-    final filterChanged = _cachedWoodType != selectedWoodType;
+    final filterChanged =
+        _cachedWoodType != selectedWoodType ||
+        _cachedUnitFilter != selectedUnitFilter;
 
     if (sourceChanged || filterChanged) {
       _cachedProducts = products;
       _cachedWoodType = selectedWoodType;
+      _cachedUnitFilter = selectedUnitFilter;
 
+      // ── ຊະນິດໄມ້ options ──
       final types = products
           .map((p) => p.woodType.trim())
           .where((t) => t.isNotEmpty)
@@ -83,11 +94,32 @@ class _Wood3DPageState extends State<Wood3DPage> {
           .toList();
       _cachedWoodTypeOptions = ['ທັງໝົດ', ...types];
 
-      _cachedFiltered = selectedWoodType == 'ທັງໝົດ'
-          ? products
-          : products
-              .where((p) => p.woodType.trim() == selectedWoodType)
-              .toList();
+      // ── 🆕 ໜ່ວຍນັບ options ──
+      final units = products
+          .map((p) => p.unit.trim())
+          .where((u) => u.isNotEmpty)
+          .toSet()
+          .toList();
+      // ເພີ່ມ 'ວົງ' ອັດຕະໂນມັດ ຖ້າມີ unit ໃດກໍໄດ້ທີ່ມີຄຳ 'ວົງ'
+      if (units.any((u) => u.contains('ວົງ')) && !units.contains('ວົງ')) {
+        units.add('ວົງ');
+      }
+      // ຈັດລຳດັບ: ສັ້ນ → ຍາວ (ດັ່ງນັ້ນ 'ວົງ' ມາກ່ອນ 'ວົງນ້ອຍ')
+      units.sort((a, b) => a.length.compareTo(b.length));
+      _cachedUnitOptions = ['ທັງໝົດ', ...units];
+
+      // ── filter (contains match) ──
+      _cachedFiltered = products.where((p) {
+        if (selectedWoodType != 'ທັງໝົດ' &&
+            p.woodType.trim() != selectedWoodType) {
+          return false;
+        }
+        if (selectedUnitFilter != 'ທັງໝົດ' &&
+            !p.unit.contains(selectedUnitFilter)) {
+          return false;
+        }
+        return true;
+      }).toList();
 
       _cachedNames = _cachedFiltered.map((p) => p.name).toSet().toList();
 
@@ -127,7 +159,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
 
         return Column(
           children: [
-            // ✅ ລຶບປຸ່ມສີທີ່ຢູ່ຂ້າງເທິງອອກແລ້ວ
             Expanded(
               child: hasSelection
                   ? RepaintBoundary(
@@ -157,8 +188,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
                       ),
                     ),
             ),
-
-            // ✅ Panel ລຸ່ມ — ຊ່ອນ/ສະແດງໄດ້
             _buildBottomPanel(hasSelection, allProducts),
           ],
         );
@@ -166,9 +195,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
     );
   }
 
-  // ══════════════════════════════════════════════
-  // ✅ Panel ລຸ່ມ — ປັດຂຶ້ນ/ລົງ ຫຼື ແຕະ ເພື່ອຊ່ອນ/ສະແດງ
-  // ══════════════════════════════════════════════
   Widget _buildBottomPanel(
     bool hasSelection,
     List<WoodProductModel> allProducts,
@@ -193,7 +219,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
           children: [
             _panelHandle(),
             if (_panelExpanded) ...[
-              // dim buttons (ກວ້າງ/ຍາວ/ໜາ)
               if (hasSelection)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -207,7 +232,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
                     ],
                   ),
                 ),
-              // Dropdowns
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                 child: allProducts.isEmpty
@@ -217,6 +241,7 @@ class _Wood3DPageState extends State<Wood3DPage> {
                       )
                     : Column(
                         children: [
+                          // ─── Row 1: ຊະນິດໄມ້ + 🆕 ໜ່ວຍນັບ + ລ້າງ ───
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -235,7 +260,7 @@ class _Wood3DPageState extends State<Wood3DPage> {
                                             value: type,
                                             child: Text(
                                               type == 'ທັງໝົດ'
-                                                  ? 'ທັງໝົດ (ສະແດງທັງໝົດ)'
+                                                  ? 'ທັງໝົດ (ຊະນິດ)'
                                                   : type,
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -250,10 +275,42 @@ class _Wood3DPageState extends State<Wood3DPage> {
                                 ),
                               ),
                               const SizedBox(width: 8),
+                              // 🆕 ໜ່ວຍນັບ filter
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: selectedUnitFilter,
+                                  isExpanded: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'ໜ່ວຍນັບ',
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 10),
+                                  ),
+                                  items: _cachedUnitOptions
+                                      .map((u) => DropdownMenuItem(
+                                            value: u,
+                                            child: Text(
+                                              u == 'ທັງໝົດ'
+                                                  ? 'ທັງໝົດ (ໜ່ວຍ)'
+                                                  : u,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ))
+                                      .toList(),
+                                  onChanged: (v) => setState(() {
+                                    selectedUnitFilter = v ?? 'ທັງໝົດ';
+                                    selectedName = null;
+                                    selectedVariant = null;
+                                    focusedDimension = null;
+                                  }),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
                               _clearButton(),
                             ],
                           ),
                           const SizedBox(height: 10),
+                          // ─── Row 2: ຊື່ໄມ້ + ຂະໜາດ ───
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -284,8 +341,8 @@ class _Wood3DPageState extends State<Wood3DPage> {
                               ),
                               const SizedBox(width: 8),
                               Expanded(
-                                child:
-                                    DropdownButtonFormField<WoodProductModel>(
+                                child: DropdownButtonFormField<
+                                    WoodProductModel>(
                                   value: selectedVariant,
                                   isExpanded: true,
                                   decoration: const InputDecoration(
@@ -326,7 +383,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
     );
   }
 
-  // ✅ Handle bar — ແຕະ ຫຼື ປັດ ເພື່ອຊ່ອນ/ສະແດງ
   Widget _panelHandle() {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -346,7 +402,6 @@ class _Wood3DPageState extends State<Wood3DPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
             Container(
               width: 40,
               height: 4,

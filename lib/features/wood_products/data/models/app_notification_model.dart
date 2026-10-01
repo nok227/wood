@@ -12,6 +12,8 @@ class AppNotificationModel {
   final bool isRead;
   final String? targetId;
   final Map<String, dynamic>? meta;
+  final List<String> readBy;
+  final List<String> deletedBy;
 
   AppNotificationModel({
     required this.id,
@@ -25,6 +27,8 @@ class AppNotificationModel {
     this.isRead = false,
     this.targetId,
     this.meta,
+    this.readBy = const [],
+    this.deletedBy = const [],
   });
 
   static AppNotificationType _typeFrom(String s) =>
@@ -38,6 +42,14 @@ class AppNotificationModel {
         (e) => e.name == s,
         orElse: () => NotificationAudience.all,
       );
+
+  static List<String> _strList(dynamic v) {
+    if (v == null || v is! List) return const [];
+    return v
+        .map((e) => e?.toString() ?? '')
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
 
   factory AppNotificationModel.fromMap(Map<String, dynamic> m, String docId) {
     DateTime parseDate(dynamic v) {
@@ -63,6 +75,8 @@ class AppNotificationModel {
       isRead: m['isRead'] == true,
       targetId: m['targetId']?.toString(),
       meta: m['meta'] is Map ? Map<String, dynamic>.from(m['meta']) : null,
+      readBy: _strList(m['readBy']),
+      deletedBy: _strList(m['deletedBy']),
     );
   }
 
@@ -77,6 +91,8 @@ class AppNotificationModel {
         'isRead': isRead,
         'targetId': targetId,
         'meta': meta,
+        'readBy': readBy,
+        'deletedBy': deletedBy,
       };
 
   AppNotification toEntity() => AppNotification(
@@ -91,5 +107,7 @@ class AppNotificationModel {
         isRead: isRead,
         targetId: targetId,
         meta: meta,
+        readBy: readBy,
+        deletedBy: deletedBy,
       );
 }

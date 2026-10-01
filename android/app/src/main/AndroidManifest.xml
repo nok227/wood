@@ -20,6 +20,13 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- 📸 ສຳລັບການຖ່າຍຮູບດ້ວຍກ້ອງ (Image Picker) -->
+    <!-- ═══════════════════════════════════════════ -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
     <!-- ✅ ສຳລັບການບັນທຶກຮູບລົງຄັງຮູບ (Gal package) -->
     <!-- Android ≤ 9 (API ≤ 28) ຕ້ອງການ WRITE_EXTERNAL_STORAGE -->
     <uses-permission

@@ -112,13 +112,10 @@ class _WoodProductListPageState extends State<WoodProductListPage>
           nested[nameKey]![typeKey]!.add(item);
         }
 
+        // ✅ ຈັດລຳດັບຕາມລາຄາຂາຍ ຫຼາຍ → ໜ້ອຍ (ບໍ່ໃຊ່ volume)
         nested.forEach((_, typeMap) {
           typeMap.forEach((_, list) {
-            list.sort((a, b) {
-              final va = a.width * a.length * a.thickness;
-              final vb = b.width * b.length * b.thickness;
-              return va.compareTo(vb);
-            });
+            list.sort((a, b) => b.price.compareTo(a.price));
           });
         });
 
@@ -494,26 +491,26 @@ class _WoodProductListPageState extends State<WoodProductListPage>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── ຮູບ 9:16 — ປັດຊ້າຍ/ຂວາໄດ້ ──
+          // ── ຮູບ 9:16 ──
           _SwipeableImage(
             imageUrls: item.imageUrls,
             width: 72,
-            height: 130,
+            height: 148,
             onTap: item.imageUrls.isEmpty
                 ? null
                 : () => Get.to(
-                      () => WoodGalleryPage(
-                        imageUrls: item.imageUrls,
-                        title: item.name,
-                      ),
+                    () => WoodGalleryPage(
+                      imageUrls: item.imageUrls,
+                      title: item.name,
                     ),
+                  ),
           ),
           const SizedBox(width: 10),
 
           // ── ຂໍ້ມູນ ──
           Expanded(
             child: SizedBox(
-              height: 130,
+              height: 148,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -522,6 +519,7 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // ຂະໜາດ
                       Text(
                         'ຂະໜາດ',
                         style: TextStyle(
@@ -543,12 +541,24 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                         overflow: TextOverflow.ellipsis,
                       ),
 
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
 
+                      // ແປງໜ່ວຍ
                       _conversionColumn(item),
 
-                      const SizedBox(height: 6),
+                      // ໂຊນ
+                      const SizedBox(height: 4),
+                      _zoneLine(item),
 
+                      // 🆕 ໝາຍເຫດ — ສະແດງສະເພາະຕອນມີ
+                      if (item.note.trim().isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        _noteLine(item.note.trim()),
+                      ],
+
+                      const SizedBox(height: 5),
+
+                      // ຈຳນວນ
                       Text(
                         'ຈຳນວນ',
                         style: TextStyle(
@@ -561,7 +571,7 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                       const SizedBox(height: 1),
                       Text(
                         '${item.quantity} ${item.unit}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w700,
                           color: Colors.black87,
@@ -663,6 +673,123 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     );
   }
 
+  // 🆕 ໝາຍເຫດ — ແຖວສີເຫຼືອງນ້ອຍໆ
+  Widget _noteLine(String note) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.sticky_note_2_outlined,
+          size: 11,
+          color: Colors.amber.shade800,
+        ),
+        const SizedBox(width: 3),
+        Expanded(
+          child: Text(
+            note,
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.amber.shade900,
+              fontWeight: FontWeight.w600,
+              height: 1.3,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ══════════════════════════════════════════════
+  // ໂຊນ — ສະແດງສະເໝີ
+  // ══════════════════════════════════════════════
+  Widget _zoneLine(WoodProductModel item) {
+    if (item.zones.isEmpty) {
+      return RichText(
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: 'ໂຊນ: ',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+            TextSpan(
+              text: 'ບໍ່ລະບຸ',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade500,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final displayZones = item.zones.take(4).toList();
+    final remaining = item.zones.length - displayZones.length;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          'ໂຊນ: ',
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            color: Colors.black87,
+          ),
+        ),
+        Expanded(
+          child: Wrap(
+            spacing: 3,
+            runSpacing: 3,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              ...displayZones.map(
+                (z) => Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.brown.shade50,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.brown.shade200),
+                  ),
+                  child: Text(
+                    z,
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.brown.shade800,
+                    ),
+                  ),
+                ),
+              ),
+              if (remaining > 0)
+                Text(
+                  '+$remaining',
+                  style: TextStyle(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.brown.shade400,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   // ══════════════════════════════════════════════
   // ✅ ແປງໜ່ວຍເປັນ Column
   // ══════════════════════════════════════════════
@@ -683,10 +810,10 @@ class _WoodProductListPageState extends State<WoodProductListPage>
         return Text(
           line,
           style: TextStyle(
-            fontSize: 10.5,
+            fontSize: 10,
             color: Colors.grey.shade600,
             fontWeight: FontWeight.w500,
-            height: 1.4,
+            height: 1.35,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -758,7 +885,6 @@ class _SwipeableImageState extends State<_SwipeableImage> {
 
   @override
   Widget build(BuildContext context) {
-    // ── ບໍ່ມີຮູບ ──
     if (widget.imageUrls.isEmpty) {
       return GestureDetector(
         onTap: widget.onTap,
@@ -787,7 +913,6 @@ class _SwipeableImageState extends State<_SwipeableImage> {
         borderRadius: BorderRadius.circular(8),
         child: Stack(
           children: [
-            // ── ຮູບທີ່ປັດໄດ້ ──
             PageView.builder(
               key: ValueKey('pv-${widget.imageUrls.first}'),
               controller: _pageCtrl,
@@ -820,7 +945,6 @@ class _SwipeableImageState extends State<_SwipeableImage> {
               ),
             ),
 
-            // ── ຈຸດ indicator ລຸ່ມ ──
             if (hasMultiple)
               Positioned(
                 left: 0,
@@ -854,7 +978,6 @@ class _SwipeableImageState extends State<_SwipeableImage> {
                 ),
               ),
 
-            // ── badge 1/N ມຸມເທິງຂວາ ──
             if (hasMultiple)
               Positioned(
                 top: 4,

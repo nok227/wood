@@ -41,7 +41,7 @@ class Wood3DScene extends StatefulWidget {
   final String? unit;
   final String? focusedDimension;
   final bool showColor;
-  final VoidCallback? onToggleColor; // ✅ ໃໝ່
+  final VoidCallback? onToggleColor;
 
   const Wood3DScene({
     super.key,
@@ -53,7 +53,7 @@ class Wood3DScene extends StatefulWidget {
     this.unit,
     this.focusedDimension,
     this.showColor = false,
-    this.onToggleColor, // ✅ ໃໝ່
+    this.onToggleColor,
   });
 
   @override
@@ -66,10 +66,10 @@ class _Wood3DSceneState extends State<Wood3DScene> {
   static const double _defaultZoom = 1.0;
 
   TextStyle get _labelStyle => TextStyle(
-        color: widget.showColor ? Colors.white : Colors.black,
-        fontSize: 10,
-        fontWeight: FontWeight.bold,
-      );
+    color: widget.showColor ? Colors.white : Colors.black,
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+  );
 
   Rot3 _orientation = Rot3.fromYawPitch(_defaultRotationY, _defaultRotationX);
   double _zoom = _defaultZoom;
@@ -134,31 +134,103 @@ class _Wood3DSceneState extends State<Wood3DScene> {
     });
   }
 
+  // ══════════════════════════════════════════════
+  // 🎯 Frame Type Detection
+  //   ✅ ລຳດັບການກວດ: leaves → vent → windowFrame → door
+  //      (ເພື່ອບໍ່ໃຫ້ 'ວົງປ່ອງລົມ' ຖືກຈັບເປັນ windowFrame ຜິດ)
+  // ══════════════════════════════════════════════
   FrameType _getFrameType(String? name, String? unit) {
     final n = name?.trim().toLowerCase() ?? '';
     final u = unit?.trim().toLowerCase() ?? '';
 
-    final isVentOrWindow =
-        n.contains('ປ່ອງລົມ') ||
-        n.contains('ช่องลม') ||
-        n.contains('ໜ້າຕ່າງ') ||
-        n.contains('หน้าต่าง') ||
-        u.contains('ປ່ອງລົມ') ||
-        u.contains('ช่องลม');
+    // ─── helpers ───
+    bool isVent(String s) =>
+        s.contains('ປ່ອງລົມ') || s.contains('ຊ່ອງລົມ') || s.contains('ช่องลม');
 
-    if (isVentOrWindow) return FrameType.window;
+    bool isWindowFrame(String s) =>
+        s.contains('ວົງປ່ອງຢ້ຽມ') || // 🆕 ໃໝ່
+        s.contains('ວົງໜ້າຕ່າງ') || // ເກົ່າ (backward compat)
+        s.contains('วงหน้าต่าง') ||
+        s.contains('ວົງປ່ອງ') ||
+        s.contains('วงช่อง') ||
+        s.contains('ວົງປະຕູລົມ');
 
-    final isDoor =
-        n.contains('ວົງ') ||
-        n.contains('วง') ||
-        n.contains('ປະຕູ') ||
-        n.contains('ประตู') ||
-        u.contains('ວົງ') ||
-        u.contains('วง');
+    // 🆕 ຮວມຊື່ເກົ່າ + ໃໝ່ (ວົງນ້ອຍ / ວົງໄຫຍ່)
+    bool isDoorFrame(String s) =>
+        s.contains('ວົງນ້ອຍ') ||
+        s.contains('ວົງໄຫຍ່') ||
+        s.contains('ວົງປະຕູ') ||
+        s.contains('วงประตู');
 
-    if (isDoor) return FrameType.door;
+    bool isDoorLeaf(String s) =>
+        s.contains('ບານປະຕູ') || s.contains('บานประตู');
+
+    // ✅ ຮວມຊື່ເກົ່າ + ໃໝ່ (ບານປ່ອງລົມ)
+    bool isWindowLeaf(String s) =>
+        s.contains('ບານປ່ອງຢ້ຽມ') ||
+        s.contains('ບານໜ້າຕ່າງ') ||
+        s.contains('บานหน้าต่าง') ||
+        s.contains('ບານຊ່ອງ') ||
+        s.contains('ບານປ່ອງລົມ') ||   // 🆕
+        s.contains('ບານປ່ອງ');
+
+    // ─── ① ກວດ leaves ກ່ອນ (ສຳຄັນທີ່ສຸດ — ບໍ່ໃຫ້ 'ບານປ່ອງລົມ' ຖືກຈັບເປັນ vent) ───
+    if (isDoorLeaf(u)) return FrameType.none;
+    if (isWindowLeaf(u)) return FrameType.none;
+
+    // ─── ② ກວດ vent ກ່ອນ windowFrame ───
+    //     ເພາະ 'ວົງປ່ອງລົມ' ມີຄຳ 'ວົງປ່ອງ' ຄືກັນກັບ windowFrame
+    if (isVent(u)) return FrameType.window;
+
+    // ─── ③ ກວດ windowFrame / door ───
+    if (isWindowFrame(u)) return FrameType.windowFrame;
+    if (isDoorFrame(u)) return FrameType.door;
+    if (u == 'ວົງ' || u == 'วง') return FrameType.door;   // 🆕 generic
+    if (u == 'ແຜ່ນ' || u == 'ທ່ອນ' || u == 'ແຜ່ນໄມ້' || u == 'ທ່ອນໄມ້') {
+      return FrameType.none;
+    }
+
+    // ─── ④ Fallback: ກວດ name ───
+    if (isVent(n)) return FrameType.window;
+    if (isWindowFrame(n)) return FrameType.windowFrame;
+    if (isDoorFrame(n)) return FrameType.door;
+    if (!isDoorLeaf(n) && !isWindowLeaf(n)) {
+      if (n.contains('ປະຕູ') || n.contains('ประตู')) {
+        return FrameType.door;
+      }
+      if (n.contains('ປ່ອງຢ້ຽມ') ||
+          n.contains('ໜ້າຕ່າງ') ||
+          n.contains('หน้าต่าง')) {
+        return FrameType.windowFrame;
+      }
+    }
 
     return FrameType.none;
+  }
+
+  // ══════════════════════════════════════════════
+  // 🎯 Panel Count
+  //   ດຶງເລກຈາກ "N ບານ" ກ່ອນ
+  //   ຖ້າບໍ່ມີ → ໃຊ້ keyword ນ້ອຍ/ໄຫຍ່ ຫຼື default
+  // ══════════════════════════════════════════════
+  int _getPanelCount(FrameType ft, String? unit) {
+    final u = unit?.trim().toLowerCase() ?? '';
+
+    // ① regex "N ບານ"
+    final m = RegExp(r'(\d+)\s*ບານ').firstMatch(u);
+    if (m != null) {
+      final n = int.tryParse(m.group(1) ?? '');
+      if (n != null && n > 0 && n <= 8) return n;
+    }
+
+    // ② keyword ນ້ອຍ / ໄຫຍ່
+    if (u.contains('ນ້ອຍ')) return 2;   // ວົງນ້ອຍ → 2 ບານ
+    if (u.contains('ໄຫຍ່')) return 4;   // ວົງໄຫຍ່ → 4 ບານ
+
+    // ③ default
+    if (ft == FrameType.door) return 2;
+    if (ft == FrameType.windowFrame) return 1;
+    return 1;
   }
 
   String _formatDimWithConversions(double val, String unit) {
@@ -249,8 +321,18 @@ class _Wood3DSceneState extends State<Wood3DScene> {
     const pad = 4.0;
     final w = box.width, h = box.height;
 
-    final xs = [anchor.dx, model.left + w / 2, model.right - w / 2, model.center.dx];
-    final ys = [anchor.dy, model.top + h / 2, model.bottom - h / 2, model.center.dy];
+    final xs = [
+      anchor.dx,
+      model.left + w / 2,
+      model.right - w / 2,
+      model.center.dx,
+    ];
+    final ys = [
+      anchor.dy,
+      model.top + h / 2,
+      model.bottom - h / 2,
+      model.center.dy,
+    ];
 
     final candidates = <Offset>[];
     for (final x in xs) {
@@ -266,8 +348,18 @@ class _Wood3DSceneState extends State<Wood3DScene> {
     double bestCost = double.infinity;
 
     for (final c in candidates) {
-      final cx = _clampSafe(c.dx, pad + w / 2, view.width - pad - w / 2, view.width / 2);
-      final cy = _clampSafe(c.dy, pad + h / 2, view.height - pad - h / 2, view.height / 2);
+      final cx = _clampSafe(
+        c.dx,
+        pad + w / 2,
+        view.width - pad - w / 2,
+        view.width / 2,
+      );
+      final cy = _clampSafe(
+        c.dy,
+        pad + h / 2,
+        view.height - pad - h / 2,
+        view.height / 2,
+      );
       final rect = Rect.fromCenter(center: Offset(cx, cy), width: w, height: h);
 
       var cost = (rect.center - anchor).distance;
@@ -364,7 +456,6 @@ class _Wood3DSceneState extends State<Wood3DScene> {
     return [CustomPaint(size: size, painter: _ArrowsPainter(arrows)), ...texts];
   }
 
-  // 🧭 ปุ่มเปลี่ยนมุมมอง + ปุ่มสี
   Widget _buildQuickViewButtons() {
     return Positioned(
       right: 12,
@@ -387,19 +478,29 @@ class _Wood3DSceneState extends State<Wood3DScene> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    _viewBtn('ດ້ານເທິງ', Icons.navigation,
-                        () => _setView(Rot3.top)),
+                    _viewBtn(
+                      'ດ້ານເທິງ',
+                      Icons.navigation,
+                      () => _setView(Rot3.top),
+                    ),
                     const SizedBox(height: 6),
-                    _viewBtn('ດ້ານໜ້າ', Icons.crop_square,
-                        () => _setView(Rot3.front)),
+                    _viewBtn(
+                      'ດ້ານໜ້າ',
+                      Icons.crop_square,
+                      () => _setView(Rot3.front),
+                    ),
                     const SizedBox(height: 6),
-                    _viewBtn('ດ້ານຂ້າງ', Icons.view_column,
-                        () => _setView(Rot3.side)),
+                    _viewBtn(
+                      'ດ້ານຂ້າງ',
+                      Icons.view_column,
+                      () => _setView(Rot3.side),
+                    ),
                     const SizedBox(height: 6),
-                    _viewBtn('ດ້ານສະຫຼຽງ (ເລີ່ມຕົ້ນ)',
-                        Icons.restart_alt, _resetView),
-
-                    // ✅ ປຸ່ມສີ — ຢູ່ໃນເມນູນີ້
+                    _viewBtn(
+                      'ດ້ານສະຫຼຽງ (ເລີ່ມຕົ້ນ)',
+                      Icons.restart_alt,
+                      _resetView,
+                    ),
                     if (widget.onToggleColor != null) ...[
                       const SizedBox(height: 6),
                       _viewBtn(
@@ -408,7 +509,7 @@ class _Wood3DSceneState extends State<Wood3DScene> {
                             ? Icons.format_color_reset
                             : Icons.palette,
                         widget.onToggleColor!,
-                        autoClose: false, // ✅ ບໍ່ປິດເມນູ ຫຼັງກົດ
+                        autoClose: false,
                         active: widget.showColor,
                       ),
                     ],
@@ -443,7 +544,6 @@ class _Wood3DSceneState extends State<Wood3DScene> {
     );
   }
 
-  // 🔘 ปุ่มย่อย — ✅ ເພີ່ມ autoClose + active
   Widget _viewBtn(
     String label,
     IconData icon,
@@ -467,11 +567,7 @@ class _Wood3DSceneState extends State<Wood3DScene> {
           width: active ? 1.4 : 0.8,
         ),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 2,
-            offset: Offset(0, 1),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1)),
         ],
       ),
       child: Material(
@@ -524,6 +620,7 @@ class _Wood3DSceneState extends State<Wood3DScene> {
             builder: (context, constraints) {
               final size = Size(constraints.maxWidth, constraints.maxHeight);
               final frameType = _getFrameType(widget.productName, widget.unit);
+              final panelCount = _getPanelCount(frameType, widget.unit);
 
               final geometry = Wood3DGeometry(
                 width: widget.width,
@@ -531,6 +628,7 @@ class _Wood3DSceneState extends State<Wood3DScene> {
                 thickness: widget.thickness,
                 orientation: _orientation,
                 frameType: frameType,
+                panelCount: panelCount,
               );
 
               return SizedBox(

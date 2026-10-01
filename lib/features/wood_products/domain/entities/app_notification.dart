@@ -4,14 +4,14 @@ enum AppNotificationType {
   productAdd,
   productEdit,
   priceChange,
-  saleAdd,           // ຂາຍສົດ / ໂອນ / ປະສົມ (ຈ່າຍຄົບ)
-  saleDebtAdd,       // 🆕 ສ້າງໜີ້ໃໝ່
+  saleAdd,
+  saleDebtAdd,
   saleConfirm,
   saleMismatch,
   saleMismatchClear,
   saleDelete,
-  debtPaid,          // ປິດໜີ້ເຕັມ
-  debtPartial,       // 🆕 ຈ່າຍໜີ້ບາງສ່ວນ
+  debtPaid,
+  debtPartial,
   accountAdd,
   accountDelete,
 }
@@ -27,9 +27,16 @@ class AppNotification {
   final bool actorIsAdmin;
   final NotificationAudience audience;
   final DateTime date;
+
+  // ⚠️ legacy — ບໍ່ໃຊ້ແລ້ວ (ຄົງໄວ້ເພື່ອ backward compat)
   final bool isRead;
+
   final String? targetId;
   final Map<String, dynamic>? meta;
+
+  // 🆕 per-user state
+  final List<String> readBy;
+  final List<String> deletedBy;
 
   const AppNotification({
     required this.id,
@@ -43,9 +50,27 @@ class AppNotification {
     this.isRead = false,
     this.targetId,
     this.meta,
+    this.readBy = const [],
+    this.deletedBy = const [],
   });
 
-  AppNotification copyWith({bool? isRead}) => AppNotification(
+  // ✅ helper — ໃຊ້ໃນ UI ແທນ isRead
+  bool isReadBy(String? uid) {
+    if (uid == null || uid.isEmpty) return isRead;
+    return readBy.contains(uid);
+  }
+
+  bool isDeletedBy(String? uid) {
+    if (uid == null || uid.isEmpty) return false;
+    return deletedBy.contains(uid);
+  }
+
+  AppNotification copyWith({
+    bool? isRead,
+    List<String>? readBy,
+    List<String>? deletedBy,
+  }) =>
+      AppNotification(
         id: id,
         type: type,
         title: title,
@@ -57,6 +82,8 @@ class AppNotification {
         isRead: isRead ?? this.isRead,
         targetId: targetId,
         meta: meta,
+        readBy: readBy ?? this.readBy,
+        deletedBy: deletedBy ?? this.deletedBy,
       );
 
   IconData get icon {
@@ -69,7 +96,7 @@ class AppNotification {
         return Icons.price_change_outlined;
       case AppNotificationType.saleAdd:
         return Icons.point_of_sale_outlined;
-      case AppNotificationType.saleDebtAdd:      // 🆕
+      case AppNotificationType.saleDebtAdd:
         return Icons.receipt_long_outlined;
       case AppNotificationType.saleConfirm:
         return Icons.check_circle_outline;
@@ -81,7 +108,7 @@ class AppNotification {
         return Icons.delete_outline;
       case AppNotificationType.debtPaid:
         return Icons.verified_outlined;
-      case AppNotificationType.debtPartial:      // 🆕
+      case AppNotificationType.debtPartial:
         return Icons.payments_outlined;
       case AppNotificationType.accountAdd:
         return Icons.account_balance_wallet_outlined;
@@ -95,29 +122,29 @@ class AppNotification {
       case AppNotificationType.productAdd:
       case AppNotificationType.saleConfirm:
       case AppNotificationType.debtPaid:
-        return const Color(0xFF2E7D32); // ຂຽວ
+        return const Color(0xFF2E7D32);
 
       case AppNotificationType.productEdit:
-        return const Color(0xFF1565C0); // ຟ້າ
+        return const Color(0xFF1565C0);
 
       case AppNotificationType.priceChange:
-      case AppNotificationType.saleDebtAdd:       // 🆕 ສົ້ມ
-      case AppNotificationType.debtPartial:       // 🆕 ສົ້ມ
+      case AppNotificationType.saleDebtAdd:
+      case AppNotificationType.debtPartial:
         return const Color(0xFFE65100);
 
       case AppNotificationType.saleAdd:
-        return const Color(0xFF5D4037); // ນ້ຳຕານ
+        return const Color(0xFF5D4037);
 
       case AppNotificationType.saleMismatch:
       case AppNotificationType.saleDelete:
       case AppNotificationType.accountDelete:
-        return const Color(0xFFB71C1C); // ແດງ
+        return const Color(0xFFB71C1C);
 
       case AppNotificationType.saleMismatchClear:
-        return const Color(0xFF00695C); // ຂຽວເຂັ້ມ
+        return const Color(0xFF00695C);
 
       case AppNotificationType.accountAdd:
-        return const Color(0xFF283593); // ມ່ວງ
+        return const Color(0xFF283593);
     }
   }
 }

@@ -1,12 +1,11 @@
+// lib/features/wood_products/data/repositories/wood_repository_impl.dart
+
 import 'dart:io';
 import '../../domain/entities/wood_product.dart';
 import '../../domain/repositories/wood_repository.dart';
 import '../datasources/wood_remote_data_source.dart';
 import '../models/wood_product_model.dart';
 
-// หมายเหตุ: ปัจจุบัน WoodProductController เรียก WoodRemoteDataSource ตรง ๆ
-// ไม่ได้ผ่าน repository นี้ (ตามแพทเทิร์นเดิมของโปรเจกต์) — คงไฟล์นี้ไว้ให้
-// สอดคล้องกันเผื่ออนาคตอยากสลับมาใช้งานผ่าน repository แทน
 class WoodRepositoryImpl implements WoodRepository {
   final WoodRemoteDataSource remoteDataSource;
 
@@ -28,6 +27,8 @@ class WoodRepositoryImpl implements WoodRepository {
         quantity: p.quantity,
         unit: p.unit,
         price: p.price,
+        zones: p.zones,
+        note: p.note,
       );
 
   WoodProduct _toEntity(WoodProductModel m) => WoodProduct(
@@ -41,6 +42,8 @@ class WoodRepositoryImpl implements WoodRepository {
         quantity: m.quantity,
         unit: m.unit,
         price: m.price,
+        zones: m.zones,
+        note: m.note,
       );
 
   @override

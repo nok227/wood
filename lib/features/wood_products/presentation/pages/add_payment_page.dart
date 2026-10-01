@@ -63,6 +63,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
 
   // state ຟອມ
   String? _wood, _type;
+  String _unitFilter = 'ທັງໝົດ'; // 🆕 ໜ່ວຍນັບ filter
   int _qty = 1;
   double _disc = 0, _paid = 0, _debtPaid = 0;
   String? _choice;
@@ -290,6 +291,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     setState(() {
       _items.clear();
       _wood = _type = _choice = null;
+      _unitFilter = 'ທັງໝົດ';
       _payImg = _billImg = _topUpSlip = _topUpCash = _debtImg = null;
       _debtBillImg = null;
       _qty = 1;
@@ -899,7 +901,59 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           child: Center(child: CircularProgressIndicator(color: Colors.brown)),
         );
       }
-      final names = pc.uniqueProductNames;
+      final allProducts = pc.products;
+      if (allProducts.isEmpty) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.inventory_2_outlined,
+                color: Colors.grey.shade500,
+                size: 24,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'ຍັງບໍ່ມີລາຍການໄມ້ໃນຄັງ',
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      // ສ້າງ unit options ຈາກສິນຄ້າທັງໝົດ
+      final unitSet = <String>{};
+      for (final p in allProducts) {
+        final u = p.unit.trim();
+        if (u.isNotEmpty) unitSet.add(u);
+      }
+      // ເພີ່ມ 'ວົງ' ອັດຕະໂນມັດ
+      if (unitSet.any((u) => u.contains('ວົງ')) && !unitSet.contains('ວົງ')) {
+        unitSet.add('ວົງ');
+      }
+      final unitOptions = unitSet.toList()
+        ..sort((a, b) => a.length.compareTo(b.length));
+      final unitList = <String>['ທັງໝົດ', ...unitOptions];
+
+      // ຖ້າ filter ທີ່ເລືອກບໍ່ມີໃນ list ແລ້ວ → reset
+      if (!unitList.contains(_unitFilter)) {
+        _unitFilter = 'ທັງໝົດ';
+      }
+
+      // filter products ຕາມ unit (contains match)
+      final filteredProducts = _unitFilter == 'ທັງໝົດ'
+          ? allProducts.toList()
+          : allProducts.where((p) => p.unit.contains(_unitFilter)).toList();
+
+      final names = filteredProducts.map((p) => p.name).toSet().toList();
       if (names.isEmpty) {
         return Container(
           padding: const EdgeInsets.all(16),
@@ -927,11 +981,15 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         );
       }
 
+      // ໃຊ້ filteredProducts ແທນ pc.variantsForName
+      final woodVariants = _wood == null
+          ? <WoodProductModel>[]
+          : filteredProducts.where((p) => p.name == _wood).toList();
+
       final List<String> types =
           _wood == null
                 ? <String>[]
-                : pc
-                      .variantsForName(_wood!)
+                : woodVariants
                       .map(
                         (p) =>
                             p.woodType.trim().isEmpty ? 'ບໍ່ລະບຸ' : p.woodType,
@@ -940,16 +998,56 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                       .toList()
             ..sort();
 
-      final List<WoodProductModel> list = (_wood == null || _type == null)
-          ? <WoodProductModel>[]
-          : pc.variantsForName(_wood!).where((p) {
-              final t = p.woodType.trim().isEmpty ? 'ບໍ່ລະບຸ' : p.woodType;
-              return t == _type;
-            }).toList();
+      final List<WoodProductModel> list =
+          (_wood == null || _type == null)
+                ? <WoodProductModel>[]
+                : (woodVariants.where((p) {
+                    final t = p.woodType.trim().isEmpty
+                        ? 'ບໍ່ລະບຸ'
+                        : p.woodType;
+                    return t == _type;
+                  }).toList())
+            ..sort((a, b) => b.price.compareTo(a.price));
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+                    // 🆕 ໜ່ວຍນັບ filter
+          DropdownButtonFormField<String>(
+            value: _unitFilter,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'ໜ່ວຍນັບ',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.straighten, color: Colors.brown),
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 14,
+              ),
+            ),
+            items: unitList
+                .map(
+                  (u) => DropdownMenuItem<String>(
+                    value: u,
+                    child: Text(
+                      u == 'ທັງໝົດ' ? 'ທັງໝົດ (ໜ່ວຍ)' : u,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                )
+                .toList(),
+            onChanged: (v) {
+              setState(() {
+                _unitFilter = v ?? 'ທັງໝົດ';
+                _wood = null;
+                _type = null;
+                c.selectedProduct.value = null;
+              });
+            },
+          ),
+          const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: _wood,
             isExpanded: true,
@@ -1459,7 +1557,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                       right: 6,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black54,
                           borderRadius: BorderRadius.circular(20),
@@ -1467,12 +1567,19 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.zoom_out_map,
-                                color: Colors.white, size: 14),
+                            Icon(
+                              Icons.zoom_out_map,
+                              color: Colors.white,
+                              size: 14,
+                            ),
                             SizedBox(width: 4),
-                            Text('ກົດເພື່ອຂະຫຍາຍ',
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 10.5)),
+                            Text(
+                              'ກົດເພື່ອຂະຫຍາຍ',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10.5,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -2807,7 +2914,6 @@ class _RowLabel extends StatelessWidget {
   );
 }
 
-
 // ══════════════════════════════════════════════
 // 🖼️ Full-screen image viewer — ປັດຂຶ້ນ/ລົງເພື່ອປິດ, ຫຍິກນິ້ວເພື່ອຊູມ
 // ══════════════════════════════════════════════
@@ -2913,8 +3019,11 @@ class _FullImageViewerState extends State<_FullImageViewer> {
                   opacity: 1 - progress,
                   child: IconButton(
                     onPressed: () => Get.back(),
-                    icon: const Icon(Icons.close,
-                        color: Colors.white, size: 28),
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 28,
+                    ),
                   ),
                 ),
               ),

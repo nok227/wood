@@ -30,35 +30,53 @@ class NotificationRemoteDataSource {
       isRead: n.isRead,
       targetId: n.targetId,
       meta: n.meta,
+      readBy: n.readBy,
+      deletedBy: n.deletedBy,
     );
-    
-    // บันทึกลง Firestore ตามปกติ
-    // เมื่อบันทึกแล้ว แอปฝั่งผู้รับที่เปิดแอปอยู่หรือกดรับจาก Topic 'all_users' จะได้รับข้อมูลอัตโนมัติ
     await _db.collection(_collection).doc(n.id).set(m.toMap());
   }
 
-  Future<void> markRead(String id) async {
-    await _db.collection(_collection).doc(id).update({'isRead': true});
+  // ══════════════════════════════════════════════
+  // ✅ ໃໝ່: ຮັບ uid — per-user state ດ້ວຍ arrayUnion
+  // ══════════════════════════════════════════════
+
+  /// ✅ ອ່ານ — ເພີ່ມ uid ເຂົ້າ readBy
+  Future<void> markRead(String id, String uid) async {
+    if (uid.isEmpty) return;
+    await _db.collection(_collection).doc(id).update({
+      'readBy': FieldValue.arrayUnion([uid]),
+    });
   }
 
-  Future<void> markAllRead(List<String> ids) async {
-    if (ids.isEmpty) return;
+  /// ✅ ອ່ານທັງໝົດ — batch arrayUnion
+  Future<void> markAllRead(List<String> ids, String uid) async {
+    if (ids.isEmpty || uid.isEmpty) return;
     final batch = _db.batch();
     for (final id in ids) {
-      batch.update(_db.collection(_collection).doc(id), {'isRead': true});
+      batch.update(_db.collection(_collection).doc(id), {
+        'readBy': FieldValue.arrayUnion([uid]),
+      });
     }
     await batch.commit();
   }
 
-  Future<void> delete(String id) async {
-    await _db.collection(_collection).doc(id).delete();
+  /// ✅ ລຶບ (soft) — ເພີ່ມ uid ເຂົ້າ deletedBy
+  ///    ຄົນອື່ນຍັງເຫັນ notification ນີ້ຢູ່
+  Future<void> delete(String id, String uid) async {
+    if (uid.isEmpty) return;
+    await _db.collection(_collection).doc(id).update({
+      'deletedBy': FieldValue.arrayUnion([uid]),
+    });
   }
 
-  Future<void> clearAll(List<String> ids) async {
-    if (ids.isEmpty) return;
+  /// ✅ ລ້າງທັງໝົດ (soft) — batch arrayUnion
+  Future<void> clearAll(List<String> ids, String uid) async {
+    if (ids.isEmpty || uid.isEmpty) return;
     final batch = _db.batch();
     for (final id in ids) {
-      batch.delete(_db.collection(_collection).doc(id));
+      batch.update(_db.collection(_collection).doc(id), {
+        'deletedBy': FieldValue.arrayUnion([uid]),
+      });
     }
     await batch.commit();
   }

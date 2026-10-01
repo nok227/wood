@@ -7,13 +7,9 @@ import '../models/wood_product_model.dart';
 class WoodRemoteDataSource {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  // ⚠️ ຂໍ້ມູນ Cloudinary
   final String cloudName = 'onvap9ey';
   final String uploadPreset = 'wood_preset';
 
-  // ══════════════════════════════════════════════
-  // 1. ອັບໂຫຼດຮູບ → Cloudinary (ມີ timeout ປ້ອງກັນຄ້າງ)
-  // ══════════════════════════════════════════════
   Future<String> uploadImageToCloudinary(File imageFile) async {
     try {
       final url = Uri.parse(
@@ -25,7 +21,6 @@ class WoodRemoteDataSource {
           await http.MultipartFile.fromPath('file', imageFile.path),
         );
 
-      // ✅ Timeout 45 ວິ ປ້ອງກັນຄ້າງຕະຫຼອດ
       final streamedResponse =
           await request.send().timeout(const Duration(seconds: 45));
 
@@ -46,9 +41,6 @@ class WoodRemoteDataSource {
     }
   }
 
-  // ══════════════════════════════════════════════
-  // 2. ບັນທຶກ Firestore (ສ້າງໃໝ່)
-  // ══════════════════════════════════════════════
   Future<void> saveWoodProduct(WoodProductModel product) async {
     await firestore
         .collection('wood_products')
@@ -57,9 +49,6 @@ class WoodRemoteDataSource {
         .timeout(const Duration(seconds: 20));
   }
 
-  // ══════════════════════════════════════════════
-  // 3. ອັບເດດຂໍ້ມູນ
-  // ══════════════════════════════════════════════
   Future<void> updateWoodProduct(WoodProductModel product) async {
     await firestore
         .collection('wood_products')
@@ -68,9 +57,6 @@ class WoodRemoteDataSource {
         .timeout(const Duration(seconds: 20));
   }
 
-  // ══════════════════════════════════════════════
-  // 4. ລຶບຂໍ້ມູນ
-  // ══════════════════════════════════════════════
   Future<void> deleteWoodProduct(String id) async {
     await firestore
         .collection('wood_products')
@@ -79,9 +65,6 @@ class WoodRemoteDataSource {
         .timeout(const Duration(seconds: 20));
   }
 
-  // ══════════════════════════════════════════════
-  // 5. ດຶງລາຍການທັງໝົດ
-  // ══════════════════════════════════════════════
   Future<List<WoodProductModel>> getWoodProducts() async {
     final snapshot = await firestore
         .collection('wood_products')

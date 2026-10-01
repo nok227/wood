@@ -31,6 +31,8 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     controller.thicknessController,
     controller.priceController,
     controller.customUnitController,
+    controller.customZonesController,
+    controller.noteController,
   ]);
 
   @override
@@ -39,6 +41,14 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
   // ══════════════════════════════════════════════
   // 🔍 ກວດສອບສິນຄ້າຊ້ຳ
   // ══════════════════════════════════════════════
+  Set<String> _normalizeZones(List<String> input) => input
+      .map((z) => z.trim().toLowerCase())
+      .where((z) => z.isNotEmpty)
+      .toSet();
+
+  bool _sameZones(Set<String> a, Set<String> b) =>
+      a.length == b.length && a.containsAll(b);
+
   WoodProductModel? _findDuplicate() {
     final editingId = controller.editingProductId.value;
 
@@ -50,6 +60,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     final sizeUnit = controller.selectedSizeUnit.value.trim().toLowerCase();
     final unit = controller.selectedUnit.value.trim().toLowerCase();
     final price = controller.priceController.text.trim().replaceAll(',', '');
+    final zones = _normalizeZones(controller.allZones);
 
     for (final p in controller.products) {
       if (editingId != null && p.id == editingId) continue;
@@ -62,6 +73,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
       final sameSizeUnit = p.sizeUnit.trim().toLowerCase() == sizeUnit;
       final sameUnit = p.unit.trim().toLowerCase() == unit;
       final samePrice = _numEq(p.price, price.replaceAll(RegExp(r'\.0+$'), ''));
+      final sameZones = _sameZones(_normalizeZones(p.zones), zones);
 
       if (sameWoodType &&
           sameName &&
@@ -70,7 +82,8 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
           sameThickness &&
           sameSizeUnit &&
           sameUnit &&
-          samePrice) {
+          samePrice &&
+          sameZones) {
         return p;
       }
     }
@@ -95,6 +108,8 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
 
   bool get _doneName => controller.nameController.text.trim().isNotEmpty;
 
+  bool get _doneZone => controller.allZones.isNotEmpty;
+
   bool get _doneSize {
     final w = double.tryParse(controller.widthController.text.trim());
     final l = double.tryParse(controller.lengthController.text.trim());
@@ -109,7 +124,6 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     return p != null && p > 0;
   }
 
-  // ✅ ໜ່ວຍນັບ done — default ຂຽວທັນທີ, 'ອື່ນໆ' ຕ້ອງພິມ
   bool get _doneUnit {
     final u = controller.selectedUnit.value.trim();
     if (u.isEmpty) return false;
@@ -119,7 +133,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     return true;
   }
 
-  // ✅ ມີ input ຫຍັງກໍ່ໄດ້ → ສະແດງ preview ທັນທີ
+  // 🆕 ໝາຍເຫດ — ບໍ່ບັງຄັບ
+  bool get _doneNote => controller.noteController.text.trim().isNotEmpty;
+
   bool get _hasAnyInput =>
       controller.woodTypeController.text.trim().isNotEmpty ||
       controller.nameController.text.trim().isNotEmpty ||
@@ -128,7 +144,10 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
       controller.thicknessController.text.trim().isNotEmpty ||
       controller.priceController.text.trim().isNotEmpty ||
       controller.selectedImages.isNotEmpty ||
-      controller.existingImageUrls.isNotEmpty;
+      controller.existingImageUrls.isNotEmpty ||
+      controller.selectedZones.isNotEmpty ||
+      controller.customZonesController.text.trim().isNotEmpty ||
+      controller.noteController.text.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -229,9 +248,127 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
               ),
               const SizedBox(height: 14),
 
-              // ④ ຂະໜາດ
+              // ④ ໂຊນ (ບໍ່ບັງຄັບ)
+              Obx(
+                () => _section(
+                  number: '4',
+                  title: 'ໂຊນ',
+                  icon: Icons.place_outlined,
+                  color: Colors.brown,
+                  done: _doneZone,
+                  warning: true,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final letter
+                          in WoodProductController.zoneLetters) ...[
+                        _zoneRow(letter, controller),
+                        const SizedBox(height: 8),
+                      ],
+                      TextField(
+                        controller: controller.customZonesController,
+                        decoration: _minimalInputDecoration(
+                          'ໂຊນອື່ນໆ (ຄັ່ນດ້ວຍ , ເຊັ່ນ e1, e2)',
+                        ),
+                      ),
+                      if (controller.allZones.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade50,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.green.shade300,
+                                width: 1.2,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle,
+                                      size: 14,
+                                      color: Colors.green.shade800,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      'ເລືອກແລ້ວ ${controller.allZones.length} ໂຊນ',
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.green.shade800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 5,
+                                  runSpacing: 5,
+                                  children: controller.allZones
+                                      .map(
+                                        (z) => GestureDetector(
+                                          onTap: () =>
+                                              controller.removeZone(z),
+                                          child: Container(
+                                            padding:
+                                                const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 3,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              border: Border.all(
+                                                color:
+                                                    Colors.green.shade400,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  z,
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight:
+                                                        FontWeight.bold,
+                                                    color: Colors
+                                                        .green.shade800,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Icon(
+                                                  Icons.close,
+                                                  size: 11,
+                                                  color:
+                                                      Colors.green.shade700,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // ⑤ ຂະໜາດ
               _section(
-                number: '4',
+                number: '5',
                 title: 'ຂະໜາດ',
                 icon: Icons.straighten,
                 color: Colors.brown,
@@ -244,7 +381,8 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                         Expanded(
                           child: TextField(
                             controller: controller.widthController,
-                            keyboardType: const TextInputType.numberWithOptions(
+                            keyboardType:
+                                const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
                             decoration: _minimalInputDecoration('ກວ້າງ'),
@@ -254,7 +392,8 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                         Expanded(
                           child: TextField(
                             controller: controller.lengthController,
-                            keyboardType: const TextInputType.numberWithOptions(
+                            keyboardType:
+                                const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
                             decoration: _minimalInputDecoration('ຍາວ'),
@@ -264,7 +403,8 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                         Expanded(
                           child: TextField(
                             controller: controller.thicknessController,
-                            keyboardType: const TextInputType.numberWithOptions(
+                            keyboardType:
+                                const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
                             decoration: _minimalInputDecoration('ໜາ'),
@@ -276,10 +416,18 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     Obx(
                       () => DropdownButtonFormField<String>(
                         value: controller.selectedSizeUnit.value,
+                        isExpanded: true,
                         decoration: _minimalInputDecoration('ໜ່ວຍຂະໜາດ'),
                         items: controller.sizeUnitOptions
                             .map(
-                              (u) => DropdownMenuItem(value: u, child: Text(u)),
+                              (u) => DropdownMenuItem(
+                                value: u,
+                                child: Text(
+                                  u,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ),
                             )
                             .toList(),
                         onChanged: (v) {
@@ -294,11 +442,10 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
               ),
               const SizedBox(height: 14),
 
-              // ⑤ ຈຳນວນ ແລະ ໜ່ວຍນັບ
-              // ✅ done: _doneUnit (ແທນ false ເກົ່າ)
+              // ⑥ ຈຳນວນ ແລະ ໜ່ວຍນັບ
               Obx(
                 () => _section(
-                  number: '5',
+                  number: '6',
                   title: 'ຈຳນວນ ແລະ ໜ່ວຍນັບ',
                   icon: Icons.numbers,
                   color: Colors.brown,
@@ -316,20 +463,22 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                               enabled: false,
                               decoration: _minimalInputDecoration('ຈຳນວນ')
                                   .copyWith(
-                                    filled: true,
-                                    fillColor: Colors.grey.shade100,
-                                  ),
+                                filled: true,
+                                fillColor: Colors.grey.shade100,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              // ✅ ຖ້າຫວ່າງ → null ຈຶ່ງສະແດງ hint
                               value: controller.selectedUnit.value.isEmpty
                                   ? null
                                   : controller.selectedUnit.value,
+                              isExpanded: true,
                               hint: Text(
                                 'ເລືອກໜ່ວຍນັບ',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                                 style: TextStyle(
                                   color: Colors.grey.shade500,
                                   fontSize: 14,
@@ -340,7 +489,11 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                                   .map(
                                     (u) => DropdownMenuItem(
                                       value: u,
-                                      child: Text(u),
+                                      child: Text(
+                                        u,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
                                     ),
                                   )
                                   .toList(),
@@ -358,7 +511,8 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                           padding: const EdgeInsets.only(top: 8),
                           child: TextField(
                             controller: controller.customUnitController,
-                            decoration: _minimalInputDecoration('ລະບຸໜ່ວຍນັບ'),
+                            decoration:
+                                _minimalInputDecoration('ລະບຸໜ່ວຍນັບ'),
                           ),
                         ),
                     ],
@@ -367,9 +521,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
               ),
               const SizedBox(height: 14),
 
-              // ⑥ ລາຄາຂາຍ
+              // ⑦ ລາຄາຂາຍ
               _section(
-                number: '6',
+                number: '7',
                 title: 'ລາຄາຂາຍ',
                 icon: Icons.sell_outlined,
                 color: Colors.brown,
@@ -388,11 +542,30 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                   ).copyWith(suffixText: 'ກີບ '),
                 ),
               ),
+              const SizedBox(height: 14),
+
+              // 🆕 ⑧ ໝາຍເຫດ (ບໍ່ບັງຄັບ)
+              _section(
+                number: '8',
+                title: 'ໝາຍເຫດ',
+                icon: Icons.sticky_note_2_outlined,
+                color: Colors.brown,
+                done: _doneNote,
+                warning: true,
+                child: TextField(
+                  controller: controller.noteController,
+                  maxLines: 4,
+                  minLines: 2,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
+                  decoration: _minimalInputDecoration(
+                    'ໝາຍເຫດເພີ່ມເຕີມ (ຖ້າມີ) — ເຊັ່ນ ສີໄມ້, ຄຸນນະພາບ, ຂໍ້ຄວນລະວັງ',
+                  ).copyWith(alignLabelWithHint: true),
+                ),
+              ),
 
               // ══════════════════════════════════════════
-              // ✅ Preview Card — ຢູ່ຕຳແໜ່ງເກົ່າ (inline)
-              //    ປ່ຽນເງື່ອນໄຂ: ສະແດງທັນທີເມື່ອມີ input ຫຍັງກໍ່ໄດ້
-              //    (ເກົ່າແມ່ນ _previewReady = ຕ້ອງຄົບ 6 ຢ່າງ)
+              // ✅ Preview Card — inline
               // ══════════════════════════════════════════
               Obx(() {
                 if (!_hasAnyInput) return const SizedBox.shrink();
@@ -403,18 +576,15 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     newImages: controller.selectedImages.toList(),
                     woodType: controller.woodTypeController.text.trim(),
                     name: controller.nameController.text.trim(),
-                    width:
-                        double.tryParse(
+                    width: double.tryParse(
                           controller.widthController.text.trim(),
                         ) ??
                         0,
-                    length:
-                        double.tryParse(
+                    length: double.tryParse(
                           controller.lengthController.text.trim(),
                         ) ??
                         0,
-                    thickness:
-                        double.tryParse(
+                    thickness: double.tryParse(
                           controller.thicknessController.text.trim(),
                         ) ??
                         0,
@@ -422,14 +592,15 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     unit: controller.selectedUnit.value == 'ອື່ນໆ'
                         ? controller.customUnitController.text.trim()
                         : controller.selectedUnit.value,
-                    price:
-                        double.tryParse(
+                    price: double.tryParse(
                           controller.priceController.text
                               .replaceAll(',', '')
                               .trim(),
                         ) ??
                         0,
+                    zones: controller.allZones,
                     isEditing: controller.editingProductId.value != null,
+                    note: controller.noteController.text.trim(),
                   ),
                 );
               }),
@@ -594,8 +765,11 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     required Color color,
     required Widget child,
     bool done = false,
+    bool warning = false,
   }) {
-    final effectiveColor = done ? Colors.green.shade700 : color;
+    final Color effectiveColor = done
+        ? Colors.green.shade700
+        : (warning ? Colors.amber.shade600 : color);
 
     return Container(
       decoration: BoxDecoration(
@@ -656,6 +830,8 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                       color: effectiveColor,
                       letterSpacing: 0.2,
                     ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
                 if (done)
@@ -683,12 +859,113 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                         ),
                       ],
                     ),
+                  )
+                else if (warning)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade600,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.edit_note, color: Colors.white, size: 11),
+                        SizedBox(width: 3),
+                        Text(
+                          'ບໍ່ບັງຄັບ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
               ],
             ),
           ),
           Padding(padding: const EdgeInsets.all(12), child: child),
         ],
+      ),
+    );
+  }
+
+  // ─── ແຖວໂຊນຕໍ່ letter ───
+  Widget _zoneRow(String letter, WoodProductController controller) {
+    final selected = controller.selectedZones.toSet();
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 24,
+          height: 24,
+          margin: const EdgeInsets.only(top: 3),
+          decoration: BoxDecoration(
+            color: Colors.brown.shade700,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Center(
+            child: Text(
+              letter.toUpperCase(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Wrap(
+            spacing: 5,
+            runSpacing: 5,
+            children: [
+              for (int i = 1;
+                  i <= WoodProductController.zoneNumbersPerLetter;
+                  i++)
+                _zoneChip(
+                  label: '$letter$i',
+                  selected: selected.contains('$letter$i'),
+                  onTap: () => controller.toggleZone('$letter$i'),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _zoneChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        decoration: BoxDecoration(
+          color: selected ? Colors.brown.shade700 : Colors.brown.shade50,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: selected ? Colors.brown.shade700 : Colors.brown.shade200,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.bold,
+            color: selected ? Colors.white : Colors.brown.shade700,
+          ),
+        ),
       ),
     );
   }
@@ -739,6 +1016,12 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     'ລາຄາ',
                     '${NumberFormat('#,###').format(dup.price)} ກີບ',
                   ),
+                  _dupRow(
+                    'ໂຊນ',
+                    dup.zones.isEmpty ? '-' : dup.zones.join(', '),
+                  ),
+                  if (dup.note.trim().isNotEmpty)
+                    _dupRow('ໝາຍເຫດ', dup.note),
                 ],
               ),
             ),
@@ -786,7 +1069,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
 }
 
 // ══════════════════════════════════════════════
-// Helper widgets (top-level) — ຄົງເດີມ
+// Helper widgets (top-level)
 // ══════════════════════════════════════════════
 
 Widget _dupRow(String label, String value) {
@@ -918,7 +1201,25 @@ Widget _buildImagesPicker(WoodProductController controller) {
             border: Border.all(color: Colors.grey.shade300),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(Icons.add_a_photo_outlined, color: Colors.grey.shade600),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.add_a_photo_outlined,
+                color: Colors.grey.shade600,
+                size: 22,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'ກ້ອງ/ຄັງ',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

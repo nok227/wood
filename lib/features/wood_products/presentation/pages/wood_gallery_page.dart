@@ -19,7 +19,6 @@ class _WoodGalleryPageState extends State<WoodGalleryPage> {
   late final PageController _pageController;
   int _index = 0;
 
-  // 🎯 ตัวติดตามการซูม — ถ้าซูมอยู่ จะปิดการปัดขึ้น/ลง
   final TransformationController _transform = TransformationController();
   bool _isZoomed = false;
 
@@ -66,7 +65,7 @@ class _WoodGalleryPageState extends State<WoodGalleryPage> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      extendBodyBehindAppBar: true, // ✅ รูปเต็มจอทับหลัง AppBar
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -75,9 +74,6 @@ class _WoodGalleryPageState extends State<WoodGalleryPage> {
       ),
       body: Stack(
         children: [
-          // ══════════════════════════════════════════
-          // 🖼️ รูปเต็มจอ + ปัดซ้าย/ขวา + ปัดขึ้น/ลงปิด
-          // ══════════════════════════════════════════
           Positioned.fill(
             child: PageView.builder(
               controller: _pageController,
@@ -113,7 +109,6 @@ class _WoodGalleryPageState extends State<WoodGalleryPage> {
 
                 return Dismissible(
                   key: ValueKey('wood-viewer-$i-${urls[i]}'),
-                  // ถ้าซูมอยู่ → ห้ามปัดออก (ให้ pan รูปได้)
                   direction: _isZoomed
                       ? DismissDirection.none
                       : DismissDirection.vertical,
@@ -131,9 +126,6 @@ class _WoodGalleryPageState extends State<WoodGalleryPage> {
             ),
           ),
 
-          // ══════════════════════════════════════════
-          // 🔢 ตัวนับ X / Y (มุมล่างขวา — เลื่อนขึ้นถ้ามี thumbnail)
-          // ══════════════════════════════════════════
           Positioned(
             right: 16,
             bottom: hasMultiple ? 108 : 16,
@@ -153,9 +145,6 @@ class _WoodGalleryPageState extends State<WoodGalleryPage> {
             ),
           ),
 
-          // ══════════════════════════════════════════
-          // 🖼️ Thumbnail bar — วางทับด้านล่าง (overlay)
-          // ══════════════════════════════════════════
           if (hasMultiple)
             Positioned(
               left: 0,

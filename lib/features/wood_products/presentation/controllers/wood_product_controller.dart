@@ -1,3 +1,5 @@
+// lib/features/wood_products/presentation/controllers/wood_product_controller.dart
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,15 +15,13 @@ class WoodProductController extends GetxController {
   var isLoading = false.obs;
   var isSaving = false.obs;
 
-  // ✅ ຕົວບອກຄວາມຄືບໜ້າ (progress bar)
-  var saveProgress = 0.obs;      // 0-100
-  var saveStep = ''.obs;         // ຂໍ້ຄວາມສະຖານະ
+  var saveProgress = 0.obs;
+  var saveStep = ''.obs;
 
   var productList = <WoodProductModel>[].obs;
   var products = <WoodProductModel>[].obs;
   var errorMessage = RxnString();
 
-  // ✅ ເກັບຄ່າເດີມ
   double? _originalPrice;
   DateTime? _originalPriceUpdatedAt;
 
@@ -30,15 +30,74 @@ class WoodProductController extends GetxController {
   var existingImageUrls = <String>[].obs;
   var selectedImages = <File>[].obs;
 
-  // ---------- หน่วยวัดขนาด ----------
+  // ---------- ຫົວໜ່ວຍຂະໜາດ ----------
   final List<String> sizeUnitOptions = ['mm', 'cm', 'm'];
   var selectedSizeUnit = 'mm'.obs;
 
-  // ---------- หน่วยนับจำนวน ----------
-final List<String> unitOptions = ['ແຜ່ນ', 'ທ່ອນ', 'ວົງ', 'ອື່ນໆ'];
-var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint 'ເລືອກໜ່ວຍນັບ'
+  // ---------- ຫົວໜ່ວຍນັບ ----------
+  final List<String> unitOptions = [
+    'ແຜ່ນ',
+    'ທ່ອນ',
+    'ວົງ',
+    'ວົງນ້ອຍ',
+    'ວົງໄຫຍ່',
+    'ວົງປ່ອງຢ້ຽມ 1 ບານ',
+    'ວົງປ່ອງຢ້ຽມ 2 ບານ',
+    'ວົງປ່ອງຢ້ຽມ 3 ບານ',
+    'ວົງປ່ອງລົມ',
+    'ບານປະຕູ',
+    'ບານປ່ອງຢ້ຽມ',
+    'ບານປ່ອງລົມ',
+    'ອື່ນໆ',
+  ];
+  var selectedUnit = ''.obs;
 
-  // ---------- โหมดแก้ไข ----------
+  // ══════════════════════════════════════════════
+  // 🆕 ໂຊນ (multi-select)
+  // ══════════════════════════════════════════════
+  static const List<String> zoneLetters = ['a', 'b', 'c', 'd'];
+  static const int zoneNumbersPerLetter = 10;
+
+  List<String> get zoneOptions => [
+        for (final letter in zoneLetters)
+          for (int i = 1; i <= zoneNumbersPerLetter; i++) '$letter$i',
+      ];
+
+  var selectedZones = <String>[].obs;
+  var customZonesText = ''.obs;
+  final customZonesController = TextEditingController();
+
+  List<String> get allZones {
+    final custom = customZonesText.value
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty);
+    final set = <String>{...selectedZones, ...custom};
+    return set.toList();
+  }
+
+  void toggleZone(String zone) {
+    if (selectedZones.contains(zone)) {
+      selectedZones.remove(zone);
+    } else {
+      selectedZones.add(zone);
+    }
+  }
+
+  void removeZone(String zone) {
+    if (selectedZones.contains(zone)) {
+      selectedZones.remove(zone);
+    } else {
+      final remaining = customZonesController.text
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty && s != zone)
+          .toList();
+      customZonesController.text = remaining.join(', ');
+    }
+  }
+
+  // ---------- ໂໝດແກ້ໄຂ ----------
   var editingProductId = RxnString();
 
   final nameController = TextEditingController();
@@ -49,10 +108,16 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
   final quantityController = TextEditingController(text: '1');
   final customUnitController = TextEditingController();
   final priceController = TextEditingController();
+  final noteController = TextEditingController(); // 🆕
 
   @override
   void onInit() {
     super.onInit();
+    customZonesController.addListener(() {
+      if (customZonesText.value != customZonesController.text) {
+        customZonesText.value = customZonesController.text;
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchProducts();
     });
@@ -68,11 +133,13 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
     quantityController.dispose();
     customUnitController.dispose();
     priceController.dispose();
+    customZonesController.dispose();
+    noteController.dispose();
     super.onClose();
   }
 
   // ══════════════════════════════════════════════
-  // 📷 ເລືອກຮູບ — ບີບອັດແຮງຂຶ້ນ ເພື່ອ upload ໄວ
+  // 📷 ເລືອກຮູບ
   // ══════════════════════════════════════════════
   Future<void> pickImages() async {
     try {
@@ -82,10 +149,68 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
         Get.snackbar('ແຈ້ງເຕືອນ', 'ເລືອກໄດ້ສູງສຸດ $maxImages ຮູບເທົ່ານັ້ນ');
         return;
       }
+
+      final source = await Get.bottomSheet<ImageSource>(
+        Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 42,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_library_outlined,
+                    color: Colors.brown,
+                  ),
+                  title: const Text('ເລືອກຈາກຄັງຮູບ'),
+                  onTap: () => Get.back(result: ImageSource.gallery),
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt_outlined,
+                    color: Colors.brown,
+                  ),
+                  title: const Text('ຖ່າຍຮູບ'),
+                  onTap: () => Get.back(result: ImageSource.camera),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      if (source == null) return;
+
+      if (source == ImageSource.camera) {
+        final shot = await ImagePicker().pickImage(
+          source: ImageSource.camera,
+          maxWidth: 900,
+          maxHeight: 900,
+          imageQuality: 60,
+        );
+        if (shot != null) {
+          selectedImages.add(File(shot.path));
+        }
+        return;
+      }
+
       final pickedFiles = await ImagePicker().pickMultiImage(
-        maxWidth: 900,        // ✅ ຫຼຸດຈາກ 1200 → 900
+        maxWidth: 900,
         maxHeight: 900,
-        imageQuality: 60,     // ✅ ຫຼຸດຈາກ 75 → 60 (ໄວຂຶ້ນ 40%)
+        imageQuality: 60,
       );
       if (pickedFiles.isEmpty) return;
 
@@ -150,6 +275,7 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
     thicknessController.text = _fmt(product.thickness);
     quantityController.text = '1';
     priceController.text = _fmtPrice(product.price);
+    noteController.text = product.note; // 🆕
     selectedSizeUnit.value =
         sizeUnitOptions.contains(product.sizeUnit) ? product.sizeUnit : 'cm';
 
@@ -160,6 +286,20 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
       selectedUnit.value = 'ອື່ນໆ';
       customUnitController.text = product.unit;
     }
+
+    final predefined = zoneOptions.toSet();
+    final preset = <String>[];
+    final custom = <String>[];
+    for (final z in product.zones) {
+      if (predefined.contains(z)) {
+        preset.add(z);
+      } else {
+        custom.add(z);
+      }
+    }
+    selectedZones.assignAll(preset);
+    customZonesController.text = custom.join(', ');
+    customZonesText.value = customZonesController.text;
 
     existingImageUrls.assignAll(product.imageUrls);
     selectedImages.clear();
@@ -173,11 +313,7 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
       v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
 
   // ══════════════════════════════════════════════
-  // 🚀 ບັນທຶກ — ເວີຊັ່ນໄວ
-  //   ① Upload ຮູບພ້ອມກັນ (parallel)
-  //   ② ບັນທຶກ Firestore
-  //   ③ ອັບເດດ list ໃນ-memory (ບໍ່ fetch ຄືນ)
-  //   ④ ແຈ້ງເຕືອນ fire-and-forget
+  // 🚀 ບັນທຶກ
   // ══════════════════════════════════════════════
   Future<bool> saveProduct() async {
     final name = nameController.text.trim();
@@ -191,9 +327,9 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
     final unit = selectedUnit.value == 'ອື່ນໆ'
         ? customUnitController.text.trim()
         : selectedUnit.value;
+    final note = noteController.text.trim(); // 🆕
     final totalImages = existingImageUrls.length + selectedImages.length;
 
-    // ── Validation ──
     if (name.isEmpty) {
       Get.snackbar('ແຈ້ງເຕືອນ', 'ກະລຸນາປ້ອນຊື່ໄມ້');
       return false;
@@ -223,9 +359,6 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
       saveStep.value = 'ກຳລັງກະກຽມ...';
       errorMessage.value = null;
 
-      // ─────────────────────────────────────────
-      // ① Upload ຮູບພ້ອມກັນ
-      // ─────────────────────────────────────────
       final newUrls = <String>[];
       if (selectedImages.isNotEmpty) {
         final total = selectedImages.length;
@@ -237,7 +370,6 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
         final futures = selectedImages.map((file) async {
           final url = await dataSource.uploadImageToCloudinary(file);
           completed++;
-          // ✅ progress 5% → 85%
           saveProgress.value = 5 + (completed / total * 80).round();
           saveStep.value = 'ກຳລັງອັບໂຫຼດຮູບ $completed/$total...';
           return url;
@@ -249,13 +381,14 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
       final finalImageUrls = [...existingImageUrls, ...newUrls];
       final isEditing = editingProductId.value != null;
 
-      final priceChanged = isEditing &&
-          _originalPrice != null &&
-          _originalPrice != price;
+      final priceChanged =
+          isEditing && _originalPrice != null && _originalPrice != price;
 
       final DateTime? newPriceUpdatedAt = priceChanged
           ? DateTime.now()
           : (isEditing ? _originalPriceUpdatedAt : null);
+
+      final zones = allZones;
 
       final product = WoodProductModel(
         id: isEditing
@@ -271,12 +404,11 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
         quantity: quantity,
         unit: unit,
         price: price,
+        zones: zones,
         priceUpdatedAt: newPriceUpdatedAt,
+        note: note,
       );
 
-      // ─────────────────────────────────────────
-      // ② ບັນທຶກ Firestore
-      // ─────────────────────────────────────────
       saveStep.value = 'ກຳລັງບັນທຶກ...';
       saveProgress.value = 90;
 
@@ -286,9 +418,6 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
         await dataSource.saveWoodProduct(product);
       }
 
-      // ─────────────────────────────────────────
-      // ③ ອັບເດດ list ໃນ-memory (ບໍ່ fetch ຄືນ)
-      // ─────────────────────────────────────────
       final idx = products.indexWhere((p) => p.id == product.id);
       if (idx >= 0) {
         products[idx] = product;
@@ -298,12 +427,10 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
 
       saveProgress.value = 100;
 
-      // ─────────────────────────────────────────
-      // ④ ແຈ້ງເຕືອນ — fire-and-forget
-      // ─────────────────────────────────────────
       if (Get.isRegistered<NotificationController>()) {
         try {
           final noti = Get.find<NotificationController>();
+          final zoneTag = zones.isEmpty ? '' : ' [${zones.join(", ")}]';
           if (isEditing) {
             final oldP = _originalPrice;
             if (oldP != null && oldP != price) {
@@ -311,7 +438,7 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
                 type: AppNotificationType.priceChange,
                 title: 'ປ່ຽນແປງລາຄາໄມ້',
                 message:
-                    '$name: ${oldP.toStringAsFixed(0)} → ${price.toStringAsFixed(0)} ກີບ',
+                    '$name$zoneTag: ${oldP.toStringAsFixed(0)} → ${price.toStringAsFixed(0)} ກີບ',
                 audience: NotificationAudience.all,
                 targetId: product.id,
                 meta: {'oldPrice': oldP, 'newPrice': price},
@@ -320,7 +447,7 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
               noti.push(
                 type: AppNotificationType.productEdit,
                 title: 'ແກ້ໄຂຂໍ້ມູນໄມ້',
-                message: 'ແກ້ໄຂ "$name" ຂະໜາດ '
+                message: 'ແກ້ໄຂ "$name"$zoneTag ຂະໜາດ '
                     '${_fmt(width)}×${_fmt(length)}×${_fmt(thickness)} ${selectedSizeUnit.value}',
                 audience: NotificationAudience.all,
                 targetId: product.id,
@@ -331,7 +458,7 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
               type: AppNotificationType.productAdd,
               title: 'ເພີ່ມໄມ້ໃໝ່',
               message:
-                  'ເພີ່ມ "$name" (${woodType.isEmpty ? "ບໍ່ລະບຸຊະນິດ" : woodType})',
+                  'ເພີ່ມ "$name"$zoneTag (${woodType.isEmpty ? "ບໍ່ລະບຸຊະນິດ" : woodType})',
               audience: NotificationAudience.all,
               targetId: product.id,
             );
@@ -364,7 +491,7 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
       final removed = products.firstWhereOrNull((p) => p.id == id);
 
       await dataSource.deleteWoodProduct(id);
-      products.removeWhere((p) => p.id == id);   // ✅ ລຶບໃນ-memory
+      products.removeWhere((p) => p.id == id);
 
       if (Get.isRegistered<NotificationController>()) {
         try {
@@ -392,24 +519,27 @@ var selectedUnit = ''.obs;   // ✅ ຫວ່າງ → ສະແດງ hint '�
   // ══════════════════════════════════════════════
   // 🧹 ລ້າງຟອມ
   // ══════════════════════════════════════════════
- // ─── ໃໝ່ ───
-void clearForm() {
-  editingProductId.value = null;
-  _originalPrice = null;
-  _originalPriceUpdatedAt = null;
-  nameController.clear();
-  woodTypeController.clear();
-  widthController.clear();
-  lengthController.clear();
-  thicknessController.clear();
-  quantityController.text = '1';
-  customUnitController.clear();
-  priceController.clear();
-  selectedUnit.value = '';              // ✅ ຫວ່າງ
-  selectedSizeUnit.value = 'cm';
-  existingImageUrls.clear();
-  selectedImages.clear();
-}
+  void clearForm() {
+    editingProductId.value = null;
+    _originalPrice = null;
+    _originalPriceUpdatedAt = null;
+    nameController.clear();
+    woodTypeController.clear();
+    widthController.clear();
+    lengthController.clear();
+    thicknessController.clear();
+    quantityController.text = '1';
+    customUnitController.clear();
+    priceController.clear();
+    noteController.clear(); // 🆕
+    selectedUnit.value = '';
+    selectedSizeUnit.value = 'cm';
+    selectedZones.clear();
+    customZonesController.clear();
+    customZonesText.value = '';
+    existingImageUrls.clear();
+    selectedImages.clear();
+  }
 
   String _fmtPrice(num v) {
     String text = v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();

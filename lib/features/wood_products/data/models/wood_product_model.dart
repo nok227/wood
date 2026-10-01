@@ -1,3 +1,5 @@
+// lib/features/wood_products/data/models/wood_product_model.dart
+
 class WoodProductModel {
   final String id;
   final String name;
@@ -11,8 +13,14 @@ class WoodProductModel {
   final String unit;
   final double price;
 
+  // 🆕 ໂຊນ (multiple) — ເຊັ່ນ ['a1', 'a2', 'b3']
+  final List<String> zones;
+
   // 🆕 ເວລາທີ່ແກ້ໄຂລາຄາລ່າສຸດ (ໃຊ້ສະແດງ Badge "ໃໝ່")
   final DateTime? priceUpdatedAt;
+
+  // 🆕 ໝາຍເຫດ
+  final String note;
 
   WoodProductModel({
     required this.id,
@@ -26,17 +34,17 @@ class WoodProductModel {
     required this.quantity,
     required this.unit,
     required this.price,
+    this.zones = const [],
     this.priceUpdatedAt,
+    this.note = '',
   });
 
-  // ✅ ກວດວ່າລາຄາຖືກອັບເດດພາຍໃນ 7 ວັນ
   bool get isPriceNew {
     if (priceUpdatedAt == null) return false;
     final diff = DateTime.now().difference(priceUpdatedAt!);
     return diff.inDays < 7 && !diff.isNegative;
   }
 
-  // ✅ ຈຳນວນວັນທີ່ຍັງເຫຼືອ (ສຳລັບ tooltip)
   int get daysSincePriceUpdate {
     if (priceUpdatedAt == null) return -1;
     return DateTime.now().difference(priceUpdatedAt!).inDays;
@@ -55,8 +63,9 @@ class WoodProductModel {
       'quantity': quantity,
       'unit': unit,
       'price': price,
-      // 🆕 ບັນທຶກເວລາແກ້ລາຄາ (ຖ້າມີ)
+      'zones': zones,
       'priceUpdatedAt': priceUpdatedAt?.toIso8601String(),
+      'note': note,
       'createdAt': DateTime.now(),
     };
   }
@@ -73,8 +82,9 @@ class WoodProductModel {
       'quantity': quantity,
       'unit': unit,
       'price': price,
-      // 🆕 ອັບເດດທຸກຄັ້ງ (null ກໍ່ຂຽນທັບ — ປ້ອງກັນຄ່າເກົ່າຄ້າງ)
+      'zones': zones,
       'priceUpdatedAt': priceUpdatedAt?.toIso8601String(),
+      'note': note,
       'updatedAt': DateTime.now(),
     };
   }
@@ -106,8 +116,24 @@ class WoodProductModel {
     List<String> images = [];
     if (map['imageUrls'] != null) {
       images = List<String>.from(map['imageUrls']);
-    } else if (map['imageUrl'] != null && map['imageUrl'].toString().isNotEmpty) {
+    } else if (map['imageUrl'] != null &&
+        map['imageUrl'].toString().isNotEmpty) {
       images = [map['imageUrl'].toString()];
+    }
+
+    List<String> zones = [];
+    if (map['zones'] != null) {
+      if (map['zones'] is List) {
+        zones = List<String>.from(
+          (map['zones'] as List).map((e) => e.toString()),
+        );
+      } else if (map['zones'] is String) {
+        zones = (map['zones'] as String)
+            .split(',')
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
+      }
     }
 
     return WoodProductModel(
@@ -122,7 +148,9 @@ class WoodProductModel {
       quantity: _toInt(map['quantity']),
       unit: map['unit'] ?? 'ແຜ່ນ',
       price: _toDouble(map['price']),
+      zones: zones,
       priceUpdatedAt: _toDate(map['priceUpdatedAt']),
+      note: (map['note'] ?? '').toString(),
     );
   }
 

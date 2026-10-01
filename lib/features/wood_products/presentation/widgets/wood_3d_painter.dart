@@ -1,19 +1,42 @@
 // lib/features/wood_products/presentation/widgets/wood_3d_painter.dart
+//
+// 🎨 Realistic Wood 3D Painter
+//   - Procedural wood grain (ລາຍໄມ້)
+//   - Face lighting ຕາມ normal
+//   - Ambient occlusion ຮອຍຕໍ່
+//   - Specular highlight ວາວເຫຼື້ອມ
+//   - Edge highlight ຂອບສະຫວ່າງ
+
 import 'dart:ui' as ui;
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'wood_3d_geometry.dart';
 
 class _FaceDef {
   final List<int> indices;
   final Color color;
-  const _FaceDef(this.indices, this.color);
+  /// ທິດທາງ grain ຂອງໜ້ານີ້ — 'horizontal' / 'vertical'
+  final String grainDir;
+  const _FaceDef(this.indices, this.color, this.grainDir);
 }
 
 class _DrawFace {
   final List<Offset> points;
+  final List<V3> worldPoints;
   final double avgZ;
   final Color color;
-  const _DrawFace(this.points, this.avgZ, this.color);
+  final double brightness;
+  final V3 normal;
+  final String grainDir;
+  const _DrawFace(
+    this.points,
+    this.worldPoints,
+    this.avgZ,
+    this.color,
+    this.brightness,
+    this.normal,
+    this.grainDir,
+  );
 }
 
 class Wood3DPainter extends CustomPainter {
@@ -21,19 +44,24 @@ class Wood3DPainter extends CustomPainter {
 
   Wood3DPainter(this.geometry);
 
+  // 🎨 ສີໄມ້ອົບອຸ່ນ (warm wood palette)
+  //   ປັບຕົວເລກໄດ້ຕາມຊະນິດໄມ້ທີ່ຢາກໄດ້
+  static const Color _woodLight = Color(0xFFE8C99B); // ໄມ້ອ່ອນ
+  static const Color _woodMid = Color(0xFFCE9C5E);   // ໄມ້ກາງ
+  static const Color _woodDark = Color(0xFF8B5A2B);  // ໄມ້ແກ່
+
+  // 6 ໜ້າ — ສີຕ່າງກັນໜ້ອຍໜຶ່ງເພື່ອໃຫ້ເຫັນມິຕິ
   static const _faces = [
-    _FaceDef([0, 1, 2, 3], Color(0xFFE3C9A0)), // หน้า
-    _FaceDef([5, 4, 7, 6], Color(0xFFD3B58C)), // หลัง
-    _FaceDef([4, 0, 3, 7], Color(0xFFDCC7A4)), // ซ้าย
-    _FaceDef([1, 5, 6, 2], Color(0xFFE3C9A0)), // ขวา
-    _FaceDef([4, 5, 1, 0], Color(0xFFC7AE86)), // ล่าง
-    _FaceDef([3, 2, 6, 7], Color(0xFFF0E0C0)), // บน
+    _FaceDef([0, 1, 2, 3], _woodMid, 'horizontal'),   // ໜ້າ
+    _FaceDef([5, 4, 7, 6], _woodDark, 'horizontal'),  // ຫຼັງ
+    _FaceDef([4, 0, 3, 7], _woodMid, 'vertical'),     // ຊ້າຍ
+    _FaceDef([1, 5, 6, 2], _woodMid, 'vertical'),     // ຂວາ
+    _FaceDef([4, 5, 1, 0], _woodDark, 'vertical'),    // ລຸ່ມ
+    _FaceDef([3, 2, 6, 7], _woodLight, 'horizontal'), // ເທິງ
   ];
 
   static const _lightDir = V3(0.4, 0.7, -0.6);
 
-  /// คำนวณ normal จริงจากพิกัดที่หมุนแล้ว แทนการใช้ normal ตายตัวตามแกน
-  /// จำเป็นสำหรับชิ้นวงกบที่มีหน้าตัดเฉียง 45° ซึ่งไม่ได้ตั้งฉากกับแกนอีกต่อไป
   V3 _faceNormal(List<V3> quad) {
     final a = quad[1].sub(quad[0]);
     final b = quad[2].sub(quad[0]);
@@ -43,8 +71,158 @@ class Wood3DPainter extends CustomPainter {
     return V3(n.x / len, n.y / len, n.z / len);
   }
 
+  // ══════════════════════════════════════════════
+  // 🌲 ລາຍໄມ້ (procedural wood grain)
+  //   ສ້າງເສັ້ນໄມ້ລະອຽດດ້ວຍ sin wave
+  // ══════════════════════════════════════════════
+  void _paintWoodGrain(
+    Canvas canvas,
+    Path path,
+    Rect bounds,
+    Color baseColor,
+    double brightness,
+    String grainDir,
+  ) {
+    canvas.save();
+    canvas.clipPath(path);
+
+    final isHorizontal = grainDir == 'horizontal';
+    final length = isHorizontal ? bounds.width : bounds.height;
+
+    // ── ຈຳນວນເສັ້ນໄມ້ (ຍິ່ງຫຼາຍຍິ່ງລະອຽດ) ──
+    final lineCount = (length / 3).clamp(8, 60).toInt();
+
+    // ── ສີເສັ້ນ grain (ເຂັ້ມກວ່າ base) ──
+    final darkGrain = Color.lerp(
+      baseColor,
+      const Color(0xFF3A1F0A),
+      0.35 * brightness,
+    )!;
+    final lightGrain = Color.lerp(
+      baseColor,
+      const Color(0xFFF5E0B5),
+      0.35,
+    )!;
+
+    for (int i = 0; i < lineCount; i++) {
+      // ── ຕຳແໜ່ງຂອງເສັ້ນ (random-ish ດ້ວຍ sin) ──
+      final t = i / lineCount;
+      final phase = i * 1.37;
+      final wiggle = math.sin(phase) * 0.4 + math.cos(phase * 0.7) * 0.3;
+
+      // ── ຄວາມໜາຂອງເສັ້ນ (ບາງ 0.3-1.2) ──
+      final thickness = 0.3 + (math.sin(phase * 1.7).abs() * 0.9);
+
+      // ── ສີ (ສະຫຼັບໄປມາລະຫວ່າງ dark/light) ──
+      final isDark = (i % 3) != 0;
+      final lineColor = isDark ? darkGrain : lightGrain;
+
+      final paint = Paint()
+        ..color = lineColor.withOpacity(isDark ? 0.22 : 0.12)
+        ..strokeWidth = thickness
+        ..style = PaintingStyle.stroke;
+
+      if (isHorizontal) {
+        // ເສັ້ນຕາມແນວນອນ
+        final y = bounds.top + bounds.height * t + wiggle * 2;
+        final path2 = Path()
+          ..moveTo(bounds.left, y)
+          ..quadraticBezierTo(
+            bounds.center.dx,
+            y + wiggle * 3,
+            bounds.right,
+            y + wiggle * 1.5,
+          );
+        canvas.drawPath(path2, paint);
+      } else {
+        // ເສັ້ນຕາມແນວຕັ້ງ
+        final x = bounds.left + bounds.width * t + wiggle * 2;
+        final path2 = Path()
+          ..moveTo(x, bounds.top)
+          ..quadraticBezierTo(
+            x + wiggle * 3,
+            bounds.center.dy,
+            x + wiggle * 1.5,
+            bounds.bottom,
+          );
+        canvas.drawPath(path2, paint);
+      }
+    }
+
+    canvas.restore();
+  }
+
+  // ══════════════════════════════════════════════
+  // 🌑 Ambient occlusion — ຮອຍມືດຢູ່ຂອບໃນ
+  // ══════════════════════════════════════════════
+  void _paintAmbientOcclusion(
+    Canvas canvas,
+    Path path,
+    Rect bounds,
+    double strength,
+  ) {
+    if (strength <= 0.01) return;
+
+    canvas.save();
+    canvas.clipPath(path);
+
+    // ມືດຢູ່ຂອບ — ໃຊ້ radial gradient ຈາກໃຈກາງອອກ
+    final occl = ui.Gradient.radial(
+      bounds.center,
+      bounds.longestSide * 0.55,
+      [
+        Colors.transparent,
+        Colors.transparent,
+        Colors.black.withOpacity(0.28 * strength),
+      ],
+      const [0.0, 0.65, 1.0],
+    );
+    canvas.drawRect(bounds, Paint()..shader = occl);
+
+    canvas.restore();
+  }
+
+  // ══════════════════════════════════════════════
+  // ✨ Specular highlight — ຈຸດວາວເຫຼື້ອມ
+  // ══════════════════════════════════════════════
+  void _paintSpecular(
+    Canvas canvas,
+    Path path,
+    Rect bounds,
+    double strength,
+  ) {
+    if (strength <= 0.01) return;
+
+    canvas.save();
+    canvas.clipPath(path);
+
+    // ວາວຢູ່ມຸມເທິງຊ້າຍ
+    final center = Offset(
+      bounds.left + bounds.width * 0.28,
+      bounds.top + bounds.height * 0.22,
+    );
+    final rad = bounds.longestSide * 0.5;
+
+    final hi = ui.Gradient.radial(
+      center,
+      rad,
+      [
+        Colors.white.withOpacity(0.28 * strength),
+        Colors.white.withOpacity(0.08 * strength),
+        Colors.transparent,
+      ],
+      const [0.0, 0.4, 1.0],
+    );
+    canvas.drawRect(bounds, Paint()..shader = hi);
+
+    canvas.restore();
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
+    // ══════════════════════════════════════════════
+    // ① ສ້າງທຸກໜ້າ + ຄຳນວນແສງ
+    // ══════════════════════════════════════════════
     final allDrawFaces = <_DrawFace>[];
 
     for (final baseBox in geometry.allBoxesVertices) {
@@ -53,43 +231,155 @@ class Wood3DPainter extends CustomPainter {
       for (final f in _faces) {
         final quad = f.indices.map((i) => rotated[i]).toList();
         final n = _faceNormal(quad);
-        final avgZ = quad.map((v) => v.z).reduce((a, b) => a + b) / quad.length;
-        final brightness = 0.55 + 0.45 * n.dot(_lightDir).clamp(0.0, 1.0);
+        final avgZ =
+            quad.map((v) => v.z).reduce((a, b) => a + b) / quad.length;
 
-        final shaded = Color.lerp(Colors.black, f.color, brightness)!;
+        // ── ແສງ (Lambertian) + ແສງອ້ອມ ──
+        final lambert = n.dot(_lightDir).clamp(0.0, 1.0);
+        final brightness = 0.42 + 0.58 * lambert;
+
+        // ── ສີຫຼັງປັບແສງ ──
+        Color shaded = Color.lerp(
+          Color.lerp(Colors.black, f.color, brightness)!,
+          Colors.white,
+          lambert * 0.10,
+        )!;
 
         final points = quad.map((v) => geometry.project(v, size)).toList();
-        allDrawFaces.add(_DrawFace(points, avgZ, shaded));
+        allDrawFaces.add(
+          _DrawFace(
+            points,
+            quad,
+            avgZ,
+            shaded,
+            brightness,
+            n,
+            f.grainDir,
+          ),
+        );
       }
     }
 
-    // เรียงลำดับจากไกลไปใกล้ (Z-sorting)
+    // ══════════════════════════════════════════════
+    // ② Z-sorting — ແຕ້ມຈາກໄກ → ໃກ້
+    // ══════════════════════════════════════════════
     allDrawFaces.sort((a, b) => a.avgZ.compareTo(b.avgZ));
 
+    // ══════════════════════════════════════════════
+    // ③ ແຕ້ມແຕ່ລະໜ້າ
+    // ══════════════════════════════════════════════
     for (final face in allDrawFaces) {
       final path = Path()..addPolygon(face.points, true);
       final bounds = path.getBounds();
 
-      final gradient = ui.Gradient.linear(
+      // ── (a) ພື້ນຖານ: gradient ເລັກນ້ອຍ ──
+      final baseGrad = ui.Gradient.linear(
         bounds.topLeft,
         bounds.bottomRight,
         [
-          Color.lerp(face.color, Colors.white, 0.16)!,
+          Color.lerp(face.color, Colors.white, 0.10)!,
           face.color,
-          Color.lerp(face.color, Colors.black, 0.14)!,
+          Color.lerp(face.color, Colors.black, 0.12)!,
         ],
-        const [0.0, 0.55, 1.0],
+        const [0.0, 0.5, 1.0],
       );
-      canvas.drawPath(path, Paint()..shader = gradient);
+      canvas.drawPath(path, Paint()..shader = baseGrad);
 
+      // ── (b) ລາຍໄມ້ ──
+      _paintWoodGrain(
+        canvas,
+        path,
+        bounds,
+        face.color,
+        face.brightness,
+        face.grainDir,
+      );
+
+      // ── (c) Ambient occlusion (ຮອຍຕໍ່ເຂັ້ມ) ──
+      _paintAmbientOcclusion(
+        canvas,
+        path,
+        bounds,
+        1.0 - face.brightness * 0.6,
+      );
+
+      // ── (d) Specular highlight (ວາວ) ──
+      final spec = math.pow(face.normal.dot(_lightDir).clamp(0.0, 1.0), 3)
+          .toDouble();
+      _paintSpecular(canvas, path, bounds, spec);
+
+      // ── (e) ຂອບ: ສອງຊັ້ນ (dark ນອກ + light ໃນ) ──
       canvas.drawPath(
         path,
         Paint()
-          ..color = Color.lerp(face.color, const Color(0xFF3E2723), 0.6)!.withOpacity(0.45)
+          ..color = Color.lerp(
+            face.color,
+            const Color(0xFF3E2723),
+            0.65,
+          )!
+              .withOpacity(0.55)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.0,
+          ..strokeWidth = 1.2,
+      );
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = Colors.white.withOpacity(0.10 * face.brightness)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.5,
       );
     }
+
+    // ══════════════════════════════════════════════
+    // ④ ເງົາລຸ່ມໂມເດວ (ground shadow)
+    // ══════════════════════════════════════════════
+    _paintGroundShadow(canvas, size);
+  }
+
+  // ══════════════════════════════════════════════
+  // 🌑 ເງົາລຸ່ມ
+  // ══════════════════════════════════════════════
+  void _paintGroundShadow(Canvas canvas, Size size) {
+    // ຫາຈຸດຕ່ຳສຸດຂອງໂມເດວ
+    double maxY = -double.infinity;
+    double minX = double.infinity, maxX = -double.infinity;
+    double sumZ = 0;
+    int count = 0;
+
+    for (final box in geometry.allBoxesVertices) {
+      for (final v in box) {
+        final p = geometry.project(geometry.transform(v), size);
+        if (p.dy > maxY) maxY = p.dy;
+        if (p.dx < minX) minX = p.dx;
+        if (p.dx > maxX) maxX = p.dx;
+        sumZ += v.z;
+        count++;
+      }
+    }
+    if (count == 0) return;
+
+    final shadowCenter = Offset((minX + maxX) / 2, maxY + 2);
+    final shadowWidth = (maxX - minX) * 0.85;
+    final shadowHeight = shadowWidth * 0.18;
+
+    final rect = Rect.fromCenter(
+      center: shadowCenter,
+      width: shadowWidth,
+      height: shadowHeight,
+    );
+
+    final shadow = ui.Gradient.radial(
+      shadowCenter,
+      shadowWidth * 0.5,
+      [
+        Colors.black.withOpacity(0.22),
+        Colors.black.withOpacity(0.08),
+        Colors.transparent,
+      ],
+      const [0.0, 0.5, 1.0],
+    );
+
+    canvas.drawOval(rect, Paint()..shader = shadow);
   }
 
   @override

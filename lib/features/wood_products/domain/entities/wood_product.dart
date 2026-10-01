@@ -1,14 +1,18 @@
+// lib/features/wood_products/domain/entities/wood_product.dart
+
 class WoodProduct {
   final String id;
   final String name;
-  final List<String> imageUrls; // ✅ รองรับหลายรูป (สูงสุด 6)
+  final List<String> imageUrls;
   final double width;
   final double length;
   final double thickness;
-  final String sizeUnit; // mm / cm / m
+  final String sizeUnit;
   final int quantity;
-  final String unit; // แผ่น / ท่อน / ต้น ฯลฯ
+  final String unit;
   final double price;
+  final List<String> zones;
+  final String note; // 🆕
 
   WoodProduct({
     required this.id,
@@ -21,5 +25,7 @@ class WoodProduct {
     required this.quantity,
     required this.unit,
     required this.price,
+    this.zones = const [],
+    this.note = '', // 🆕
   });
 }
