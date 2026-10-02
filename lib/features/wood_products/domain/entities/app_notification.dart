@@ -27,16 +27,12 @@ class AppNotification {
   final bool actorIsAdmin;
   final NotificationAudience audience;
   final DateTime date;
-
-  // ⚠️ legacy — ບໍ່ໃຊ້ແລ້ວ (ຄົງໄວ້ເພື່ອ backward compat)
   final bool isRead;
-
   final String? targetId;
   final Map<String, dynamic>? meta;
-
-  // 🆕 per-user state
   final List<String> readBy;
   final List<String> deletedBy;
+  final DateTime expireAt; // 🆕 TTL — ລຶບອັດຕະໂນມັດຫຼັງ 7 ວັນ
 
   const AppNotification({
     required this.id,
@@ -52,9 +48,9 @@ class AppNotification {
     this.meta,
     this.readBy = const [],
     this.deletedBy = const [],
+    required this.expireAt, // 🆕
   });
 
-  // ✅ helper — ໃຊ້ໃນ UI ແທນ isRead
   bool isReadBy(String? uid) {
     if (uid == null || uid.isEmpty) return isRead;
     return readBy.contains(uid);
@@ -84,6 +80,7 @@ class AppNotification {
         meta: meta,
         readBy: readBy ?? this.readBy,
         deletedBy: deletedBy ?? this.deletedBy,
+        expireAt: expireAt,
       );
 
   IconData get icon {

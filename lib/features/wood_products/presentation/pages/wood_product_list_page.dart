@@ -71,7 +71,7 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     super.build(context);
 
     final controller = Get.find<WoodProductController>();
-    final bool isAdmin = Get.find<AuthController>().isAdmin;
+      final bool isAdmin = Get.find<AuthController>().isAdmin;
 
     return Scaffold(
       backgroundColor: Colors.brown[50],
@@ -482,196 +482,234 @@ class _WoodProductListPageState extends State<WoodProductListPage>
   // 🎴 ກາດສິນຄ້າ (Level 3)
   // ══════════════════════════════════════════════
   Widget _productCard(
-    WoodProductModel item,
-    bool isAdmin,
-    WoodProductController controller,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── ຮູບ 9:16 ──
-          _SwipeableImage(
-            imageUrls: item.imageUrls,
-            width: 72,
+  WoodProductModel item,
+  bool isAdmin,
+  WoodProductController controller,
+) {
+  final hasNote = item.note.trim().isNotEmpty;
+
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 2),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── ຮູບ 9:16 ──
+        _SwipeableImage(
+          imageUrls: item.imageUrls,
+          width: 72,
+          height: 148,
+          onTap: item.imageUrls.isEmpty
+              ? null
+              : () => Get.to(
+                  () => WoodGalleryPage(
+                    imageUrls: item.imageUrls,
+                    title: item.name,
+                  ),
+                ),
+        ),
+        const SizedBox(width: 10),
+
+        // ── ຂໍ້ມູນ ──
+        Expanded(
+          child: SizedBox(
             height: 148,
-            onTap: item.imageUrls.isEmpty
-                ? null
-                : () => Get.to(
-                    () => WoodGalleryPage(
-                      imageUrls: item.imageUrls,
-                      title: item.name,
-                    ),
-                  ),
-          ),
-          const SizedBox(width: 10),
-
-          // ── ຂໍ້ມູນ ──
-          Expanded(
-            child: SizedBox(
-              height: 148,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // ຂະໜາດ
-                      Text(
-                        'ຂະໜາດ',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        '${formatNum(item.width)} × ${formatNum(item.length)} × ${formatNum(item.thickness)} ${item.sizeUnit}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.green,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-
-                      const SizedBox(height: 3),
-
-                      // ແປງໜ່ວຍ
-                      _conversionColumn(item),
-
-                      // ໂຊນ
-                      const SizedBox(height: 4),
-                      _zoneLine(item),
-
-                      // 🆕 ໝາຍເຫດ — ສະແດງສະເພາະຕອນມີ
-                      if (item.note.trim().isNotEmpty) ...[
-                        const SizedBox(height: 3),
-                        _noteLine(item.note.trim()),
-                      ],
-
-                      const SizedBox(height: 5),
-
-                      // ຈຳນວນ
-                      Text(
-                        'ຈຳນວນ',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        '${item.quantity} ${item.unit}',
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // ── ຫົວ: ຂະໜາດ + ໝາຍເຫດ icon ──
+                    Row(
                       children: [
                         Text(
-                          'ລາຄາ: ',
+                          'ຂະໜາດ',
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: Colors.black87,
-                            letterSpacing: 0.3,
+                            letterSpacing: 0.5,
                           ),
                         ),
-                        AnimatedNumber(
-                          value: item.price,
-                          suffix: ' ກີບ',
-                          duration: 900,
-                          replayOnRouteChange: true,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.green.shade700,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                        if (item.isPriceNew) ...[
+                        if (hasNote) ...[
                           const SizedBox(width: 5),
-                          Transform.translate(
-                            offset: const Offset(0, -8),
-                            child: BlinkingBadge(
-                              text: 'ລ່າສຸດ',
-                              color: Colors.orange.shade700,
+                          // 🆕 icon ໝາຍເຫດ ພ້ອມ tooltip
+                          Tooltip(
+                            message: item.note.trim(),
+                            triggerMode: TooltipTriggerMode.tap,
+                            preferBelow: false,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.shade100,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                    color: Colors.amber.shade400),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.sticky_note_2_outlined,
+                                    size: 9,
+                                    color: Colors.amber.shade900,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    'ໝາຍເຫດ',
+                                    style: TextStyle(
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.amber.shade900,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
                       ],
                     ),
+                    const SizedBox(height: 1),
+                    Text(
+                      '${formatNum(item.width)} × ${formatNum(item.length)} × ${formatNum(item.thickness)} ${item.sizeUnit}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.green,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const SizedBox(height: 3),
+
+                    // ແປງໜ່ວຍ
+                    _conversionColumn(item),
+
+                    // ໂຊນ
+                    const SizedBox(height: 4),
+                    _zoneLine(item),
+
+                    const SizedBox(height: 5),
+
+                    // ຈຳນວນ
+                    Text(
+                      'ຈຳນວນ',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      '${item.quantity} ${item.unit}',
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'ລາຄາ: ',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      AnimatedNumber(
+                        value: item.price,
+                        suffix: ' ກີບ',
+                        duration: 900,
+                        replayOnRouteChange: true,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.green.shade700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      if (item.isPriceNew) ...[
+                        const SizedBox(width: 5),
+                        Transform.translate(
+                          offset: const Offset(0, -8),
+                          child: BlinkingBadge(
+                            text: 'ລ່າສຸດ',
+                            color: Colors.orange.shade700,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
+        ),
 
-          // ── Admin menu ──
-          if (isAdmin)
-            SizedBox(
-              width: 28,
-              height: 28,
-              child: PopupMenuButton<int>(
-                padding: EdgeInsets.zero,
-                icon: Icon(
-                  Icons.more_vert,
-                  size: 18,
-                  color: Colors.grey.shade600,
-                ),
-                onSelected: (value) {
-                  if (value == 1) {
-                    controller.startEdit(item);
-                    Get.to(() => WoodProductFormPage(isPage: true));
-                  } else if (value == 2) {
-                    _confirmDelete(context, controller, item);
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 1,
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit, color: Colors.blue, size: 20),
-                        SizedBox(width: 12),
-                        Text('ແກ້ໄຂ'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 2,
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete, color: Colors.red, size: 20),
-                        SizedBox(width: 12),
-                        Text('ລຶບ', style: TextStyle(color: Colors.red)),
-                      ],
-                    ),
-                  ),
-                ],
+        // ── Admin menu ──
+        if (isAdmin)
+          SizedBox(
+            width: 28,
+            height: 28,
+            child: PopupMenuButton<int>(
+              padding: EdgeInsets.zero,
+              icon: Icon(
+                Icons.more_vert,
+                size: 18,
+                color: Colors.grey.shade600,
               ),
+              onSelected: (value) {
+                if (value == 1) {
+                  controller.startEdit(item);
+                  Get.to(() => WoodProductFormPage(isPage: true));
+                } else if (value == 2) {
+                  _confirmDelete(context, controller, item);
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 1,
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, color: Colors.blue, size: 20),
+                      SizedBox(width: 12),
+                      Text('ແກ້ໄຂ'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 2,
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.red, size: 20),
+                      SizedBox(width: 12),
+                      Text('ລຶບ', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
             ),
-        ],
-      ),
-    );
-  }
+          ),
+      ],
+    ),
+  );
+}
 
   // 🆕 ໝາຍເຫດ — ແຖວສີເຫຼືອງນ້ອຍໆ
   Widget _noteLine(String note) {

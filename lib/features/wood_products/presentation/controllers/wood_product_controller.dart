@@ -56,7 +56,7 @@ class WoodProductController extends GetxController {
   // 🆕 ໂຊນ (multi-select)
   // ══════════════════════════════════════════════
   static const List<String> zoneLetters = ['a', 'b', 'c', 'd'];
-  static const int zoneNumbersPerLetter = 10;
+  static const int zoneNumbersPerLetter = 13;
 
   List<String> get zoneOptions => [
         for (final letter in zoneLetters)

@@ -133,7 +133,6 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     return true;
   }
 
-  // 🆕 ໝາຍເຫດ — ບໍ່ບັງຄັບ
   bool get _doneNote => controller.noteController.text.trim().isNotEmpty;
 
   bool get _hasAnyInput =>
@@ -260,17 +259,24 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      for (final letter
-                          in WoodProductController.zoneLetters) ...[
-                        _zoneRow(letter, controller),
-                        const SizedBox(height: 8),
-                      ],
-                      TextField(
-                        controller: controller.customZonesController,
-                        decoration: _minimalInputDecoration(
-                          'ໂຊນອື່ນໆ (ຄັ່ນດ້ວຍ , ເຊັ່ນ e1, e2)',
+                      // ══════════════════════════════════════════
+                      // ✅ ແກ້: ສະແດງແຕ່ລະໂຊນ + ຂີດໆ ລະຫວ່າງ
+                      // ══════════════════════════════════════════
+                      for (int i = 0;
+                          i < WoodProductController.zoneLetters.length;
+                          i++) ...[
+                        _zoneRow(
+                          WoodProductController.zoneLetters[i],
+                          controller,
                         ),
-                      ),
+                        // ບໍ່ໃສ່ຂີດຫຼັງອັນສຸດທ້າຍ
+                        if (i <
+                            WoodProductController.zoneLetters.length - 1) ...[
+                          const SizedBox(height: 4),
+                          _dashedDivider(),
+                          const SizedBox(height: 4),
+                        ],
+                      ],
                       if (controller.allZones.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 10),
@@ -544,7 +550,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
               ),
               const SizedBox(height: 14),
 
-              // 🆕 ⑧ ໝາຍເຫດ (ບໍ່ບັງຄັບ)
+              // ⑧ ໝາຍເຫດ (ບໍ່ບັງຄັບ)
               _section(
                 number: '8',
                 title: 'ໝາຍເຫດ',
@@ -892,6 +898,31 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
           Padding(padding: const EdgeInsets.all(12), child: child),
         ],
       ),
+    );
+  }
+
+  // ══════════════════════════════════════════════
+  // ✂️ ເສັ້ນຂີດໆ ຄັ່ນລະຫວ່າງໂຊນ
+  // ══════════════════════════════════════════════
+  Widget _dashedDivider() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const dashWidth = 5.0;
+        const dashSpace = 4.0;
+        final count =
+            (constraints.maxWidth / (dashWidth + dashSpace)).floor();
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(
+            count,
+            (_) => Container(
+              width: dashWidth,
+              height: 1,
+              color: Colors.brown.shade200,
+            ),
+          ),
+        );
+      },
     );
   }
 

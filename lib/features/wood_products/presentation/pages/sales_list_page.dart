@@ -117,7 +117,7 @@ class _SalesListPageState extends State<SalesListPage>
     super.build(context);
 
     final controller = Get.find<SalesController>();
-    final isAdminUser = Get.find<AuthController>().isAdmin;
+      final isAdminUser = Get.find<AuthController>().isAdmin;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0EA),

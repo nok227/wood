@@ -32,15 +32,11 @@ class NotificationRemoteDataSource {
       meta: n.meta,
       readBy: n.readBy,
       deletedBy: n.deletedBy,
+      expireAt: n.expireAt, // 🆕
     );
     await _db.collection(_collection).doc(n.id).set(m.toMap());
   }
 
-  // ══════════════════════════════════════════════
-  // ✅ ໃໝ່: ຮັບ uid — per-user state ດ້ວຍ arrayUnion
-  // ══════════════════════════════════════════════
-
-  /// ✅ ອ່ານ — ເພີ່ມ uid ເຂົ້າ readBy
   Future<void> markRead(String id, String uid) async {
     if (uid.isEmpty) return;
     await _db.collection(_collection).doc(id).update({
@@ -48,7 +44,6 @@ class NotificationRemoteDataSource {
     });
   }
 
-  /// ✅ ອ່ານທັງໝົດ — batch arrayUnion
   Future<void> markAllRead(List<String> ids, String uid) async {
     if (ids.isEmpty || uid.isEmpty) return;
     final batch = _db.batch();
@@ -60,8 +55,6 @@ class NotificationRemoteDataSource {
     await batch.commit();
   }
 
-  /// ✅ ລຶບ (soft) — ເພີ່ມ uid ເຂົ້າ deletedBy
-  ///    ຄົນອື່ນຍັງເຫັນ notification ນີ້ຢູ່
   Future<void> delete(String id, String uid) async {
     if (uid.isEmpty) return;
     await _db.collection(_collection).doc(id).update({
@@ -69,7 +62,6 @@ class NotificationRemoteDataSource {
     });
   }
 
-  /// ✅ ລ້າງທັງໝົດ (soft) — batch arrayUnion
   Future<void> clearAll(List<String> ids, String uid) async {
     if (ids.isEmpty || uid.isEmpty) return;
     final batch = _db.batch();

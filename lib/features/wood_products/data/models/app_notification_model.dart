@@ -14,6 +14,7 @@ class AppNotificationModel {
   final Map<String, dynamic>? meta;
   final List<String> readBy;
   final List<String> deletedBy;
+  final DateTime expireAt; // 🆕
 
   AppNotificationModel({
     required this.id,
@@ -29,6 +30,7 @@ class AppNotificationModel {
     this.meta,
     this.readBy = const [],
     this.deletedBy = const [],
+    required this.expireAt, // 🆕
   });
 
   static AppNotificationType _typeFrom(String s) =>
@@ -63,6 +65,13 @@ class AppNotificationModel {
       return DateTime.now();
     }
 
+    final date = parseDate(m['date']);
+
+    // ✅ ຖ້າບໍ່ມີ expireAt → ໃຊ້ date + 7 ວັນ
+    final expireAt = m['expireAt'] != null
+        ? parseDate(m['expireAt'])
+        : date.add(const Duration(days: 7));
+
     return AppNotificationModel(
       id: docId,
       type: _typeFrom(m['type']?.toString() ?? ''),
@@ -71,12 +80,13 @@ class AppNotificationModel {
       actorEmail: m['actorEmail']?.toString() ?? '',
       actorIsAdmin: m['actorIsAdmin'] == true,
       audience: _audFrom(m['audience']?.toString() ?? 'all'),
-      date: parseDate(m['date']),
+      date: date,
       isRead: m['isRead'] == true,
       targetId: m['targetId']?.toString(),
       meta: m['meta'] is Map ? Map<String, dynamic>.from(m['meta']) : null,
       readBy: _strList(m['readBy']),
       deletedBy: _strList(m['deletedBy']),
+      expireAt: expireAt, // 🆕
     );
   }
 
@@ -93,6 +103,7 @@ class AppNotificationModel {
         'meta': meta,
         'readBy': readBy,
         'deletedBy': deletedBy,
+        'expireAt': expireAt.toIso8601String(), // 🆕
       };
 
   AppNotification toEntity() => AppNotification(
@@ -109,5 +120,6 @@ class AppNotificationModel {
         meta: meta,
         readBy: readBy,
         deletedBy: deletedBy,
+        expireAt: expireAt, // 🆕
       );
 }

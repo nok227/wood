@@ -13,7 +13,9 @@ class NotificationController extends GetxController {
   final allNotifications = <AppNotification>[].obs;
   final isLoading = false.obs;
 
-  // ✅ uid ຂອງຜູ້ໃຊ້ປັດຈຸບັນ (reactive)
+  // ✅ TTL — ຈຳນວນວັນກ່ອນລຶບ (ປັບໄດ້)
+  static const int ttlDays = 7;
+
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
   @override
@@ -42,16 +44,16 @@ class NotificationController extends GetxController {
     isLoading.value = true;
     try {
       final list = await repository.getNotifications();
-      allNotifications.assignAll(list);
+      // ✅ ກັ່ນຕອນ expire ອອກ (ກັນ TTL ຊ້າ)
+      final now = DateTime.now();
+      final fresh = list.where((n) => n.expireAt.isAfter(now)).toList();
+      allNotifications.assignAll(fresh);
     } catch (_) {
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ══════════════════════════════════════════════
-  // ✅ _visible — ກັ່ນຕາມ audience + ຕັດ deletedBy
-  // ══════════════════════════════════════════════
   List<AppNotification> get _visible {
     bool isAdmin = false;
     if (Get.isRegistered<AuthController>()) {
@@ -65,10 +67,8 @@ class NotificationController extends GetxController {
     final uid = _uid;
 
     return allNotifications.where((n) {
-      // ① ຕັດຄົນທີ່ user ນີ້ລຶບໄປແລ້ວ
       if (n.isDeletedBy(uid)) return false;
 
-      // ② ກັ່ນຕາມ audience
       if (isAdmin) {
         return n.audience == NotificationAudience.admin ||
             n.audience == NotificationAudience.all;
@@ -80,13 +80,11 @@ class NotificationController extends GetxController {
 
   List<AppNotification> get visibleNotifications => _visible;
 
-  // ✅ ນັບສະເພາະຄົນທີ່ user ນີ້ຍັງບໍ່ອ່ານ
   int get unreadCount {
     final uid = _uid;
     return _visible.where((n) => !n.isReadBy(uid)).length;
   }
 
-  // ✅ ຊ່ວຍ UI ກວດສອບວ່າ notification ນີ້ອ່ານແລ້ວບໍ່ (ຕາມ uid)
   bool isReadByMe(AppNotification n) => n.isReadBy(_uid);
 
   Future<void> push({
@@ -106,17 +104,21 @@ class NotificationController extends GetxController {
         } catch (_) {}
       }
 
+      final now = DateTime.now();
+      final expireAt = now.add(Duration(days: ttlDays)); // 🆕 +7 ວັນ
+
       final n = AppNotification(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        id: now.microsecondsSinceEpoch.toString(),
         type: type,
         title: title,
         message: message,
         actorEmail: user?.email ?? 'unknown',
         actorIsAdmin: isAdmin,
         audience: audience,
-        date: DateTime.now(),
+        date: now,
         targetId: targetId,
         meta: meta,
+        expireAt: expireAt, // 🆕
       );
 
       allNotifications.insert(0, n);
@@ -124,9 +126,6 @@ class NotificationController extends GetxController {
     } catch (_) {}
   }
 
-  // ══════════════════════════════════════════════
-  // ✅ ອ່ານ — ເພີ່ມ uid ເຂົ້າ readBy (local + remote)
-  // ══════════════════════════════════════════════
   Future<void> markRead(String id) async {
     final uid = _uid;
     if (uid == null) return;
@@ -165,20 +164,15 @@ class NotificationController extends GetxController {
     } catch (_) {}
   }
 
-  // ══════════════════════════════════════════════
-  // ✅ ລຶບ (soft) — ເພີ່ມ uid ເຂົ້າ deletedBy
-  // ══════════════════════════════════════════════
   Future<void> deleteOne(String id) async {
     final uid = _uid;
     if (uid == null) return;
 
-    // local: ຕັດອອກຈາກ list ທັນທີ (UI ໄວ)
     allNotifications.removeWhere((n) => n.id == id);
 
     try {
       await repository.delete(id, uid);
     } catch (_) {
-      // ຖ້າ fail → ໂຫຼດຄືນ
       fetchNotifications();
     }
   }
