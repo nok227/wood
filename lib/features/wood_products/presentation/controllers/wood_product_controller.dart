@@ -22,6 +22,10 @@ class WoodProductController extends GetxController {
   var products = <WoodProductModel>[].obs;
   var errorMessage = RxnString();
 
+  // 🔄 ນັບຈຳນວນຄັ້ງທີ່ຂໍ້ມູນຖືກປ່ຽນ — ໃຫ້ 3D page ຮູ້ວ່າ cache ເກົ່າ
+  final productsRevision = 0.obs;
+  void _bumpRevision() => productsRevision.value++;
+
   double? _originalPrice;
   DateTime? _originalPriceUpdatedAt;
 
@@ -240,6 +244,7 @@ class WoodProductController extends GetxController {
       errorMessage.value = null;
       final result = await dataSource.getWoodProducts();
       products.assignAll(result);
+      _bumpRevision(); // ✅ ແຈ້ງ 3D ວ່າຂໍ້ມູນປ່ຽນ
     } catch (e) {
       errorMessage.value = e.toString();
       debugPrint('fetchProducts error: $e');
@@ -424,6 +429,7 @@ class WoodProductController extends GetxController {
       } else {
         products.insert(0, product);
       }
+      _bumpRevision(); // ✅ ແຈ້ງ 3D ວ່າຂໍ້ມູນປ່ຽນ
 
       saveProgress.value = 100;
 
@@ -492,6 +498,7 @@ class WoodProductController extends GetxController {
 
       await dataSource.deleteWoodProduct(id);
       products.removeWhere((p) => p.id == id);
+      _bumpRevision(); // ✅ ແຈ້ງ 3D ວ່າຂໍ້ມູນປ່ຽນ
 
       if (Get.isRegistered<NotificationController>()) {
         try {

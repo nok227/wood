@@ -139,11 +139,9 @@ class _WoodProductListPageState extends State<WoodProductListPage>
           child: Column(
             children: [
               // ── Filter ──
+              // ── Filter (Chip style) ──
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   boxShadow: [
@@ -154,75 +152,86 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                     ),
                   ],
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.brown.shade700,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.filter_list,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'ກັ່ນກອງ:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: nameOptions.contains(selectedNameFilter)
-                            ? selectedNameFilter
-                            : 'ທັງໝົດ',
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
+                    // ── ຫົວຂໍ້ ──
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Colors.brown.shade700,
+                            borderRadius: BorderRadius.circular(6),
                           ),
-                          fillColor: Colors.brown.shade50,
-                          filled: true,
-                          isDense: true,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: Colors.brown.shade200,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: Colors.brown.shade200,
-                            ),
+                          child: const Icon(
+                            Icons.filter_list,
+                            color: Colors.white,
+                            size: 13,
                           ),
                         ),
-                        items: nameOptions
-                            .map(
-                              (name) => DropdownMenuItem(
-                                value: name,
-                                child: Text(
-                                  name == 'ທັງໝົດ' ? 'ທັງໝົດ' : name,
-                                  overflow: TextOverflow.ellipsis,
+                        const SizedBox(width: 6),
+                        const Text(
+                          'ກັ່ນກອງ:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                            color: Colors.brown,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // ── Chip list ເລື່ອນແນວນອນ ──
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: nameOptions.map((name) {
+                          final selected = selectedNameFilter == name;
+                          final label =
+                              name == 'ທັງໝົດ' ? 'ທັງໝົດ' : name;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: ChoiceChip(
+                              showCheckmark: false,
+                              avatar: selected
+                                  ? Icon(
+                                      Icons.check_circle,
+                                      size: 14,
+                                      color: Colors.brown.shade700,
+                                    )
+                                  : null,
+                              label: Text(
+                                label,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: selected
+                                      ? FontWeight.bold
+                                      : FontWeight.w600,
+                                  color: selected
+                                      ? Colors.brown.shade900
+                                      : Colors.brown.shade700,
                                 ),
                               ),
-                            )
-                            .toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() {
-                              selectedNameFilter = val;
-                              _displayLimit = 10;
-                            });
-                          }
-                        },
+                              selected: selected,
+                              selectedColor: Colors.brown.shade100,
+                              backgroundColor: Colors.brown.shade50,
+                              side: BorderSide(
+                                color: selected
+                                    ? Colors.brown.shade400
+                                    : Colors.brown.shade200,
+                              ),
+                              onSelected: (_) {
+                                setState(() {
+                                  selectedNameFilter = name;
+                                  _displayLimit = 10;
+                                });
+                              },
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ),
                   ],
@@ -423,6 +432,7 @@ class _WoodProductListPageState extends State<WoodProductListPage>
       ),
     );
   }
+  
 
   // ── Subheader ຊະນິດ ──
   Widget _typeSubHeader(String typeKey, int count) {

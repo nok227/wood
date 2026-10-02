@@ -262,9 +262,11 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                       // ══════════════════════════════════════════
                       // ✅ ແກ້: ສະແດງແຕ່ລະໂຊນ + ຂີດໆ ລະຫວ່າງ
                       // ══════════════════════════════════════════
-                      for (int i = 0;
-                          i < WoodProductController.zoneLetters.length;
-                          i++) ...[
+                      for (
+                        int i = 0;
+                        i < WoodProductController.zoneLetters.length;
+                        i++
+                      ) ...[
                         _zoneRow(
                           WoodProductController.zoneLetters[i],
                           controller,
@@ -318,11 +320,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                                   children: controller.allZones
                                       .map(
                                         (z) => GestureDetector(
-                                          onTap: () =>
-                                              controller.removeZone(z),
+                                          onTap: () => controller.removeZone(z),
                                           child: Container(
-                                            padding:
-                                                const EdgeInsets.symmetric(
+                                            padding: const EdgeInsets.symmetric(
                                               horizontal: 8,
                                               vertical: 3,
                                             ),
@@ -331,8 +331,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                                               borderRadius:
                                                   BorderRadius.circular(6),
                                               border: Border.all(
-                                                color:
-                                                    Colors.green.shade400,
+                                                color: Colors.green.shade400,
                                               ),
                                             ),
                                             child: Row(
@@ -342,18 +341,16 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                                                   z,
                                                   style: TextStyle(
                                                     fontSize: 11,
-                                                    fontWeight:
-                                                        FontWeight.bold,
-                                                    color: Colors
-                                                        .green.shade800,
+                                                    fontWeight: FontWeight.bold,
+                                                    color:
+                                                        Colors.green.shade800,
                                                   ),
                                                 ),
                                                 const SizedBox(width: 4),
                                                 Icon(
                                                   Icons.close,
                                                   size: 11,
-                                                  color:
-                                                      Colors.green.shade700,
+                                                  color: Colors.green.shade700,
                                                 ),
                                               ],
                                             ),
@@ -387,8 +384,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                         Expanded(
                           child: TextField(
                             controller: controller.widthController,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(
+                            keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
                             decoration: _minimalInputDecoration('ກວ້າງ'),
@@ -398,8 +394,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                         Expanded(
                           child: TextField(
                             controller: controller.lengthController,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(
+                            keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
                             decoration: _minimalInputDecoration('ຍາວ'),
@@ -409,8 +404,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                         Expanded(
                           child: TextField(
                             controller: controller.thicknessController,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(
+                            keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
                             decoration: _minimalInputDecoration('ໜາ'),
@@ -469,9 +463,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                               enabled: false,
                               decoration: _minimalInputDecoration('ຈຳນວນ')
                                   .copyWith(
-                                filled: true,
-                                fillColor: Colors.grey.shade100,
-                              ),
+                                    filled: true,
+                                    fillColor: Colors.grey.shade100,
+                                  ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -517,8 +511,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                           padding: const EdgeInsets.only(top: 8),
                           child: TextField(
                             controller: controller.customUnitController,
-                            decoration:
-                                _minimalInputDecoration('ລະບຸໜ່ວຍນັບ'),
+                            decoration: _minimalInputDecoration('ລະບຸໜ່ວຍນັບ'),
                           ),
                         ),
                     ],
@@ -582,15 +575,18 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     newImages: controller.selectedImages.toList(),
                     woodType: controller.woodTypeController.text.trim(),
                     name: controller.nameController.text.trim(),
-                    width: double.tryParse(
+                    width:
+                        double.tryParse(
                           controller.widthController.text.trim(),
                         ) ??
                         0,
-                    length: double.tryParse(
+                    length:
+                        double.tryParse(
                           controller.lengthController.text.trim(),
                         ) ??
                         0,
-                    thickness: double.tryParse(
+                    thickness:
+                        double.tryParse(
                           controller.thicknessController.text.trim(),
                         ) ??
                         0,
@@ -598,7 +594,8 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     unit: controller.selectedUnit.value == 'ອື່ນໆ'
                         ? controller.customUnitController.text.trim()
                         : controller.selectedUnit.value,
-                    price: double.tryParse(
+                    price:
+                        double.tryParse(
                           controller.priceController.text
                               .replaceAll(',', '')
                               .trim(),
@@ -707,7 +704,10 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                               controller.editingProductId.value != null;
                           final isSuccess = await controller.saveProduct();
                           if (isSuccess) {
-                            Get.back();
+                            // ✅ ປັອບກັບ ສະເພາະຕອນເປີດເປັນ page (isPage = true)
+                            if (widget.isPage) {
+                              Get.back();
+                            }
                             Get.snackbar(
                               'ສຳເລັດ',
                               isEditing
@@ -741,7 +741,10 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                         ),
                         onPressed: () {
                           controller.cancelEdit();
-                          Get.back();
+                          // ✅ ປັອບກັບ ສະເພາະຕອນເປີດເປັນ page
+                          if (widget.isPage) {
+                            Get.back();
+                          }
                         },
                         child: Text(
                           'ຍົກເລີກ',
@@ -909,8 +912,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
       builder: (context, constraints) {
         const dashWidth = 5.0;
         const dashSpace = 4.0;
-        final count =
-            (constraints.maxWidth / (dashWidth + dashSpace)).floor();
+        final count = (constraints.maxWidth / (dashWidth + dashSpace)).floor();
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(
@@ -957,9 +959,11 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
             spacing: 5,
             runSpacing: 5,
             children: [
-              for (int i = 1;
-                  i <= WoodProductController.zoneNumbersPerLetter;
-                  i++)
+              for (
+                int i = 1;
+                i <= WoodProductController.zoneNumbersPerLetter;
+                i++
+              )
                 _zoneChip(
                   label: '$letter$i',
                   selected: selected.contains('$letter$i'),
@@ -1051,8 +1055,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     'ໂຊນ',
                     dup.zones.isEmpty ? '-' : dup.zones.join(', '),
                   ),
-                  if (dup.note.trim().isNotEmpty)
-                    _dupRow('ໝາຍເຫດ', dup.note),
+                  if (dup.note.trim().isNotEmpty) _dupRow('ໝາຍເຫດ', dup.note),
                 ],
               ),
             ),

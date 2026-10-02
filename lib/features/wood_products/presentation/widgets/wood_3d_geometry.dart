@@ -43,9 +43,15 @@ class Rot3 {
   const Rot3._(this.m);
 
   static const Rot3 identity = Rot3._([
-    1.0, 0.0, 0.0,
-    0.0, 1.0, 0.0,
-    0.0, 0.0, 1.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
   ]);
 
   static Rot3 get front => Rot3.fromYawPitch(0, 0);
@@ -69,7 +75,8 @@ class Rot3 {
     final r = List<double>.filled(9, 0.0);
     for (var i = 0; i < 3; i++) {
       for (var j = 0; j < 3; j++) {
-        r[i * 3 + j] = m[i * 3] * o.m[j] +
+        r[i * 3 + j] =
+            m[i * 3] * o.m[j] +
             m[i * 3 + 1] * o.m[3 + j] +
             m[i * 3 + 2] * o.m[6 + j];
       }
@@ -78,10 +85,10 @@ class Rot3 {
   }
 
   V3 apply(V3 v) => V3(
-        m[0] * v.x + m[1] * v.y + m[2] * v.z,
-        m[3] * v.x + m[4] * v.y + m[5] * v.z,
-        m[6] * v.x + m[7] * v.y + m[8] * v.z,
-      );
+    m[0] * v.x + m[1] * v.y + m[2] * v.z,
+    m[3] * v.x + m[4] * v.y + m[5] * v.z,
+    m[6] * v.x + m[7] * v.y + m[8] * v.z,
+  );
 
   Rot3 rotatedByScreenDrag(double dx, double dy) {
     final delta = Rot3.rotX(dy).mul(Rot3.rotY(dx));
@@ -215,14 +222,10 @@ class Wood3DGeometry {
   //     panelCount = 4 → 3 ແທ່ງ
   // ══════════════════════════════════════════════
   int get _mullionCount {
-    switch (frameType) {
-      case FrameType.door:
-        return 0;
-      case FrameType.windowFrame:
-        return (panelCount - 1).clamp(0, 8);
-      default:
-        return 0;
+    if (frameType == FrameType.door || frameType == FrameType.windowFrame) {
+      return (panelCount - 1).clamp(0, 8);
     }
+    return 0;
   }
 
   List<List<V3>> _buildMullions(double border, bool hasSill) {

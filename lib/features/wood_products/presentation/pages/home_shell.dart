@@ -37,7 +37,6 @@ class _HomeShellState extends State<HomeShell> {
   final ValueNotifier<bool> _lockSwipe = ValueNotifier<bool>(false);
 
   // ✅ Title/WaveText ໃຊ້ index ແຍກຕ່າງຫາກ + debounce
-  // ບໍ່ໃຫ້ replay ອະນິເມຊັນຕອນນິ້ວຍັງລາກຢູ່ (ລໍຖ້າ settle ກ່ອນ)
   final ValueNotifier<int> _titleIndexNotifier = ValueNotifier<int>(0);
   Timer? _titleDebounce;
 
@@ -131,8 +130,8 @@ class _HomeShellState extends State<HomeShell> {
     ];
   }
 
-  /// ✅ ຄຸມ TickerMode ຂອງແຕ່ລະ tab — tab ທີ່ບໍ່ໄດ້ສະແດງຢູ່ ຈະຢຸດ
-  /// AnimationController/AnimatedNumber ທັງໝົດຂອງມັນໂດຍອັດຕະໂນມັດ
+  /// ✅ ຄຸມ TickerMode + ExcludeFocus ຂອງແຕ່ລະ tab
+  /// - tab ທີ່ບໍ່ໄດ້ສະແດງ → ຢຸດ animation ແລະ ບໍ່ຮັບ focus
   Widget _gate(int index, Widget child) {
     return _TabTickerGate(
       index: index,
@@ -210,11 +209,9 @@ class _HomeShellState extends State<HomeShell> {
             allowImplicitScrolling: true,
             onPageChanged: (i) {
               _indexNotifier.value = i;
-              _lastTabIndex = i;      // ✅ ບັນທຶກທຸກຄັ້ງທີ່ປ່ຽນ tab
+              _lastTabIndex = i;
               _scheduleBump();
 
-              // ✅ ລໍໃຫ້ນິ້ວນິ່ງກ່ອນ ຄ່ອຍປ່ຽນ title (ບໍ່ໃຫ້ WaveText
-              // replay ອະນິເມຊັນຕອນ PageView ຍັງກຳລັງ scroll ຢູ່)
               _titleDebounce?.cancel();
               _titleDebounce = Timer(const Duration(milliseconds: 120), () {
                 if (mounted) _titleIndexNotifier.value = i;
@@ -287,7 +284,10 @@ class _Lazy3DWrapperState extends State<_Lazy3DWrapper>
 }
 
 // ══════════════════════════════════════════════
-// 🎯 TickerMode Gate — ຢຸດອະນິເມຊັນຂອງ tab ທີ່ບໍ່ໄດ້ສະແດງ
+// 🎯 Tab Gate — ຢຸດ animation + ບໍ່ຮັບ focus ຕອນ tab ບໍ່ active
+// ══════════════════════════════════════════════
+// 🎯 ປ້ອງກັນ: TextField ຂອງ tab ທີ່ຊ່ອນຢູ່ ຖືກ focus
+//    → Scrollable.ensureVisible() → PageView ເດັ້ງໄປ tab ນັ້ນ
 // ══════════════════════════════════════════════
 class _TabTickerGate extends StatelessWidget {
   final int index;
@@ -304,10 +304,17 @@ class _TabTickerGate extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<int>(
       valueListenable: currentIndex,
-      // ✅ child ຖືກສົ່ງຜ່ານ builder — ຂອງເດີມບໍ່ຖືກ rebuild ໃໝ່
-      // ມີແຕ່ TickerMode enabled flag ທີ່ toggle
       builder: (context, current, child) {
-        return TickerMode(enabled: current == index, child: child!);
+        final active = current == index;
+        return TickerMode(
+          enabled: active,
+          // ✅ ບໍ່ໃຫ້ tab ທີ່ບໍ່ active ຮັບ focus ໄດ້
+          //    → ບໍ່ມີ ensureVisible → ບໍ່ມີການ scroll PageView
+          child: ExcludeFocus(
+            excluding: !active,
+            child: child!,
+          ),
+        );
       },
       child: child,
     );

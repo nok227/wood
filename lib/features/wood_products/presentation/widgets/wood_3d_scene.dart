@@ -213,10 +213,10 @@ class _Wood3DSceneState extends State<Wood3DScene> {
   //   ດຶງເລກຈາກ "N ບານ" ກ່ອນ
   //   ຖ້າບໍ່ມີ → ໃຊ້ keyword ນ້ອຍ/ໄຫຍ່ ຫຼື default
   // ══════════════════════════════════════════════
-  int _getPanelCount(FrameType ft, String? unit) {
+    int _getPanelCount(FrameType ft, String? unit) {
     final u = unit?.trim().toLowerCase() ?? '';
 
-    // ① regex "N ບານ"
+    // ① regex "N ບານ" → ດຶງຕົວເລກກ່ອນ
     final m = RegExp(r'(\d+)\s*ບານ').firstMatch(u);
     if (m != null) {
       final n = int.tryParse(m.group(1) ?? '');
@@ -228,7 +228,8 @@ class _Wood3DSceneState extends State<Wood3DScene> {
     if (u.contains('ໄຫຍ່')) return 4;   // ວົງໄຫຍ່ → 4 ບານ
 
     // ③ default
-    if (ft == FrameType.door) return 2;
+    //    ✅ ວົງທຳມະດາ (ບໍ່ມີເລກ) = 1 ບານ → ມີແຕ່ກອບ 4 ດ້ານ
+    if (ft == FrameType.door) return 1;
     if (ft == FrameType.windowFrame) return 1;
     return 1;
   }
