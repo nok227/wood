@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_repository.dart';
 import 'auth_remote_data_source.dart';
@@ -40,4 +41,12 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> signOut() {
     return remoteDataSource.signOut();
   }
+
+  @override
+  Stream<DocumentSnapshot<Map<String, dynamic>>> userDocStream(String uid) =>
+      remoteDataSource.userDocStream(uid);
+
+  @override
+  Future<void> updateAllowedMenus(String uid, List<String> menus) =>
+      remoteDataSource.updateAllowedMenus(uid, menus);
 }

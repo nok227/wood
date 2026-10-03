@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 abstract class AuthRepository {
@@ -13,6 +14,10 @@ abstract class AuthRepository {
   });
 
   Future<UserCredential?> signInWithGoogle();
-  
+
   Future<void> signOut();
+
+  // 🆕
+  Stream<DocumentSnapshot<Map<String, dynamic>>> userDocStream(String uid);
+  Future<void> updateAllowedMenus(String uid, List<String> menus);
 }

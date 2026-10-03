@@ -136,26 +136,27 @@ class _Wood3DSceneState extends State<Wood3DScene> {
 
   // ══════════════════════════════════════════════
   // 🎯 Frame Type Detection
-  //   ✅ ລຳດັບການກວດ: leaves → vent → windowFrame → door
-  //      (ເພື່ອບໍ່ໃຫ້ 'ວົງປ່ອງລົມ' ຖືກຈັບເປັນ windowFrame ຜິດ)
+  //   ✅ ລຳດັບ: bundle → leaves → vent → windowFrame → door
   // ══════════════════════════════════════════════
   FrameType _getFrameType(String? name, String? unit) {
     final n = name?.trim().toLowerCase() ?? '';
     final u = unit?.trim().toLowerCase() ?? '';
 
     // ─── helpers ───
+    // 🆕 ມັດ
+    bool isBundle(String s) => s.contains('ມັດ') || s.contains('มัด');
+
     bool isVent(String s) =>
         s.contains('ປ່ອງລົມ') || s.contains('ຊ່ອງລົມ') || s.contains('ช่องลม');
 
     bool isWindowFrame(String s) =>
-        s.contains('ວົງປ່ອງຢ້ຽມ') || // 🆕 ໃໝ່
-        s.contains('ວົງໜ້າຕ່າງ') || // ເກົ່າ (backward compat)
+        s.contains('ວົງປ່ອງຢ້ຽມ') ||
+        s.contains('ວົງໜ້າຕ່າງ') ||
         s.contains('วงหน้าต่าง') ||
         s.contains('ວົງປ່ອງ') ||
         s.contains('วงช่อง') ||
         s.contains('ວົງປະຕູລົມ');
 
-    // 🆕 ຮວມຊື່ເກົ່າ + ໃໝ່ (ວົງນ້ອຍ / ວົງໄຫຍ່)
     bool isDoorFrame(String s) =>
         s.contains('ວົງນ້ອຍ') ||
         s.contains('ວົງໄຫຍ່') ||
@@ -165,27 +166,29 @@ class _Wood3DSceneState extends State<Wood3DScene> {
     bool isDoorLeaf(String s) =>
         s.contains('ບານປະຕູ') || s.contains('บานประตู');
 
-    // ✅ ຮວມຊື່ເກົ່າ + ໃໝ່ (ບານປ່ອງລົມ)
     bool isWindowLeaf(String s) =>
         s.contains('ບານປ່ອງຢ້ຽມ') ||
         s.contains('ບານໜ້າຕ່າງ') ||
         s.contains('บานหน้าต่าง') ||
         s.contains('ບານຊ່ອງ') ||
-        s.contains('ບານປ່ອງລົມ') ||   // 🆕
+        s.contains('ບານປ່ອງລົມ') ||
         s.contains('ບານປ່ອງ');
 
-    // ─── ① ກວດ leaves ກ່ອນ (ສຳຄັນທີ່ສຸດ — ບໍ່ໃຫ້ 'ບານປ່ອງລົມ' ຖືກຈັບເປັນ vent) ───
+    // ─── ⓪ ກວດມັດກ່ອນທຸກຢ່າງ ───
+    if (isBundle(u)) return FrameType.bundle;
+    if (isBundle(n)) return FrameType.bundle;
+
+    // ─── ① ກວດ leaves ───
     if (isDoorLeaf(u)) return FrameType.none;
     if (isWindowLeaf(u)) return FrameType.none;
 
     // ─── ② ກວດ vent ກ່ອນ windowFrame ───
-    //     ເພາະ 'ວົງປ່ອງລົມ' ມີຄຳ 'ວົງປ່ອງ' ຄືກັນກັບ windowFrame
     if (isVent(u)) return FrameType.window;
 
     // ─── ③ ກວດ windowFrame / door ───
     if (isWindowFrame(u)) return FrameType.windowFrame;
     if (isDoorFrame(u)) return FrameType.door;
-    if (u == 'ວົງ' || u == 'วง') return FrameType.door;   // 🆕 generic
+    if (u == 'ວົງ' || u == 'วง') return FrameType.door;
     if (u == 'ແຜ່ນ' || u == 'ທ່ອນ' || u == 'ແຜ່ນໄມ້' || u == 'ທ່ອນໄມ້') {
       return FrameType.none;
     }
@@ -210,26 +213,24 @@ class _Wood3DSceneState extends State<Wood3DScene> {
 
   // ══════════════════════════════════════════════
   // 🎯 Panel Count
-  //   ດຶງເລກຈາກ "N ບານ" ກ່ອນ
-  //   ຖ້າບໍ່ມີ → ໃຊ້ keyword ນ້ອຍ/ໄຫຍ່ ຫຼື default
   // ══════════════════════════════════════════════
-    int _getPanelCount(FrameType ft, String? unit) {
+  int _getPanelCount(FrameType ft, String? unit) {
     final u = unit?.trim().toLowerCase() ?? '';
 
-    // ① regex "N ບານ" → ດຶງຕົວເລກກ່ອນ
+    // 🆕 bundle ບໍ່ໃຊ້ panelCount
+    if (ft == FrameType.bundle) return 1;
+
+    if (ft == FrameType.door) return 1;
+
     final m = RegExp(r'(\d+)\s*ບານ').firstMatch(u);
     if (m != null) {
       final n = int.tryParse(m.group(1) ?? '');
       if (n != null && n > 0 && n <= 8) return n;
     }
 
-    // ② keyword ນ້ອຍ / ໄຫຍ່
-    if (u.contains('ນ້ອຍ')) return 2;   // ວົງນ້ອຍ → 2 ບານ
-    if (u.contains('ໄຫຍ່')) return 4;   // ວົງໄຫຍ່ → 4 ບານ
+    if (u.contains('ນ້ອຍ')) return 2;
+    if (u.contains('ໄຫຍ່')) return 4;
 
-    // ③ default
-    //    ✅ ວົງທຳມະດາ (ບໍ່ມີເລກ) = 1 ບານ → ມີແຕ່ກອບ 4 ດ້ານ
-    if (ft == FrameType.door) return 1;
     if (ft == FrameType.windowFrame) return 1;
     return 1;
   }

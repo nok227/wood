@@ -6,9 +6,10 @@ import 'package:flutter/material.dart';
 // ✅ ประเภทโครงสร้างโมเดล 3D
 enum FrameType {
   none, // ไม้แผ่น / ไม้กล่อง / บานประตู ฯลฯ
-  door, // วงกบประตู (3 ด้าน: เสาซ้าย, เสาขวา, ทับหลัง) — เปิดล่าง
-  window, // วงกบช่องลม (4 ด้าน: สี่เหลี่ยมปิดสมบูรณ์)
+  door, // วงกบประตู (3 ด้าน) — เปิดล่าง
+  window, // วงกบช่องลม (4 ด้าน)
   windowFrame, // วงกบหน้าต่าง (4 ด้าน + ไม้กลาง)
+  bundle, // 🆕 ມັດ — 2 ແຖວ × 5 ຖັນ
 }
 
 class V3 {
@@ -118,14 +119,19 @@ class Wood3DGeometry {
   final Rot3 orientation;
   final FrameType frameType;
 
-  // 🆕 ຈຳນວນບານ (panel) ສຳລັບວົງ:
-  //   - 1 = ວົງປ່ອງຢ້ຽມ 1 ບານ (ບໍ່ມີໄມ້ກາງ)
-  //   - 2 = ວົງດຽວ / ວົງນ້ອຍ (2 ບານ)
-  //   - 3 = ວົງປ່ອງຢ້ຽມ 3 ບານ (2 ໄມ້ກາງ)
-  //   - 4 = ວົງຄູ່ / ວົງໄຫຍ່ (4 ບານ)
+  // 🆕 ຈຳນວນບານ (panel) ສຳລັບວົງ
   final int panelCount;
 
   static const cameraDistance = 4.0;
+
+  // ══════════════════════════════════════════════
+  // 🆕 ມັດ — ຈຳນວນເສັ້ນ (2 ແຖວ × 5 ຖັນ = 10)
+  // ══════════════════════════════════════════════
+  static const int bundleRows = 2;
+  static const int bundleCols = 5;
+
+  /// ອັດຕາສ່ວນຊ່ອງຫວ່າງລະຫວ່າງເສັ້ນ (0.08 = 8% ຂອງຂະໜາດເສັ້ນ)
+  static const double bundleGapRatio = 0.08;
 
   Wood3DGeometry({
     required this.width,
@@ -133,7 +139,7 @@ class Wood3DGeometry {
     required this.thickness,
     required this.orientation,
     this.frameType = FrameType.none,
-    this.panelCount = 2, // ✅ default 2 → ຄືເກົ່າ
+    this.panelCount = 2,
   });
 
   double get _maxDim =>
@@ -213,16 +219,51 @@ class Wood3DGeometry {
   }
 
   // ══════════════════════════════════════════════
+  // 🆕 ສ້າງ boxes ຂອງມັດ — 2 ແຖວ × 5 ຖັນ
+  // ══════════════════════════════════════════════
+  List<List<V3>> _buildBundleBoxes() {
+    final pieceW = hx * 2; // ກວ້າງຕໍ່ເສັ້ນ (ແກນ X)
+    final pieceH = hy * 2; // ໜາຕໍ່ເສັ້ນ (ແກນ Y)
+
+    final gapX = pieceW * bundleGapRatio;
+    final gapY = pieceH * bundleGapRatio;
+
+    final pitchX = pieceW + gapX;
+    final pitchY = pieceH + gapY;
+
+    final totalW = bundleCols * pieceW + (bundleCols - 1) * gapX;
+    final totalH = bundleRows * pieceH + (bundleRows - 1) * gapY;
+
+    // ໃຫ້ມັດຢູ່ໃຈກາງ
+    final startX = -totalW / 2 + pieceW / 2;
+    final startY = -totalH / 2 + pieceH / 2;
+
+    final boxes = <List<V3>>[];
+    for (int r = 0; r < bundleRows; r++) {
+      for (int c = 0; c < bundleCols; c++) {
+        final cx = startX + c * pitchX;
+        final cy = startY + r * pitchY;
+        boxes.add(
+          _createBoxVertices(
+            cx - hx,
+            cx + hx,
+            cy - hy,
+            cy + hy,
+            -hz,
+            hz,
+          ),
+        );
+      }
+    }
+    return boxes;
+  }
+
+  // ══════════════════════════════════════════════
   // 🆕 ຄຳນວນຈຳນວນໄມ້ກາງ (mullion)
-  //   door:        ບໍ່ມີໄມ້ກາງ (ສະເໝີ)
-  //   windowFrame: = panelCount - 1
-  //     panelCount = 1 → 0 ແທ່ງ
-  //     panelCount = 2 → 1 ແທ່ງ
-  //     panelCount = 3 → 2 ແທ່ງ
-  //     panelCount = 4 → 3 ແທ່ງ
   // ══════════════════════════════════════════════
   int get _mullionCount {
-    if (frameType == FrameType.door || frameType == FrameType.windowFrame) {
+    if (frameType == FrameType.door) return 0;
+    if (frameType == FrameType.windowFrame) {
       return (panelCount - 1).clamp(0, 8);
     }
     return 0;
@@ -257,13 +298,17 @@ class Wood3DGeometry {
   }
 
   List<List<V3>> get allBoxesVertices {
+    // 🆕 ມັດ — ສະແດງ 2×5 = 10 ເສັ້ນ
+    if (frameType == FrameType.bundle) {
+      return _buildBundleBoxes();
+    }
+
     if (frameType == FrameType.none) {
       return [_createBoxVertices(-hx, hx, -hy, hy, -hz, hz)];
     }
 
     final border = (2 * hy).clamp(0.0, min(hx, hz) * 0.9);
 
-    // 4 ด้าน สำหรับ window + windowFrame
     final hasSill =
         frameType == FrameType.window || frameType == FrameType.windowFrame;
 
@@ -302,7 +347,6 @@ class Wood3DGeometry {
       outerZ: hz,
     );
 
-    // 🆕 ສ້າງໄມ້ກາງ (mullions) ຕາມ panelCount
     final mullions = _buildMullions(border, hasSill);
 
     if (hasSill) {
@@ -321,11 +365,9 @@ class Wood3DGeometry {
         return [leftJamb, rightJamb, head, sill, ...mullions];
       }
 
-      // window (ວົງປ່ອງລົມ) — ບໍ່ມີ mullion
       return [leftJamb, rightJamb, head, sill];
     }
 
-    // door — ມີ mullions ຕາມ panelCount
     return [leftJamb, rightJamb, head, ...mullions];
   }
 
@@ -345,38 +387,33 @@ class Wood3DGeometry {
 
   V3 _mid(V3 a, V3 b) => V3((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
 
+  // 🆕 ເສັ້ນອ້າງອີງສຳລັບ anchor — ຖ້າ bundle ໃຊ້ເສັ້ນທຳອິດ
+  List<V3> _anchorBox() {
+    if (frameType == FrameType.bundle) {
+      final boxes = _buildBundleBoxes();
+      if (boxes.isNotEmpty) return boxes[0];
+    }
+    return _createBoxVertices(-hx, hx, -hy, hy, -hz, hz);
+  }
+
   Offset widthAnchor(Size size) {
     V3 target;
     if (frameType == FrameType.door) {
       target = V3(0, -hy, hz);
     } else {
-      final outer = _createBoxVertices(-hx, hx, -hy, hy, -hz, hz);
+      final outer = _anchorBox();
       target = _mid(outer[1], outer[0]);
     }
     return project(transform(target), size);
   }
 
   Offset lengthAnchor(Size size) {
-    final outer = _createBoxVertices(
-      -hx,
-      hx,
-      -hy,
-      hy,
-      -hz,
-      hz,
-    ).map(transform).toList();
+    final outer = _anchorBox().map(transform).toList();
     return project(_mid(outer[4], outer[0]), size);
   }
 
   Offset thicknessAnchor(Size size) {
-    final outer = _createBoxVertices(
-      -hx,
-      hx,
-      -hy,
-      hy,
-      -hz,
-      hz,
-    ).map(transform).toList();
+    final outer = _anchorBox().map(transform).toList();
     return project(_mid(outer[3], outer[0]), size);
   }
 }

@@ -41,6 +41,7 @@ class WoodProductController extends GetxController {
   // ---------- ຫົວໜ່ວຍນັບ ----------
   final List<String> unitOptions = [
     'ແຜ່ນ',
+    'ມັດ', // 🆕 ມັດໄມ້ (bundle)
     'ທ່ອນ',
     'ວົງ',
     'ວົງນ້ອຍ',

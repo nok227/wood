@@ -7,7 +7,7 @@ class AuthRemoteDataSource {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // 1. ลงทะเบียนด้วย Email + Password
+  // 1. ລົງທະບຽນດ້ວຍ Email + Password
   Future<UserCredential> registerWithEmail({
     required String name,
     required String email,
@@ -32,7 +32,7 @@ class AuthRemoteDataSource {
     return credential;
   }
 
-  // 2. เข้าสู่ระบบด้วย Email + Password (เพิ่มใหม่)
+  // 2. ເຂົ້າສູ່ລະບົບດ້ວຍ Email + Password
   Future<UserCredential> signInWithEmail({
     required String email,
     required String password,
@@ -43,12 +43,13 @@ class AuthRemoteDataSource {
     );
   }
 
-  // 3. เข้าสู่ระบบด้วย Google
+  // 3. ເຂົ້າສູ່ລະບົບດ້ວຍ Google
   Future<UserCredential?> signInWithGoogle() async {
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
     if (googleUser == null) return null;
 
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
     final OAuthCredential credential = GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
@@ -57,9 +58,15 @@ class AuthRemoteDataSource {
     final userCredential = await _firebaseAuth.signInWithCredential(credential);
 
     if (userCredential.user != null) {
-      final userDoc = await _firestore.collection('users').doc(userCredential.user!.uid).get();
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
       if (!userDoc.exists) {
-        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+        await _firestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
           'uid': userCredential.user!.uid,
           'name': userCredential.user!.displayName ?? '',
           'email': userCredential.user!.email ?? '',
@@ -71,9 +78,37 @@ class AuthRemoteDataSource {
     return userCredential;
   }
 
-  // 4. ออกจากระบบ
-  Future<void> signOut() async {
-    await _googleSignIn.signOut();
-    await _firebaseAuth.signOut();
+// 4. ອອກຈາກລະບົບ — ✅ ແກ້ໃຫ້ໄວ
+Future<void> signOut() async {
+  // ✅ ຄົງລຳດັບເກົ່າ (Google ກ່ອນ) ແຕ່ເພີ່ມ timeout
+  try {
+    await _googleSignIn.signOut().timeout(
+      const Duration(seconds: 2),
+      onTimeout: () {},
+    );
+  } catch (_) {
+    // ຖ້າ error (user login ດ້ວຍ email ທຳມະດາ) → ຂ້າມ
+  }
+  await _firebaseAuth.signOut();
+}
+
+  // ══════════════════════════════════════════════
+  // 🆕 5. Stream ດູ user doc ຂອງຕົນເອງ (real-time)
+  // ══════════════════════════════════════════════
+  Stream<DocumentSnapshot<Map<String, dynamic>>> userDocStream(String uid) {
+    return _firestore.collection('users').doc(uid).snapshots();
+  }
+
+  // ══════════════════════════════════════════════
+  // 🆕 6. admin ອັບເດດສິດເມນູຂອງ user
+  // ══════════════════════════════════════════════
+  Future<void> updateAllowedMenus(String uid, List<String> menus) async {
+    await _firestore.collection('users').doc(uid).set(
+      {
+        'allowedMenus': menus,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
   }
 }

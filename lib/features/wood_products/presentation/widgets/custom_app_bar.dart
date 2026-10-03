@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:wood/features/auth/auth_controller.dart';
 import 'package:wood/features/auth/register_page.dart';
+import 'package:wood/features/auth/user_permission_page.dart';
 import 'package:wood/features/wood_products/presentation/controllers/notification_controller.dart';
 import 'package:wood/features/wood_products/presentation/pages/notification_page.dart';
 import 'package:wood/features/wood_products/presentation/pages/recipe_library_page.dart';
@@ -16,10 +17,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? titleWidget;
 
   const CustomAppBar({super.key, this.title, this.titleWidget})
-    : assert(
-        title != null || titleWidget != null,
-        'ต้องระบุ title หรือ titleWidget อย่างใดอย่างหนึ่ง',
-      );
+      : assert(
+          title != null || titleWidget != null,
+          'ต้องระบุ title หรือ titleWidget อย่างใดอย่างหนึ่ง',
+        );
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -27,15 +28,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title:
-          titleWidget ??
+      title: titleWidget ??
           WaveText(
             text: title!,
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
-            replayOnRouteChange: false, // ✅ ບໍ່ replay ຕາມ route — ກັນກະຕຸກ
+            replayOnRouteChange: false,
           ),
       actions: [
-        // 🍜 ຄັງເມນູອາຫານ
         IconButton(
           icon: const Icon(Icons.restaurant_menu, size: 24),
           tooltip: 'ຄັງເມນູອາຫານ',
@@ -45,7 +44,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             duration: const Duration(milliseconds: 300),
           ),
         ),
-        // 🔔 ແຈ້ງເຕືອນ
         Obx(() {
           if (!Get.isRegistered<NotificationController>()) {
             return const SizedBox.shrink();
@@ -74,7 +72,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           );
         }),
-        // 👤 ໂປຣຟາຍ
         IconButton(
           icon: const Icon(Icons.account_circle, size: 28),
           tooltip: 'ໂປຣຟາຍ',
@@ -118,21 +115,27 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
           .get();
       final me = FirebaseAuth.instance.currentUser?.uid;
 
-      final list =
-          snap.docs.map((d) {
-            final m = d.data();
-            return _UserInfo(
-              name: (m['name'] ?? m['displayName'] ?? m['username'] ?? '-')
-                  .toString(),
-              email: (m['email'] ?? '-').toString(),
-              role: (m['role'] ?? 'user').toString(),
-              isMe: d.id == me,
-            );
-          }).toList()..sort((a, b) {
-            final aA = a.role.toLowerCase() == 'admin' ? 0 : 1;
-            final bA = b.role.toLowerCase() == 'admin' ? 0 : 1;
-            return aA != bA ? aA - bA : a.email.compareTo(b.email);
-          });
+      final list = snap.docs.map((d) {
+        final m = d.data();
+        final allowed = (m['allowedMenus'] as List?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            const <String>[];
+        return _UserInfo(
+          uid: d.id,
+          name: (m['name'] ?? m['displayName'] ?? m['username'] ?? '-')
+              .toString(),
+          email: (m['email'] ?? '-').toString(),
+          role: (m['role'] ?? 'user').toString(),
+          isMe: d.id == me,
+          allowedMenus: allowed,
+        );
+      }).toList()
+        ..sort((a, b) {
+          final aA = a.role.toLowerCase() == 'admin' ? 0 : 1;
+          final bA = b.role.toLowerCase() == 'admin' ? 0 : 1;
+          return aA != bA ? aA - bA : a.email.compareTo(b.email);
+        });
 
       if (mounted) setState(() => _users = list);
     } catch (e) {
@@ -175,7 +178,6 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
             const SizedBox(height: 20),
             _usersHeader(),
             const SizedBox(height: 8),
-            // ✅ ໃຊ້ ProfileSkeleton ແທນ CircularProgressIndicator
             if (_loading && _users.isEmpty)
               const SizedBox(height: 400, child: ProfileSkeleton())
             else if (_users.isEmpty)
@@ -418,10 +420,40 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
                 style: TextStyle(
                   fontSize: 10.5,
                   fontWeight: FontWeight.bold,
-                  color: isAdmin ? Colors.amber.shade900 : Colors.grey.shade700,
+                  color:
+                      isAdmin ? Colors.amber.shade900 : Colors.grey.shade700,
                 ),
               ),
             ),
+            // 🆕 ປຸ່ມກຳນົດສິດ (ສະເພາະ user ອື່ນ)
+            if (!isAdmin && !u.isMe) ...[
+              const SizedBox(width: 4),
+              IconButton(
+                icon: Icon(
+                  Icons.tune,
+                  size: 20,
+                  color: Colors.brown.shade700,
+                ),
+                tooltip: 'ກຳນົດສິດ',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+                onPressed: () async {
+                  await Get.to(
+                    () => UserPermissionPage(
+                      uid: u.uid,
+                      name: u.name,
+                      email: u.email,
+                      initialAllowed: u.allowedMenus,
+                    ),
+                  );
+                  // reload ຫຼັງກັບ
+                  if (mounted) _loadUsers();
+                },
+              ),
+            ],
           ],
         ),
       ),
@@ -468,15 +500,19 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
 }
 
 class _UserInfo {
+  final String uid;
   final String name;
   final String email;
   final String role;
   final bool isMe;
+  final List<String> allowedMenus;
 
   _UserInfo({
+    required this.uid,
     required this.name,
     required this.email,
     required this.role,
     required this.isMe,
+    required this.allowedMenus,
   });
 }
