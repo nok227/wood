@@ -1,5 +1,3 @@
-// lib/features/wood_products/data/repositories/wood_repository_impl.dart
-
 import 'dart:io';
 import '../../domain/entities/wood_product.dart';
 import '../../domain/repositories/wood_repository.dart';

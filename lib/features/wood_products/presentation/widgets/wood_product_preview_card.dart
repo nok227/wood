@@ -1,11 +1,8 @@
-// lib/features/wood_products/presentation/widgets/wood_product_preview_card.dart
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 
-/// 🎴 ກາດສະແດງ preview ຂໍ້ມູນໄມ້ກ່ອນບັນທຶກ
 class WoodProductPreviewCard extends StatelessWidget {
   final List<String> existingImages;
   final List<File> newImages;
@@ -19,7 +16,7 @@ class WoodProductPreviewCard extends StatelessWidget {
   final double price;
   final List<String> zones;
   final bool isEditing;
-  final String note; // 🆕
+  final String note;
 
   const WoodProductPreviewCard({
     super.key,
@@ -35,7 +32,7 @@ class WoodProductPreviewCard extends StatelessWidget {
     required this.price,
     this.zones = const [],
     this.isEditing = false,
-    this.note = '', // 🆕
+    this.note = '',
   });
 
   String _fmtNum(num v) =>
@@ -67,7 +64,6 @@ class WoodProductPreviewCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Header ──
           Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -119,13 +115,11 @@ class WoodProductPreviewCard extends StatelessWidget {
               ],
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── ຮູບພາບ ──
                 if (totalImages > 0) ...[
                   _label(Icons.photo_library_outlined,
                       'ຮູບພາບ ($totalImages)'),
@@ -162,8 +156,6 @@ class WoodProductPreviewCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                 ],
-
-                // ── ຂໍ້ມູນໄມ້ ──
                 _row(Icons.local_florist, 'ຊະນິດໄມ້',
                     woodType.isEmpty ? '-' : woodType),
                 const SizedBox(height: 6),
@@ -180,16 +172,11 @@ class WoodProductPreviewCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 _row(Icons.numbers, 'ໜ່ວຍນັບ',
                     unit.isEmpty ? '-' : unit),
-
-                // 🆕 ໝາຍເຫດ — ສະແດງສະເພາະຕອນມີ
                 if (hasNote) ...[
                   const SizedBox(height: 8),
                   _noteBox(note.trim()),
                 ],
-
                 const SizedBox(height: 14),
-
-                // ── ລາຄາ ──
                 Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 14, vertical: 12),
@@ -244,7 +231,6 @@ class WoodProductPreviewCard extends StatelessWidget {
     );
   }
 
-  // 🆕 ກ່ອງໝາຍເຫດ
   Widget _noteBox(String text) {
     return Container(
       width: double.infinity,
@@ -287,7 +273,6 @@ class WoodProductPreviewCard extends StatelessWidget {
     );
   }
 
-  // ແຖວໂຊນ
   Widget _zoneRow(List<String> zones) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

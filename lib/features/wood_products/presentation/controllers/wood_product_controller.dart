@@ -1,11 +1,9 @@
-// lib/features/wood_products/presentation/controllers/wood_product_controller.dart
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:wood/features/wood_products/domain/entities/app_notification.dart';
-import 'package:wood/features/wood_products/presentation/controllers/notification_controller.dart';
+import 'package:wood/features/notifications/domain/entities/app_notification.dart';
+import 'package:wood/features/notifications/presentation/controllers/notification_controller.dart';
 import '../../data/datasources/wood_remote_data_source.dart';
 import '../../data/models/wood_product_model.dart';
 
@@ -22,7 +20,6 @@ class WoodProductController extends GetxController {
   var products = <WoodProductModel>[].obs;
   var errorMessage = RxnString();
 
-  // 🔄 ນັບຈຳນວນຄັ້ງທີ່ຂໍ້ມູນຖືກປ່ຽນ — ໃຫ້ 3D page ຮູ້ວ່າ cache ເກົ່າ
   final productsRevision = 0.obs;
   void _bumpRevision() => productsRevision.value++;
 
@@ -41,7 +38,7 @@ class WoodProductController extends GetxController {
   // ---------- ຫົວໜ່ວຍນັບ ----------
   final List<String> unitOptions = [
     'ແຜ່ນ',
-    'ມັດ', // 🆕 ມັດໄມ້ (bundle)
+    'ມັດ',
     'ທ່ອນ',
     'ວົງ',
     'ວົງນ້ອຍ',
@@ -113,7 +110,7 @@ class WoodProductController extends GetxController {
   final quantityController = TextEditingController(text: '1');
   final customUnitController = TextEditingController();
   final priceController = TextEditingController();
-  final noteController = TextEditingController(); // 🆕
+  final noteController = TextEditingController();
 
   @override
   void onInit() {
@@ -143,9 +140,6 @@ class WoodProductController extends GetxController {
     super.onClose();
   }
 
-  // ══════════════════════════════════════════════
-  // 📷 ເລືອກຮູບ
-  // ══════════════════════════════════════════════
   Future<void> pickImages() async {
     try {
       final remainingSlots =
@@ -236,16 +230,13 @@ class WoodProductController extends GetxController {
   void removeNewImage(int index) => selectedImages.removeAt(index);
   void removeExistingImage(int index) => existingImageUrls.removeAt(index);
 
-  // ══════════════════════════════════════════════
-  // 📥 ດຶງຂໍ້ມູນ
-  // ══════════════════════════════════════════════
   Future<void> fetchProducts() async {
     try {
       isLoading.value = true;
       errorMessage.value = null;
       final result = await dataSource.getWoodProducts();
       products.assignAll(result);
-      _bumpRevision(); // ✅ ແຈ້ງ 3D ວ່າຂໍ້ມູນປ່ຽນ
+      _bumpRevision();
     } catch (e) {
       errorMessage.value = e.toString();
       debugPrint('fetchProducts error: $e');
@@ -267,9 +258,6 @@ class WoodProductController extends GetxController {
   List<WoodProductModel> variantsForName(String name) =>
       products.where((p) => p.name == name).toList();
 
-  // ══════════════════════════════════════════════
-  // ✏️ ເລີ່ມແກ້ໄຂ
-  // ══════════════════════════════════════════════
   void startEdit(WoodProductModel product) {
     _originalPrice = product.price;
     _originalPriceUpdatedAt = product.priceUpdatedAt;
@@ -281,7 +269,7 @@ class WoodProductController extends GetxController {
     thicknessController.text = _fmt(product.thickness);
     quantityController.text = '1';
     priceController.text = _fmtPrice(product.price);
-    noteController.text = product.note; // 🆕
+    noteController.text = product.note;
     selectedSizeUnit.value =
         sizeUnitOptions.contains(product.sizeUnit) ? product.sizeUnit : 'cm';
 
@@ -318,9 +306,6 @@ class WoodProductController extends GetxController {
   String _fmt(num v) =>
       v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
 
-  // ══════════════════════════════════════════════
-  // 🚀 ບັນທຶກ
-  // ══════════════════════════════════════════════
   Future<bool> saveProduct() async {
     final name = nameController.text.trim();
     final woodType = woodTypeController.text.trim();
@@ -333,7 +318,7 @@ class WoodProductController extends GetxController {
     final unit = selectedUnit.value == 'ອື່ນໆ'
         ? customUnitController.text.trim()
         : selectedUnit.value;
-    final note = noteController.text.trim(); // 🆕
+    final note = noteController.text.trim();
     final totalImages = existingImageUrls.length + selectedImages.length;
 
     if (name.isEmpty) {
@@ -430,7 +415,7 @@ class WoodProductController extends GetxController {
       } else {
         products.insert(0, product);
       }
-      _bumpRevision(); // ✅ ແຈ້ງ 3D ວ່າຂໍ້ມູນປ່ຽນ
+      _bumpRevision();
 
       saveProgress.value = 100;
 
@@ -489,9 +474,6 @@ class WoodProductController extends GetxController {
     return isSuccess;
   }
 
-  // ══════════════════════════════════════════════
-  // 🗑 ລຶບ
-  // ══════════════════════════════════════════════
   Future<void> deleteProduct(String id) async {
     try {
       isLoading.value = true;
@@ -499,7 +481,7 @@ class WoodProductController extends GetxController {
 
       await dataSource.deleteWoodProduct(id);
       products.removeWhere((p) => p.id == id);
-      _bumpRevision(); // ✅ ແຈ້ງ 3D ວ່າຂໍ້ມູນປ່ຽນ
+      _bumpRevision();
 
       if (Get.isRegistered<NotificationController>()) {
         try {
@@ -524,9 +506,6 @@ class WoodProductController extends GetxController {
     }
   }
 
-  // ══════════════════════════════════════════════
-  // 🧹 ລ້າງຟອມ
-  // ══════════════════════════════════════════════
   void clearForm() {
     editingProductId.value = null;
     _originalPrice = null;
@@ -539,7 +518,7 @@ class WoodProductController extends GetxController {
     quantityController.text = '1';
     customUnitController.clear();
     priceController.clear();
-    noteController.clear(); // 🆕
+    noteController.clear();
     selectedUnit.value = '';
     selectedSizeUnit.value = 'cm';
     selectedZones.clear();

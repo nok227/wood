@@ -1,5 +1,3 @@
-// lib/features/wood_products/domain/entities/wood_product.dart
-
 class WoodProduct {
   final String id;
   final String name;
@@ -12,7 +10,7 @@ class WoodProduct {
   final String unit;
   final double price;
   final List<String> zones;
-  final String note; // 🆕
+  final String note;
 
   WoodProduct({
     required this.id,
@@ -26,6 +24,6 @@ class WoodProduct {
     required this.unit,
     required this.price,
     this.zones = const [],
-    this.note = '', // 🆕
+    this.note = '',
   });
 }

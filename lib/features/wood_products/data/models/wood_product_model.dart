@@ -1,5 +1,3 @@
-// lib/features/wood_products/data/models/wood_product_model.dart
-
 class WoodProductModel {
   final String id;
   final String name;
@@ -13,13 +11,8 @@ class WoodProductModel {
   final String unit;
   final double price;
 
-  // 🆕 ໂຊນ (multiple) — ເຊັ່ນ ['a1', 'a2', 'b3']
   final List<String> zones;
-
-  // 🆕 ເວລາທີ່ແກ້ໄຂລາຄາລ່າສຸດ (ໃຊ້ສະແດງ Badge "ໃໝ່")
   final DateTime? priceUpdatedAt;
-
-  // 🆕 ໝາຍເຫດ
   final String note;
 
   WoodProductModel({
