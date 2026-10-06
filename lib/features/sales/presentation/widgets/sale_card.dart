@@ -3,12 +3,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import 'package:wood/core/widgets/option_tile.dart';
-import 'package:wood/core/widgets/animated_number.dart';
-import 'package:wood/core/widgets/app_image_viewer.dart';
+import 'package:wood/core/constants/specific/sale_style.dart';
+import 'package:wood/core/widgets/global/animated_number.dart';
+import 'package:wood/core/widgets/global/app_image_viewer.dart';
 import 'package:wood/features/sales/presentation/controllers/sales_controller.dart';
 import 'package:wood/features/sales/presentation/pages/debt_payment/debt_payment_page.dart';
 import 'package:wood/features/sales/presentation/pages/detail/sale_detail_page.dart';
+import 'package:wood/features/wood_products/presentation/widgets/option_tile.dart';
 
 import '../../domain/entities/sale_order_entity.dart';
 
@@ -48,8 +49,9 @@ class SaleCard extends StatelessWidget {
     final thirdUrl =
         _first(sale.debtPaymentImageUrls) ?? _first(sale.topUpImageUrls);
 
-    final payLabel =
-        sale.paymentType == 'cash' ? 'ຮູບເງິນສົດ' : 'ຮູບສະລິບໂອນ';
+    final payLabel = sale.paymentType == 'cash'
+        ? SaleStyle.detailCashLabel
+        : SaleStyle.detailTransferLabel;
 
     final images = <AppImageItem>[
       ...sale.paymentImageUrls
@@ -57,13 +59,13 @@ class SaleCard extends StatelessWidget {
           .map((u) => AppImageItem(u, label: payLabel)),
       ...sale.topUpImageUrls
           .where((u) => u.isNotEmpty)
-          .map((u) => AppImageItem(u, label: 'ຮູບເງິນເຕີມ')),
+          .map((u) => AppImageItem(u, label: SaleStyle.previewImgTopUp)),
       ...sale.billImageUrls
           .where((u) => u.isNotEmpty)
-          .map((u) => AppImageItem(u, label: 'ຮູບໃບບິນ')),
+          .map((u) => AppImageItem(u, label: SaleStyle.detailBillLabel)),
       ...sale.debtPaymentImageUrls
           .where((u) => u.isNotEmpty)
-          .map((u) => AppImageItem(u, label: 'ຮູບຈ່າຍໜີ້')),
+          .map((u) => AppImageItem(u, label: SaleStyle.previewImgDebt)),
     ];
     final openViewer = images.isEmpty
         ? null
@@ -72,33 +74,28 @@ class SaleCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: SaleStyle.white,
+        borderRadius: SaleStyle.cardRadius,
+        boxShadow: SaleStyle.card,
       ),
       child: Material(
-        color: Colors.transparent,
+        color: SaleStyle.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: SaleStyle.cardRadius,
           onTap: () => Get.to(() => SaleDetailPage(sale: sale)),
           child: Padding(
-            padding: const EdgeInsets.all(10),
+            padding: SaleStyle.padCard,
             child: IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ── 3 ຮູບ ──
                   Column(
                     children: [
                       _thumb(payUrl, openViewer),
-                      const SizedBox(height: 4),
+                      SaleStyle.gap4,
                       _thumb(billUrl, openViewer),
-                      const SizedBox(height: 4),
+                      SaleStyle.gap4,
                       _thumb(thirdUrl, openViewer),
                     ],
                   ),
@@ -125,19 +122,13 @@ class SaleCard extends StatelessWidget {
       children: [
         Text(
           sale.shortSummary,
-          style: const TextStyle(
-            fontSize: 14.5,
-            fontWeight: FontWeight.w900,
-            color: Colors.black87,
-          ),
+          style: SaleStyle.cardTitle,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         if (sale.hasMultiItems) ...[
-          const SizedBox(height: 4),
-          ...sale.items
-              .take(2)
-              .map(
+          SaleStyle.gap4,
+          ...sale.items.take(2).map(
                 (it) => Padding(
                   padding: const EdgeInsets.only(bottom: 2),
                   child: Row(
@@ -145,8 +136,8 @@ class SaleCard extends StatelessWidget {
                       Container(
                         width: 4,
                         height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade400,
+                        decoration: const BoxDecoration(
+                          color: SaleStyle.grey400,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -154,11 +145,8 @@ class SaleCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           '${it.productName} · ${it.quantity} ${it.unit}'
-                          '${it.hasDiscount ? " · ລົດ ${fmt.format(it.discountPerUnit)}" : ""}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey.shade700,
-                          ),
+                          '${it.hasDiscount ? " · ${SaleStyle.itemDiscountPrefix} ${fmt.format(it.discountPerUnit)}" : ""}',
+                          style: SaleStyle.cardSubMeta,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -171,70 +159,61 @@ class SaleCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 2, left: 9),
               child: Text(
-                '+${sale.items.length - 2} ລາຍການອື່ນ',
-                style: TextStyle(
+                '+${sale.items.length - 2} ${SaleStyle.itemsSuffix}',
+                style: const TextStyle(
                   fontSize: 10.5,
-                  color: Colors.brown.shade600,
+                  color: SaleStyle.brown600,
                   fontStyle: FontStyle.italic,
                 ),
               ),
             ),
         ],
-        const SizedBox(height: 4),
+        SaleStyle.gap4,
         Text(
-          '${sale.itemCount} ລາຍການ · ${sale.totalQuantity} ຊິ້ນ',
-          style: TextStyle(
-            fontSize: 11.5,
-            color: Colors.grey.shade600,
-            fontWeight: FontWeight.w600,
-          ),
+          '${sale.itemCount} ${SaleStyle.cardItemsPrefix} · ${sale.totalQuantity} ${SaleStyle.cardPiecesPrefix}',
+          style: SaleStyle.cardMeta,
         ),
         const SizedBox(height: 6),
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Text(
-              'ລວມ ',
+            const Text(
+              '${SaleStyle.cardTotalPrefix} ',
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade500,
+                color: SaleStyle.grey500,
               ),
             ),
             AnimatedNumber(
               value: sale.totalAmount,
-              suffix: ' ກີບ',
-              duration: 1200,
+              suffix: ' ${SaleStyle.currency}',
+              duration: SaleStyle.animNormal.inMilliseconds,
               replayOnRouteChange: true,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                color: Colors.brown.shade700,
-                letterSpacing: 0.2,
-              ),
+              style: SaleStyle.moneyLg.copyWith(color: SaleStyle.brown700),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        SaleStyle.gap4,
         Row(
           children: [
-            Text(
-              'ວິທີ: ',
-              style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500),
+            const Text(
+              SaleStyle.cardTypePrefix,
+              style: TextStyle(fontSize: 11.5, color: SaleStyle.grey500),
             ),
             Text(
               sale.paymentType == 'cash'
-                  ? 'ເງິນສົດ'
+                  ? SaleStyle.cashFull
                   : sale.paymentType == 'transfer'
-                      ? 'ເງິນໂອນ'
+                      ? SaleStyle.transferFull
                       : sale.paymentType == 'mixed'
-                          ? 'ປະສົມ'
-                          : 'ຕິດໜີ້',
-              style: TextStyle(
+                          ? SaleStyle.mixedLabel
+                          : SaleStyle.debtLabel,
+              style: const TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w800,
-                color: Colors.grey.shade800,
+                color: SaleStyle.grey800,
               ),
             ),
           ],
@@ -242,32 +221,34 @@ class SaleCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           ctrl.formatLaoDate(sale.date),
-          style: TextStyle(fontSize: 10.5, color: Colors.grey.shade500),
+          style: const TextStyle(fontSize: 10.5, color: SaleStyle.grey500),
         ),
         if (sale.discountTotal > 0) ...[
-          const SizedBox(height: 4),
+          SaleStyle.gap4,
           _miniChip(
             icon: Icons.discount,
-            text: 'ສ່ວນລົດ ${fmt.format(sale.discountTotal)} ກີບ',
-            color: Colors.red.shade700,
+            text:
+                '${SaleStyle.cardDiscountPrefix} ${fmt.format(sale.discountTotal)} ${SaleStyle.currency}',
+            color: SaleStyle.red700,
           ),
         ],
         if (sale.changeAmount > 0) ...[
-          const SizedBox(height: 4),
+          SaleStyle.gap4,
           _miniChip(
             icon: Icons.swap_horiz,
-            text: 'ເງິນທອນ ${fmt.format(sale.changeAmount)} ກີບ',
-            color: Colors.blue.shade700,
+            text:
+                '${SaleStyle.cardChangePrefix} ${fmt.format(sale.changeAmount)} ${SaleStyle.currency}',
+            color: SaleStyle.blue700,
           ),
         ],
         const SizedBox(height: 6),
         _paymentBadge(fmt),
         if ((sale.note ?? '').trim().isNotEmpty) ...[
-          const SizedBox(height: 4),
+          SaleStyle.gap4,
           _miniChip(
             icon: Icons.sticky_note_2_outlined,
             text: sale.note!,
-            color: Colors.brown.shade700,
+            color: SaleStyle.brown700,
           ),
         ],
         const Spacer(),
@@ -287,23 +268,24 @@ class SaleCard extends StatelessWidget {
         children: [
           _badge(
             icon: Icons.warning_amber_rounded,
-            text: 'ຕິດໜີ້ ${fmt.format(sale.debtAmount)} ກີບ',
-            color: Colors.orange.shade800,
+            text:
+                '${SaleStyle.debtLabel} ${fmt.format(sale.debtAmount)} ${SaleStyle.currency}',
+            color: SaleStyle.orange800,
           ),
           if (name.isNotEmpty) ...[
-            const SizedBox(height: 3),
+            SaleStyle.gap3,
             _infoRow(Icons.person_outline, name),
           ],
           if (phone.isNotEmpty) ...[
-            const SizedBox(height: 2),
+            SaleStyle.gap2,
             _infoRow(Icons.phone_outlined, phone),
           ],
           if (addr.isNotEmpty) ...[
-            const SizedBox(height: 2),
+            SaleStyle.gap2,
             _infoRow(Icons.home_outlined, addr),
           ],
           if ((sale.debtNote ?? '').trim().isNotEmpty) ...[
-            const SizedBox(height: 2),
+            SaleStyle.gap2,
             _infoRow(Icons.sticky_note_2_outlined, sale.debtNote!),
           ],
         ],
@@ -314,30 +296,30 @@ class SaleCard extends StatelessWidget {
       return _badge(
         icon: Icons.call_split,
         text:
-            'ສົດ ${fmt.format(sale.cashPaidAmount)} · ໂອນ ${fmt.format(sale.transferPaidAmount)}',
-        color: Colors.indigo.shade700,
+            '${SaleStyle.cardMixedPrefix} ${fmt.format(sale.cashPaidAmount)} · ${SaleStyle.transferLabel} ${fmt.format(sale.transferPaidAmount)}',
+        color: SaleStyle.indigo700,
       );
     }
 
     return _badge(
       icon: Icons.verified_outlined,
-      text: 'ຈ່າຍແລ້ວ',
-      color: Colors.green.shade700,
+      text: SaleStyle.cardPayment,
+      color: SaleStyle.green700,
     );
   }
 
   Widget _infoRow(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: 11, color: Colors.orange.shade800),
+        const Icon(Icons.person_outline, size: 11, color: SaleStyle.orange800),
         const SizedBox(width: 3),
         Expanded(
           child: Text(
             text,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: Colors.orange.shade800,
+              color: SaleStyle.orange800,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -360,12 +342,7 @@ class SaleCard extends StatelessWidget {
         Flexible(
           child: Text(
             text,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w900,
-              color: color,
-              letterSpacing: 0.2,
-            ),
+            style: SaleStyle.badge.copyWith(color: color),
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -386,12 +363,7 @@ class SaleCard extends StatelessWidget {
         Flexible(
           child: Text(
             text,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w800,
-              color: color,
-              letterSpacing: 0.2,
-            ),
+            style: SaleStyle.miniChip.copyWith(color: color),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -411,10 +383,10 @@ class SaleCard extends StatelessWidget {
     return GestureDetector(
       onTap: url != null ? onTap : null,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: SaleStyle.thumbRadius,
         child: Container(
-          width: 76,
-          height: 76,
+          width: SaleStyle.thumbSale,
+          height: SaleStyle.thumbSaleH,
           child: url != null
               ? CachedNetworkImage(
                   imageUrl: url,
@@ -434,17 +406,17 @@ class SaleCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
+          const Icon(
             Icons.image_not_supported_outlined,
-            color: Colors.grey.shade300,
+            color: SaleStyle.grey300,
             size: 20,
           ),
           const SizedBox(height: 2),
           Text(
-            'ບໍ່ມີຮູບ',
-            style: TextStyle(
+            SaleStyle.cardNoImg,
+            style: const TextStyle(
               fontSize: 9,
-              color: Colors.grey.shade400,
+              color: SaleStyle.grey400,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.2,
             ),
@@ -458,15 +430,15 @@ class SaleCard extends StatelessWidget {
     if (sale.isMismatch) {
       return InkWell(
         onTap: isAdmin ? () => _mismatchDialog(c, isEdit: true) : null,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: SaleStyle.r8,
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
-            color: Colors.red.shade50,
-            borderRadius: BorderRadius.circular(8),
+            color: SaleStyle.red50,
+            borderRadius: SaleStyle.r8,
             border: Border.all(
-              color: const Color(0xFFB71C1C).withOpacity(0.5),
+              color: SaleStyle.mismatch.withOpacity(0.5),
               width: 1.0,
             ),
           ),
@@ -475,17 +447,17 @@ class SaleCard extends StatelessWidget {
             children: [
               const Icon(
                 Icons.warning_amber_rounded,
-                color: Color(0xFFB71C1C),
+                color: SaleStyle.mismatch,
                 size: 18,
               ),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  isAdmin ? 'ບັນຊີບໍ່ຕົງ · ແຕະແກ້ໄຂ' : 'ບັນຊີບໍ່ຕົງ',
+                  isAdmin ? SaleStyle.cardMismatchEdit : SaleStyle.cardMismatch,
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFB71C1C),
+                    color: SaleStyle.mismatch,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -497,17 +469,17 @@ class SaleCard extends StatelessWidget {
     }
 
     if (sale.isConfirmed) {
-      return Row(
+      return const Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           _Checkmark(size: 16),
           SizedBox(width: 6),
           Text(
-            'ເງິນເຂົ້າແລ້ວ',
+            SaleStyle.detailStatusConfirmed,
             style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w900,
-              color: Color(0xFF2E7D32),
+              color: SaleStyle.confirmed,
               letterSpacing: 0.2,
             ),
           ),
@@ -518,15 +490,15 @@ class SaleCard extends StatelessWidget {
     if (sale.hasDebt) {
       return InkWell(
         onTap: isAdmin ? () => _confirmReceiveDebt(c) : null,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: SaleStyle.r8,
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
-            color: Colors.amber.shade50,
-            borderRadius: BorderRadius.circular(8),
+            color: SaleStyle.amber50,
+            borderRadius: SaleStyle.r8,
             border: Border.all(
-              color: Colors.amber.shade700.withOpacity(0.5),
+              color: SaleStyle.amber700.withOpacity(0.5),
               width: 1.0,
             ),
           ),
@@ -537,11 +509,11 @@ class SaleCard extends StatelessWidget {
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  isAdmin ? 'ແຕະຢືນຢັນຮັບເງິນ' : 'ກວດສອບ',
-                  style: TextStyle(
+                  isAdmin ? SaleStyle.cardDebtConfirm : SaleStyle.cardCheck,
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Colors.amber.shade900,
+                    color: SaleStyle.amber900,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -554,15 +526,15 @@ class SaleCard extends StatelessWidget {
 
     return InkWell(
       onTap: isAdmin ? () => _pendingDialog(c) : null,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: SaleStyle.r8,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.amber.shade50,
-          borderRadius: BorderRadius.circular(8),
+          color: SaleStyle.amber50,
+          borderRadius: SaleStyle.r8,
           border: Border.all(
-            color: Colors.amber.shade700.withOpacity(0.5),
+            color: SaleStyle.amber700.withOpacity(0.5),
             width: 1.0,
           ),
         ),
@@ -573,11 +545,11 @@ class SaleCard extends StatelessWidget {
             const SizedBox(width: 6),
             Flexible(
               child: Text(
-                isAdmin ? 'ແຕະຈັດການ' : 'ກວດສອບ',
-                style: TextStyle(
+                isAdmin ? SaleStyle.cardPending : SaleStyle.cardCheck,
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Colors.amber.shade900,
+                  color: SaleStyle.amber900,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -593,16 +565,17 @@ class SaleCard extends StatelessWidget {
     final addr = _wPrefix(sale.customerAddress, 'ບ້ານ');
 
     Get.defaultDialog(
-      title: 'ຢືນຢັນການຮັບເງິນ',
+      title: SaleStyle.confirmReceivePayment,
       content: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Column(
           children: [
-            Icon(Icons.receipt_long, size: 48, color: Colors.green.shade600),
+            const Icon(Icons.receipt_long,
+                size: 48, color: SaleStyle.green600),
             const SizedBox(height: 8),
             if (name.isNotEmpty)
               Text(
-                'ລູກຄ້າ: $name',
+                '${SaleStyle.detailCustomerPrefix}: $name',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -611,24 +584,26 @@ class SaleCard extends StatelessWidget {
             if ((sale.customerPhone ?? '').isNotEmpty) ...[
               const SizedBox(height: 2),
               Text(
-                'ເບີໂທ: ${sale.customerPhone}',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                '${SaleStyle.detailPhonePrefix}: ${sale.customerPhone}',
+                style: const TextStyle(
+                    fontSize: 12, color: SaleStyle.grey700),
               ),
             ],
             if (addr.isNotEmpty) ...[
               const SizedBox(height: 2),
               Text(
-                'ທີ່ຢູ່: $addr',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                '${SaleStyle.detailAddrPrefix}: $addr',
+                style: const TextStyle(
+                    fontSize: 12, color: SaleStyle.grey700),
               ),
             ],
             const SizedBox(height: 10),
             Text(
-              'ຍອດຕິດໜີ້: ${NumberFormat('#,###').format(sale.debtAmount)} ກີບ',
-              style: TextStyle(
+              '${SaleStyle.detailDebtAmount}: ${NumberFormat('#,###').format(sale.debtAmount)} ${SaleStyle.currency}',
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.orange.shade800,
+                color: SaleStyle.orange800,
               ),
             ),
             const SizedBox(height: 14),
@@ -636,25 +611,25 @@ class SaleCard extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.amber.shade50,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.amber.shade300),
+                color: SaleStyle.amber50,
+                borderRadius: SaleStyle.r10,
+                border: Border.all(color: SaleStyle.amber300),
               ),
-              child: Row(
+              child: const Row(
                 children: [
                   Icon(
                     Icons.help_outline,
-                    color: Colors.amber.shade900,
+                    color: SaleStyle.amber900,
                     size: 20,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'ທ່ານໄດ້ຮັບເງິນໜີ້ທີ່ຄ້າງນີ້ແລ້ວບໍ?',
+                      SaleStyle.detailReceivedDebt,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: Colors.amber.shade900,
+                        color: SaleStyle.amber900,
                       ),
                     ),
                   ),
@@ -664,14 +639,14 @@ class SaleCard extends StatelessWidget {
           ],
         ),
       ),
-      textConfirm: 'ຢືນຢັນ · ຮັບເງິນແລ້ວ',
-      textCancel: 'ຍັງບໍ່ຮັບ',
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.green.shade700,
-      cancelTextColor: Colors.grey.shade700,
+      textConfirm: SaleStyle.confirmPaidBtn,
+      textCancel: SaleStyle.notYetBtn,
+      confirmTextColor: SaleStyle.white,
+      buttonColor: SaleStyle.green700,
+      cancelTextColor: SaleStyle.grey700,
       onConfirm: () async {
         _safeCloseDialog();
-        await Future.delayed(const Duration(milliseconds: 350));
+        await Future.delayed(SaleStyle.delayClose);
         while (Get.isDialogOpen ?? false) {
           _safeCloseDialog();
           await Future.delayed(const Duration(milliseconds: 120));
@@ -686,7 +661,7 @@ class SaleCard extends StatelessWidget {
       title: '',
       titlePadding: EdgeInsets.zero,
       contentPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-      backgroundColor: Colors.white,
+      backgroundColor: SaleStyle.white,
       radius: 20,
       barrierDismissible: true,
       content: Column(
@@ -695,56 +670,53 @@ class SaleCard extends StatelessWidget {
           Container(
             width: 60,
             height: 60,
-            decoration: BoxDecoration(
-              color: Colors.amber.shade50,
+            decoration: const BoxDecoration(
+              color: SaleStyle.amber50,
               shape: BoxShape.circle,
             ),
-            child: Icon(
+            child: const Icon(
               Icons.fact_check_outlined,
-              color: Colors.amber.shade800,
+              color: SaleStyle.amber800,
               size: 30,
             ),
           ),
           const SizedBox(height: 12),
           const Text(
-            'ຈັດການສະຖານະ',
+            SaleStyle.pendingTitle,
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w900,
-              color: Colors.black87,
+              color: SaleStyle.black87,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'ເລືອກການດຳເນີນການ',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade500,
-            ),
+          SaleStyle.gap4,
+          const Text(
+            SaleStyle.pendingSubtitle,
+            style: TextStyle(fontSize: 12, color: SaleStyle.grey500),
           ),
           const SizedBox(height: 18),
           OptionTile(
             icon: Icons.check_circle_outline,
-            iconColor: Colors.green.shade700,
-            iconBg: Colors.green.shade50,
-            title: 'ຢືນຢັນເງິນເຂົ້າ',
-            subtitle: 'ບັນທຶກວ່າຮັບເງິນຄົບແລ້ວ',
+            iconColor: SaleStyle.green700,
+            iconBg: SaleStyle.green50,
+            title: SaleStyle.confirmPaymentStatus,
+            subtitle: SaleStyle.confirmPaymentSub,
             onTap: () async {
               _safeCloseDialog();
-              await Future.delayed(const Duration(milliseconds: 300));
+              await Future.delayed(SaleStyle.delayDialog);
               await c.confirmPaymentStatus(sale.id, false);
             },
           ),
           const SizedBox(height: 10),
           OptionTile(
             icon: Icons.warning_amber_rounded,
-            iconColor: const Color(0xFFB71C1C),
-            iconBg: Colors.red.shade50,
-            title: 'ບັນຊີບໍ່ຕົງກັນ',
-            subtitle: 'ບັນທຶກບັນຫາ · ລໍຖ້າກວດສອບ',
+            iconColor: SaleStyle.mismatch,
+            iconBg: SaleStyle.red50,
+            title: SaleStyle.mismatchBtn,
+            subtitle: SaleStyle.mismatchBtnSub,
             onTap: () async {
               _safeCloseDialog();
-              await Future.delayed(const Duration(milliseconds: 300));
+              await Future.delayed(SaleStyle.delayDialog);
               while (Get.isDialogOpen ?? false) {
                 _safeCloseDialog();
                 await Future.delayed(const Duration(milliseconds: 120));
@@ -758,17 +730,17 @@ class SaleCard extends StatelessWidget {
             child: TextButton(
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: SaleStyle.r10,
                 ),
               ),
               onPressed: () => Get.back(),
-              child: Text(
-                'ຍົກເລີກ',
+              child: const Text(
+                SaleStyle.cancel,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: Colors.grey.shade600,
+                  color: SaleStyle.grey600,
                 ),
               ),
             ),
@@ -784,7 +756,7 @@ class SaleCard extends StatelessWidget {
     );
 
     Get.defaultDialog(
-      title: isEdit ? 'ແກ້ໄຂບັນຊີບໍ່ຕົງ' : 'ບັນຊີບໍ່ຕົງກັນ',
+      title: isEdit ? SaleStyle.detailEditReason : SaleStyle.detailMismatchTitle,
       content: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Column(
@@ -793,7 +765,7 @@ class SaleCard extends StatelessWidget {
               controller: noteCtrl,
               maxLines: 3,
               decoration: const InputDecoration(
-                hintText: 'ປ້ອນເຫດຜົນ...',
+                hintText: SaleStyle.alertFillReason2,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -804,36 +776,37 @@ class SaleCard extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.grey.shade700,
-                        side: BorderSide(color: Colors.grey.shade400),
+                        foregroundColor: SaleStyle.grey700,
+                        side: const BorderSide(color: SaleStyle.grey400),
                       ),
                       onPressed: () async {
                         _safeCloseDialog();
-                        await Future.delayed(const Duration(milliseconds: 300));
+                        await Future.delayed(SaleStyle.delayDialog);
                         await c.clearMismatch(sale.id);
                       },
-                      child: const Text('ຍົກເລີກ'),
+                      child: const Text(SaleStyle.cancel),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFB71C1C),
+                        backgroundColor: SaleStyle.mismatch,
                       ),
                       onPressed: () async {
                         final t = noteCtrl.text.trim();
                         if (t.isEmpty) {
-                          Get.snackbar('ຜິດພາດ', 'ກະລຸນາປ້ອນເຫດຜົນ');
+                          Get.snackbar(
+                              SaleStyle.errorMsg, SaleStyle.alertFillReason);
                           return;
                         }
                         _safeCloseDialog();
-                        await Future.delayed(const Duration(milliseconds: 300));
+                        await Future.delayed(SaleStyle.delayDialog);
                         await c.updateMismatchNote(sale.id, t);
                       },
                       child: const Text(
-                        'ບັນທຶກ',
-                        style: TextStyle(color: Colors.white),
+                        SaleStyle.detailSaveReason,
+                        style: TextStyle(color: SaleStyle.white),
                       ),
                     ),
                   ),
@@ -844,29 +817,30 @@ class SaleCard extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFB71C1C),
+                    backgroundColor: SaleStyle.mismatch,
                     minimumSize: const Size.fromHeight(44),
                   ),
                   onPressed: () async {
                     final t = noteCtrl.text.trim();
                     if (t.isEmpty) {
-                      Get.snackbar('ຜິດພາດ', 'ກະລຸນາປ້ອນເຫດຜົນ');
+                      Get.snackbar(
+                          SaleStyle.errorMsg, SaleStyle.alertFillReason);
                       return;
                     }
                     _safeCloseDialog();
-                    await Future.delayed(const Duration(milliseconds: 300));
+                    await Future.delayed(SaleStyle.delayDialog);
                     await c.markAsMismatch(sale.id, t);
                   },
                   child: const Text(
-                    'ຢືນຢັນ',
-                    style: TextStyle(color: Colors.white),
+                    SaleStyle.detailMismatchConfirm,
+                    style: TextStyle(color: SaleStyle.white),
                   ),
                 ),
               ),
           ],
         ),
       ),
-      textCancel: 'ປິດ',
+      textCancel: SaleStyle.close,
       textConfirm: '',
     );
   }
@@ -875,63 +849,65 @@ class SaleCard extends StatelessWidget {
     if (Get.isDialogOpen ?? false) return;
 
     Get.defaultDialog(
-      title: 'ຢືນຢັນການລຶບ',
+      title: SaleStyle.confirmDelete,
       content: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Column(
           children: [
-            Icon(
+            const Icon(
               Icons.warning_amber_rounded,
               size: 48,
-              color: Colors.red.shade600,
+              color: SaleStyle.red600,
             ),
             const SizedBox(height: 8),
             Text(
               sale.shortSummary,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontSize: 15, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 6),
             Text(
-              '${NumberFormat('#,###').format(sale.totalAmount)} ກີບ',
+              '${NumberFormat('#,###').format(sale.totalAmount)} ${SaleStyle.currency}',
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.brown,
+                color: SaleStyle.brown700,
               ),
             ),
             if (sale.hasMultiItems) ...[
-              const SizedBox(height: 4),
+              SaleStyle.gap4,
               Text(
-                'ຈະລຶບທັງໝົດ ${sale.itemCount} ລາຍການ',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                '${SaleStyle.batchDelete} ${sale.itemCount} ${SaleStyle.previewFooterItems}',
+                style: const TextStyle(
+                    fontSize: 12, color: SaleStyle.grey700),
               ),
             ],
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.shade200),
+                color: SaleStyle.red50,
+                borderRadius: SaleStyle.r8,
+                border: Border.all(color: SaleStyle.red200),
               ),
-              child: Row(
+              child: const Row(
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: Colors.red.shade700,
+                    color: SaleStyle.red700,
                     size: 18,
                   ),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'ຈະລຶບອອກຈາກ Firebase ແລະ Cloudinary ຖາວອນ',
+                      SaleStyle.deleteConfirmPrefix,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Colors.red.shade700,
+                        color: SaleStyle.red700,
                       ),
                     ),
                   ),
@@ -940,27 +916,31 @@ class SaleCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             const Text(
-              'ຢືນຢັນການລຶບ?',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              SaleStyle.deleteConfirmMsg,
+              style:
+                  TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
             ),
           ],
         ),
       ),
       barrierDismissible: true,
-      textConfirm: 'ລຶບ',
-      textCancel: 'ຍົກເລີກ',
-      confirmTextColor: Colors.white,
-      cancelTextColor: Colors.grey.shade700,
-      buttonColor: Colors.red.shade700,
+      textConfirm: SaleStyle.delete,
+      textCancel: SaleStyle.cancel,
+      confirmTextColor: SaleStyle.white,
+      cancelTextColor: SaleStyle.grey700,
+      buttonColor: SaleStyle.red700,
       onConfirm: () async {
         _safeCloseDialog();
-        await Future.delayed(const Duration(milliseconds: 300));
+        await Future.delayed(SaleStyle.delayDialog);
         await c.deleteSale(sale.id);
       },
     );
   }
 }
 
+// ══════════════════════════════════════════════
+// ⋮ → 🗑
+// ══════════════════════════════════════════════
 class _FloatingActionsButton extends StatefulWidget {
   final String saleId;
   final bool isAdmin;
@@ -982,7 +962,7 @@ class _FloatingActionsButtonState extends State<_FloatingActionsButton>
   bool _open = false;
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 220),
+    duration: SaleStyle.floatMenu,
   );
 
   @override
@@ -1035,11 +1015,11 @@ class _FloatingActionsButtonState extends State<_FloatingActionsButton>
     final actions = <_ActionItem>[
       _ActionItem(
         icon: Icons.delete,
-        color: const Color(0xFFB71C1C),
-        shadow: Colors.red.shade200,
+        color: SaleStyle.mismatch,
+        shadow: SaleStyle.red200,
         onTap: () {
           _close();
-          Future.delayed(const Duration(milliseconds: 200), () {
+          Future.delayed(SaleStyle.swipeDelay, () {
             if (mounted) widget.onDelete();
           });
         },
@@ -1068,7 +1048,7 @@ class _FloatingActionsButtonState extends State<_FloatingActionsButton>
             child: IconButton(
               icon: Icon(
                 _open ? Icons.close : Icons.more_vert,
-                color: _open ? Colors.brown : Colors.black54,
+                color: _open ? SaleStyle.brown700 : SaleStyle.black54,
                 size: 22,
               ),
               padding: EdgeInsets.zero,
@@ -1103,7 +1083,7 @@ class _FloatingActionsButtonState extends State<_FloatingActionsButton>
                     height: 46,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white,
+                      color: SaleStyle.white,
                       boxShadow: [
                         BoxShadow(
                           color: actions[i].shadow.withOpacity(0.6),
@@ -1148,7 +1128,7 @@ class _Waiting extends StatelessWidget {
   Widget build(BuildContext context) => Icon(
         Icons.hourglass_bottom,
         size: size * 0.85,
-        color: Colors.amber.shade800,
+        color: SaleStyle.amber800,
       );
 }
 
@@ -1159,17 +1139,17 @@ class _Checkmark extends StatelessWidget {
   @override
   Widget build(BuildContext context) => TweenAnimationBuilder<double>(
         tween: Tween(begin: 0, end: 1),
-        duration: const Duration(milliseconds: 700),
+        duration: SaleStyle.animPulse,
         curve: Curves.elasticOut,
         builder: (_, v, child) => Transform.scale(scale: v, child: child),
         child: Container(
           width: size,
           height: size,
           decoration: const BoxDecoration(
-            color: Color(0xFF2E7D32),
+            color: SaleStyle.confirmed,
             shape: BoxShape.circle,
           ),
-          child: Icon(Icons.check, color: Colors.white, size: size * 0.7),
+          child: Icon(Icons.check, color: SaleStyle.white, size: size * 0.7),
         ),
       );
 }

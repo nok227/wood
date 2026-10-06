@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wood/core/widgets/skeletons/shimmer_box.dart';
-import 'package:wood/core/widgets/skeletons/shimmer_host.dart';
+import 'package:wood/core/constants/specific/recipe_style.dart';
+import 'package:wood/core/widgets/global/skeletons/shimmer_box.dart';
+import 'package:wood/core/widgets/global/skeletons/shimmer_host.dart';
 
 class RecipeListSkeleton extends StatelessWidget {
   const RecipeListSkeleton({super.key, this.count = 6});
@@ -10,22 +11,30 @@ class RecipeListSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ShimmerHost(
       builder: (context, p) => ListView.builder(
-        padding: const EdgeInsets.fromLTRB(8, 4, 8, 24),
+        padding: RecipeStyle.padListSkeleton,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: count,
         itemBuilder: (_, __) => Card(
-          margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade300, width: 1.2),
+          margin: RecipeStyle.padCardMargin,
+          shape: const RoundedRectangleBorder(
+            borderRadius: RecipeStyle.cardRadius,
+            side: BorderSide(
+              color: RecipeStyle.grey300,
+              width: RecipeStyle.borderWidthNormal,
+            ),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(10),
+            padding: RecipeStyle.padCard,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ShimmerBox(width: 84, height: 84, progress: p, radius: 10),
-                const SizedBox(width: 12),
+                ShimmerBox(
+                  width: RecipeStyle.thumbRecipe,
+                  height: RecipeStyle.thumbRecipe,
+                  progress: p,
+                  radius: 10,
+                ),
+                RecipeStyle.gap12,
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,43 +43,64 @@ class RecipeListSkeleton extends StatelessWidget {
                         children: [
                           Expanded(
                             child: ShimmerBox(
-                                width: double.infinity,
-                                height: 15,
-                                progress: p),
-                          ),
-                          const SizedBox(width: 8),
-                          ShimmerBox(
-                              width: 20,
-                              height: 20,
+                              width: double.infinity,
+                              height: 15,
                               progress: p,
-                              shape: BoxShape.circle),
+                            ),
+                          ),
+                          RecipeStyle.gap8,
+                          ShimmerBox(
+                            width: 20,
+                            height: 20,
+                            progress: p,
+                            shape: BoxShape.circle,
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      RecipeStyle.gap6,
                       Wrap(
-                        spacing: 5,
-                        runSpacing: 4,
+                        spacing: RecipeStyle.wrapCardSpacing,
+                        runSpacing: RecipeStyle.wrapCardRunSpacing,
                         children: [
                           ShimmerBox(
-                              width: 60, height: 14, progress: p, radius: 5),
+                            width: 60,
+                            height: 14,
+                            progress: p,
+                            radius: 5,
+                          ),
                           ShimmerBox(
-                              width: 50, height: 14, progress: p, radius: 5),
+                            width: 50,
+                            height: 14,
+                            progress: p,
+                            radius: 5,
+                          ),
                           ShimmerBox(
-                              width: 55, height: 14, progress: p, radius: 5),
+                            width: 55,
+                            height: 14,
+                            progress: p,
+                            radius: 5,
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      RecipeStyle.gap6,
                       ShimmerBox(
-                          width: double.infinity, height: 11, progress: p),
-                      const SizedBox(height: 4),
+                        width: double.infinity,
+                        height: 11,
+                        progress: p,
+                      ),
+                      RecipeStyle.gap4,
                       ShimmerBox(width: 140, height: 11, progress: p),
-                      const SizedBox(height: 8),
+                      RecipeStyle.gap8,
                       Row(
                         children: [
                           ShimmerBox(width: 100, height: 11, progress: p),
                           const Spacer(),
                           ShimmerBox(
-                              width: 60, height: 20, progress: p, radius: 6),
+                            width: 60,
+                            height: 20,
+                            progress: p,
+                            radius: 6,
+                          ),
                         ],
                       ),
                     ],

@@ -1,42 +1,34 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/entities/app_notification.dart';
 import '../models/app_notification_model.dart';
 
+/// ══════════════════════════════════════════════
+/// 📡 NOTIFICATION REMOTE DATA SOURCE
+/// หน้าที่: คุยกับ Firestore เท่านั้น
+/// คืน Model — ไม่แปลงเป็น Entity
+/// ══════════════════════════════════════════════
 class NotificationRemoteDataSource {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   static const _collection = 'notifications';
 
-  Future<List<AppNotification>> getNotifications() async {
+  // ── อ่าน (คืน Model) ──
+  Future<List<AppNotificationModel>> getNotifications() async {
     final snap = await _db
         .collection(_collection)
         .orderBy('date', descending: true)
         .limit(200)
         .get();
+
     return snap.docs
-        .map((d) => AppNotificationModel.fromMap(d.data(), d.id).toEntity())
+        .map((d) => AppNotificationModel.fromMap(d.data(), d.id))
         .toList();
   }
 
-  Future<void> add(AppNotification n) async {
-    final m = AppNotificationModel(
-      id: n.id,
-      type: n.type,
-      title: n.title,
-      message: n.message,
-      actorEmail: n.actorEmail,
-      actorIsAdmin: n.actorIsAdmin,
-      audience: n.audience,
-      date: n.date,
-      isRead: n.isRead,
-      targetId: n.targetId,
-      meta: n.meta,
-      readBy: n.readBy,
-      deletedBy: n.deletedBy,
-      expireAt: n.expireAt,
-    );
-    await _db.collection(_collection).doc(n.id).set(m.toMap());
+  // ── เพิ่ม (รับ Model) ──
+  Future<void> add(AppNotificationModel m) async {
+    await _db.collection(_collection).doc(m.id).set(m.toMap());
   }
 
+  // ── อ่านแล้ว ──
   Future<void> markRead(String id, String uid) async {
     if (uid.isEmpty) return;
     await _db.collection(_collection).doc(id).update({
@@ -55,6 +47,7 @@ class NotificationRemoteDataSource {
     await batch.commit();
   }
 
+  // ── ลบ ──
   Future<void> delete(String id, String uid) async {
     if (uid.isEmpty) return;
     await _db.collection(_collection).doc(id).update({

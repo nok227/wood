@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:wood/core/constants/global/app_colors.dart';
 
 class AppImageItem {
   final String url;
@@ -79,18 +80,20 @@ class _AppImageViewerState extends State<AppImageViewer> {
     final total = widget.images.length;
     final current = widget.images[_index];
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.black,
+        foregroundColor: AppColors.white,
         title: Text(current.label ?? ''),
         actions: [
           if (total > 1)
             Center(
               child: Padding(
                 padding: const EdgeInsets.only(right: 16),
-                child: Text('${_index + 1}/$total',
-                    style: const TextStyle(color: Colors.white70)),
+                child: Text(
+                  '${_index + 1}/$total',
+                  style: const TextStyle(color: AppColors.white70),
+                ),
               ),
             ),
         ],
@@ -113,12 +116,12 @@ class _AppImageViewerState extends State<AppImageViewer> {
                 imageUrl: widget.images[i].url,
                 fit: BoxFit.contain,
                 placeholder: (c, u) => const Center(
-                  child: CircularProgressIndicator(color: Colors.white),
+                  child: CircularProgressIndicator(color: AppColors.white),
                 ),
                 errorWidget: (_, __, ___) => const Icon(
                   Icons.broken_image,
                   size: 64,
-                  color: Colors.white54,
+                  color: AppColors.white54,
                 ),
               ),
             ),

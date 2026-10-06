@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:wood/core/widgets/global/app_snackbar.dart';
 import 'package:wood/features/notifications/domain/entities/app_notification.dart';
 import 'package:wood/features/notifications/presentation/controllers/notification_controller.dart';
 import '../../domain/entities/account_transaction.dart';
@@ -18,6 +19,9 @@ class AccountController extends GetxController {
     fetchTransactions();
   }
 
+  // ══════════════════════════════════════════════
+  // 🔔 Notify (ข้าม feature)
+  // ══════════════════════════════════════════════
   Future<void> _notify({
     required AppNotificationType type,
     required String title,
@@ -36,18 +40,24 @@ class AccountController extends GetxController {
     } catch (_) {}
   }
 
+  // ══════════════════════════════════════════════
+  // 📥 Fetch
+  // ══════════════════════════════════════════════
   Future<void> fetchTransactions() async {
     isLoading.value = true;
     try {
       final list = await repository.getTransactions();
       allTransactions.assignAll(list);
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດດຶງຂໍ້ມູນໄດ້');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດດຶງຂໍ້ມູນໄດ້');
     } finally {
       isLoading.value = false;
     }
   }
 
+  // ══════════════════════════════════════════════
+  // ➕ Add
+  // ══════════════════════════════════════════════
   Future<void> addTransaction(AccountTransaction tx) async {
     try {
       await repository.addTransaction(tx);
@@ -63,14 +73,15 @@ class AccountController extends GetxController {
         targetId: tx.id,
       );
 
-      Get.snackbar('ສຳເລັດ', 'ບັນທຶກຮຽບຮ້ອຍແລ້ວ',
-          snackPosition: SnackPosition.TOP,
-          duration: const Duration(seconds: 2));
+      AppSnackbar.ok('ສຳເລັດ', 'ບັນທຶກຮຽບຮ້ອຍແລ້ວ');
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດບັນທຶກໄດ້: $e');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດບັນທຶກໄດ້: $e');
     }
   }
 
+  // ══════════════════════════════════════════════
+  // 🗑 Delete
+  // ══════════════════════════════════════════════
   Future<void> deleteTransaction(String id) async {
     try {
       final tx = allTransactions.firstWhereOrNull((t) => t.id == id);
@@ -86,15 +97,14 @@ class AccountController extends GetxController {
         targetId: id,
       );
 
-      Get.snackbar('ສຳເລັດ', 'ລຶບຮຽບຮ້ອຍແລ້ວ',
-          snackPosition: SnackPosition.TOP);
+      AppSnackbar.ok('ສຳເລັດ', 'ລຶບຮຽບຮ້ອຍແລ້ວ');
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດລຶບໄດ້: $e');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດລຶບໄດ້: $e');
     }
   }
 
   // ══════════════════════════════════════════════
-  // ຍອດລວມ
+  // 💰 ຍອດລວມ
   // ══════════════════════════════════════════════
   double get totalIn => allTransactions
       .where((t) => t.isIncome)
@@ -107,15 +117,18 @@ class AccountController extends GetxController {
   double get balance => totalIn - totalOut;
 
   double get cashBalance => allTransactions
-          .where((t) => t.isCash)
-          .fold<double>(0,
-              (s, t) => s + (t.isIncome ? t.totalAmount : -t.totalAmount));
+      .where((t) => t.isCash)
+      .fold<double>(0,
+          (s, t) => s + (t.isIncome ? t.totalAmount : -t.totalAmount));
 
   double get transferBalance => allTransactions
-          .where((t) => t.isTransfer)
-          .fold<double>(0,
-              (s, t) => s + (t.isIncome ? t.totalAmount : -t.totalAmount));
+      .where((t) => t.isTransfer)
+      .fold<double>(0,
+          (s, t) => s + (t.isIncome ? t.totalAmount : -t.totalAmount));
 
+  // ══════════════════════════════════════════════
+  // 📊 Session Groups
+  // ══════════════════════════════════════════════
   List<SessionGroup> get sessionGroups {
     if (allTransactions.isEmpty) return [];
 
@@ -155,6 +168,9 @@ class AccountController extends GetxController {
     return result.reversed.toList();
   }
 
+  // ══════════════════════════════════════════════
+  // 📅 Format
+  // ══════════════════════════════════════════════
   String formatDateHeader(DateTime d) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -177,6 +193,9 @@ class AccountController extends GetxController {
   String formatTime(DateTime d) => DateFormat('HH:mm').format(d);
 }
 
+// ══════════════════════════════════════════════
+// 📦 SESSION GROUP — Model for UI
+// ══════════════════════════════════════════════
 class SessionGroup {
   final String key;
   final DateTime date;

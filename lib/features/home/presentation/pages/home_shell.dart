@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:wood/core/widgets/custom_app_bar.dart';
-import 'package:wood/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:wood/core/constants/specific/home_style.dart';
+import 'package:wood/core/widgets/shared/custom_app_bar.dart';
 import 'package:wood/features/auth/domain/entities/menu_permission.dart';
 import 'package:wood/features/wood_products/presentation/pages/form/wood_product_form_page.dart';
 import 'package:wood/features/wood_products/presentation/pages/list/wood_product_list_page.dart';
 import 'package:wood/features/sales/presentation/pages/list/sales_list_page.dart';
-import 'package:wood/features/account/presentation/pages/account_page.dart';
-
 import '../controllers/home_controller.dart';
 import '../widgets/loading_page.dart';
 import '../widgets/pending_approval_page.dart';
 import '../widgets/tab_ticker_gate.dart';
 import '../widgets/lazy_3d_wrapper.dart';
 import '../widgets/keep_alive_page.dart';
+import 'package:wood/features/account/presentation/pages/account_page.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -71,7 +70,7 @@ class _HomeShellState extends State<HomeShell> {
         page = const KeepAlivePage(child: SalesListPage());
         break;
       case MenuKey.account:
-        page = const KeepAlivePage(child: AccountPage());
+        page = KeepAlivePage(child: AccountPage());
         break;
       case MenuKey.wood3d:
         page = Lazy3DWrapper(swipeLock: ctrl.lockSwipe);
@@ -100,16 +99,19 @@ class _HomeShellState extends State<HomeShell> {
 
   Widget _scaffold() {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F0EA),
+      backgroundColor: HomeStyle.bg,
       body: Column(
         children: [
+          // ── AppBar (hide/show) ──
           ValueListenableBuilder<bool>(
             valueListenable: ctrl.barsVisible,
             builder: (_, v, child) => AnimatedSize(
-              duration: const Duration(milliseconds: 240),
+              duration: HomeStyle.barsAnim,
               curve: Curves.easeOutCubic,
               alignment: Alignment.topCenter,
-              child: v ? child! : const SizedBox(width: double.infinity),
+              child: v
+                  ? child!
+                  : const SizedBox(width: double.infinity),
             ),
             child: ValueListenableBuilder<int>(
               valueListenable: ctrl.titleIndexNotifier,
@@ -119,6 +121,8 @@ class _HomeShellState extends State<HomeShell> {
               },
             ),
           ),
+
+          // ── Body ──
           Expanded(
             child: NotificationListener<ScrollNotification>(
               onNotification: (n) {
@@ -153,13 +157,17 @@ class _HomeShellState extends State<HomeShell> {
           ),
         ],
       ),
+
+      // ── BottomNav (hide/show) ──
       bottomNavigationBar: ValueListenableBuilder<bool>(
         valueListenable: ctrl.barsVisible,
         builder: (_, v, child) => AnimatedSize(
-          duration: const Duration(milliseconds: 240),
+          duration: HomeStyle.barsAnim,
           curve: Curves.easeOutCubic,
           alignment: Alignment.bottomCenter,
-          child: v ? child! : const SizedBox(width: double.infinity),
+          child: v
+              ? child!
+              : const SizedBox(width: double.infinity),
         ),
         child: ValueListenableBuilder<int>(
           valueListenable: ctrl.indexNotifier,
@@ -167,12 +175,14 @@ class _HomeShellState extends State<HomeShell> {
             final safe = idx.clamp(0, ctrl.tabs.length - 1);
             return BottomNavigationBar(
               currentIndex: safe,
-              selectedItemColor: Colors.brown,
-              unselectedItemColor: Colors.grey,
-              selectedIconTheme: const IconThemeData(size: 26),
-              unselectedIconTheme: const IconThemeData(size: 22),
-              selectedFontSize: 12,
-              unselectedFontSize: 11,
+              selectedItemColor: HomeStyle.navSelected,
+              unselectedItemColor: HomeStyle.navUnselected,
+              selectedIconTheme: const IconThemeData(
+                  size: HomeStyle.navIconSelected),
+              unselectedIconTheme: const IconThemeData(
+                  size: HomeStyle.navIconUnselected),
+              selectedFontSize: HomeStyle.navFontSelected,
+              unselectedFontSize: HomeStyle.navFontUnselected,
               type: BottomNavigationBarType.fixed,
               onTap: (i) {
                 ctrl.setTab(i);
@@ -180,7 +190,7 @@ class _HomeShellState extends State<HomeShell> {
                 if (distance == 1) {
                   _pageController.animateToPage(
                     i,
-                    duration: const Duration(milliseconds: 200),
+                    duration: HomeStyle.pageSlide,
                     curve: Curves.easeOutCubic,
                   );
                 } else {

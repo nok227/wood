@@ -1,22 +1,36 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../entities/app_user.dart';
 
+/// ══════════════════════════════════════════════
+/// 📜 AUTH REPOSITORY — สัญญา (pure Dart)
+/// ไม่ import Firebase — คืน AppUser
+/// ══════════════════════════════════════════════
 abstract class AuthRepository {
-  Future<UserCredential> registerWithEmail({
+  // ── State ──
+  AppUser? get currentUser;
+
+  /// Stream ผู้ใช้ปัจจุบัน (login/logout)
+  Stream<AppUser?> authStateStream();
+
+  /// Stream user doc (realtime update — permissions)
+  Stream<AppUser?> userStream(String uid);
+
+  // ── Auth ──
+  Future<AppUser> registerWithEmail({
     required String name,
     required String email,
     required String password,
   });
 
-  Future<UserCredential> signInWithEmail({
+  Future<AppUser> signInWithEmail({
     required String email,
     required String password,
   });
 
-  Future<UserCredential?> signInWithGoogle();
+  Future<AppUser?> signInWithGoogle();
 
   Future<void> signOut();
 
-  Stream<DocumentSnapshot<Map<String, dynamic>>> userDocStream(String uid);
+  // ── Admin ──
+  Future<List<AppUser>> getUsers();
   Future<void> updateAllowedMenus(String uid, List<String> menus);
 }

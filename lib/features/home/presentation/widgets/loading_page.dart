@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:wood/core/constants/specific/home_style.dart';
 
 class LoadingPage extends StatelessWidget {
   const LoadingPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFFF5F0EA),
-      body: Center(
+    return Scaffold(
+      backgroundColor: HomeStyle.bg,
+      body: const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: Colors.brown),
-            SizedBox(height: 16),
+            CircularProgressIndicator(color: HomeStyle.primary),
+            HomeStyle.gapLg,
             Text(
-              'ກຳລັງໂຫຼດ...',
-              style: TextStyle(color: Colors.brown, fontSize: 14),
+              HomeStyle.loading,
+              style: HomeStyle.loadingText,
             ),
           ],
         ),

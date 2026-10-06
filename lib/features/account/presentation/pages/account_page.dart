@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
-import 'package:wood/core/widgets/skeletons/skeletons.dart';
+import 'package:wood/core/widgets/global/skeletons/skeletons.dart';
 import 'package:wood/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:wood/core/constants/specific/account_style.dart';
+
 import '../../domain/entities/account_transaction.dart';
 import '../controllers/account_controller.dart';
 import '../widgets/account_form_sheet.dart';
@@ -23,6 +26,7 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage> {
   late final AccountController controller;
   final ScrollController _scrollController = ScrollController();
+  final _fmt = NumberFormat('#,###');
   double _lastOffset = 0;
   final ValueNotifier<bool> _bannerVisible = ValueNotifier<bool>(true);
 
@@ -51,14 +55,14 @@ class _AccountPageState extends State<AccountPage> {
     final delta = offset - _lastOffset;
     _lastOffset = offset;
 
-    if (offset < 20) {
+    if (offset < AccountStyle.scrollThreshold) {
       if (!_bannerVisible.value) _bannerVisible.value = true;
       return;
     }
 
-    if (delta > 5 && _bannerVisible.value) {
+    if (delta > AccountStyle.scrollDelta && _bannerVisible.value) {
       _bannerVisible.value = false;
-    } else if (delta < -5 && !_bannerVisible.value) {
+    } else if (delta < -AccountStyle.scrollDelta && !_bannerVisible.value) {
       _bannerVisible.value = true;
     }
   }
@@ -68,17 +72,18 @@ class _AccountPageState extends State<AccountPage> {
     final isAdmin = Get.find<AuthController>().isAdmin;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F0EA),
+      backgroundColor: AccountStyle.bg,
       body: Column(
         children: [
+          // ── Banner + Buttons (hide/show) ──
           ValueListenableBuilder<bool>(
             valueListenable: _bannerVisible,
             builder: (context, visible, child) {
               return AnimatedSize(
-                duration: const Duration(milliseconds: 250),
+                duration: AccountStyle.normal,
                 curve: Curves.easeOutCubic,
                 child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 200),
+                  duration: AccountStyle.fast,
                   opacity: visible ? 1 : 0,
                   child: visible
                       ? child
@@ -94,6 +99,8 @@ class _AccountPageState extends State<AccountPage> {
               ],
             ),
           ),
+
+          // ── List ──
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value &&
@@ -103,14 +110,15 @@ class _AccountPageState extends State<AccountPage> {
               final groups = controller.sessionGroups;
               if (groups.isEmpty) {
                 return const Center(
-                  child: Text('ບໍ່ມີລາຍການ',
-                      style: TextStyle(color: Colors.grey)),
+                  child: Text(
+                    AccountStyle.noTransactions,
+                    style: TextStyle(color: AccountStyle.textHint),
+                  ),
                 );
               }
               return ListView.builder(
                 controller: _scrollController,
-                padding: const EdgeInsets.only(
-                    bottom: 100, left: 12, right: 12, top: 4),
+                padding: AccountStyle.padList,
                 itemCount: groups.length,
                 itemBuilder: (_, i) => SessionSection(
                   group: groups[i],
@@ -130,7 +138,7 @@ class _AccountPageState extends State<AccountPage> {
     Get.bottomSheet(
       AccountFormSheet(initialType: type, onSubmit: controller.addTransaction),
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AccountStyle.transparent,
     );
   }
 
@@ -138,28 +146,18 @@ class _AccountPageState extends State<AccountPage> {
     if (Get.isDialogOpen ?? false) return;
     final names = t.items.map((i) => i.name).join(', ');
     Get.defaultDialog(
-      title: 'ຢືນຢັນການລຶບ',
+      title: AccountStyle.confirmDelete,
       middleText:
-          'ລຶບ "${names.isNotEmpty ? names : "ລາຍການ"}" ${_fmt(t.totalAmount)} ກີບ?',
-      textConfirm: 'ລຶບ',
-      textCancel: 'ຍົກເລີກ',
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.red.shade700,
+          '${AccountStyle.deletePrefix}${names.isNotEmpty ? names : AccountStyle.fallbackItemName}${AccountStyle.deleteMid}${_fmt.format(t.totalAmount)}${AccountStyle.deleteSuffix}',
+      textConfirm: AccountStyle.delete,
+      textCancel: AccountStyle.cancel,
+      confirmTextColor: AccountStyle.white,
+      buttonColor: AccountStyle.error800,
       onConfirm: () async {
         Get.back();
-        await Future.delayed(const Duration(milliseconds: 200));
+        await Future.delayed(AccountStyle.fast);
         await controller.deleteTransaction(t.id);
       },
     );
-  }
-
-  String _fmt(num v) {
-    final s = v.round().toString();
-    final buf = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
-      buf.write(s[i]);
-    }
-    return buf.toString();
   }
 }

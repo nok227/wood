@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wood/core/constants/specific/home_style.dart';
 import 'package:wood/features/wood_3d/presentation/pages/wood_3d_page.dart';
 
 class Lazy3DWrapper extends StatefulWidget {
@@ -29,8 +30,10 @@ class _Lazy3DWrapperState extends State<Lazy3DWrapper>
     super.build(context);
     if (!_ready) {
       return const ColoredBox(
-        color: Color(0xFFEFEBE9),
-        child: Center(child: CircularProgressIndicator(color: Colors.brown)),
+        color: HomeStyle.brown50,
+        child: Center(
+          child: CircularProgressIndicator(color: HomeStyle.primary),
+        ),
       );
     }
     return Wood3DPage(swipeLock: widget.swipeLock);

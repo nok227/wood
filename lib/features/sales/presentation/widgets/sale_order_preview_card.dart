@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:wood/core/constants/specific/sale_style.dart';
 import '../../domain/entities/sale_item_entity.dart';
 
 class SaleOrderPreviewCard extends StatelessWidget {
@@ -49,8 +50,7 @@ class SaleOrderPreviewCard extends StatelessWidget {
     final fmt = NumberFormat('#,###');
 
     final gross = items.fold<double>(0, (s, e) => s + e.grossAmount);
-    final discountTotal =
-        items.fold<double>(0, (s, e) => s + e.discountAmount);
+    final discountTotal = items.fold<double>(0, (s, e) => s + e.discountAmount);
     final net = items.fold<double>(0, (s, e) => s + e.totalAmount);
     final totalQty = items.fold<int>(0, (s, e) => s + e.quantity);
 
@@ -58,20 +58,21 @@ class SaleOrderPreviewCard extends StatelessWidget {
     final isMixed = cashPaid > 0 && transferPaid > 0;
 
     final payLabel = paymentType == 'cash'
-        ? 'ເງິນສົດ'
+        ? SaleStyle.cashFull
         : paymentType == 'transfer'
-            ? 'ເງິນໂອນ'
-            : paymentType == 'mixed'
-                ? 'ປະສົມ'
-                : 'ຕິດໜີ້';
+        ? SaleStyle.transferFull
+        : paymentType == 'mixed'
+        ? SaleStyle.mixedLabel
+        : SaleStyle.debtLabel;
 
     final payColor = isDebt
-        ? Colors.orange.shade800
+        ? SaleStyle.orange800
         : isMixed
-            ? Colors.indigo.shade700
-            : Colors.green.shade700;
+        ? SaleStyle.indigo700
+        : SaleStyle.green700;
 
-    final totalImages = payImgCount +
+    final totalImages =
+        payImgCount +
         billImgCount +
         topUpImgCount +
         debtPayImgCount +
@@ -79,122 +80,95 @@ class SaleOrderPreviewCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: SaleStyle.white,
+        borderRadius: SaleStyle.bannerRadius,
+        boxShadow: SaleStyle.cardMd,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
+            padding: SaleStyle.padImgHeader,
             child: Row(
               children: [
-                Icon(Icons.receipt_long,
-                    color: Colors.brown.shade700, size: 22),
-                const SizedBox(width: 10),
+                const Icon(
+                  Icons.receipt_long,
+                  color: SaleStyle.brown700,
+                  size: SaleStyle.iconMdLg,
+                ),
+                SaleStyle.gap10,
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'ໃບສະຫຼຸບການຂາຍ',
-                        style: TextStyle(
-                          color: Colors.brown.shade800,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.3,
-                        ),
+                      const Text(
+                        SaleStyle.previewTitle,
+                        style: SaleStyle.txPreviewTitle,
                       ),
-                      Text(
-                        'ກວດເບິ່ງກ່ອນບັນທຶກ',
-                        style: TextStyle(
-                          color: Colors.grey.shade500,
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
+                      const Text(
+                        SaleStyle.previewSub,
+                        style: SaleStyle.txPreviewSub,
                       ),
                     ],
                   ),
                 ),
                 Text(
-                  '${items.length} ລາຍການ',
-                  style: TextStyle(
-                    color: Colors.brown.shade700,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  '${items.length} ${SaleStyle.previewItemsUnit}',
+                  style: SaleStyle.txItemCount,
                 ),
               ],
             ),
           ),
           _dashedLine(),
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 8, 18, 16),
+            padding: SaleStyle.padImgBody,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _sectionLabel('ລາຍການສິນຄ້າ'),
-                const SizedBox(height: 10),
+                _sectionLabel(SaleStyle.sectionItems),
+                SaleStyle.gap10,
                 ...items.asMap().entries.map((e) {
                   final idx = e.key;
                   final it = e.value;
                   return _itemRow(idx + 1, it, fmt);
                 }),
                 _dashedLine(),
-                _moneyRow('ຍອດລວມ', '${fmt.format(gross)} ກີບ'),
+                _moneyRow(
+                  SaleStyle.previewTotal,
+                  '${fmt.format(gross)} ${SaleStyle.currency}',
+                ),
                 if (discountTotal > 0)
                   _moneyRow(
-                    'ສ່ວນລົດ',
-                    '-${fmt.format(discountTotal)} ກີບ',
-                    color: Colors.red.shade700,
+                    SaleStyle.previewDiscountLabel,
+                    '-${fmt.format(discountTotal)} ${SaleStyle.currency}',
+                    color: SaleStyle.red700,
                   ),
                 Padding(
                   padding: const EdgeInsets.only(top: 10, bottom: 4),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Expanded(
+                      const Expanded(
                         child: Text(
-                          'ຍອດຂາຍລວມ',
-                          style: TextStyle(
-                            color: Colors.green.shade800,
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.3,
-                          ),
+                          SaleStyle.previewNet,
+                          style: SaleStyle.txPreviewNetLabel,
                         ),
                       ),
                       Text(
-                        '${fmt.format(net)} ກີບ',
-                        style: TextStyle(
-                          color: Colors.green.shade800,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.3,
-                        ),
+                        '${fmt.format(net)} ${SaleStyle.currency}',
+                        style: SaleStyle.txPreviewNetValue,
                       ),
                     ],
                   ),
                 ),
                 _dashedLine(),
-                _sectionLabel('ການຊຳລະ'),
-                const SizedBox(height: 8),
+                _sectionLabel(SaleStyle.sectionPayment),
+                SaleStyle.gapSm,
                 Row(
                   children: [
                     Text(
-                      'ວິທີ: ',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: Colors.grey.shade600,
-                      ),
+                      '${SaleStyle.detailMethodLabel}: ',
+                      style: SaleStyle.txPreviewInfoLabel,
                     ),
                     Text(
                       payLabel,
@@ -205,59 +179,56 @@ class SaleOrderPreviewCard extends StatelessWidget {
                       ),
                     ),
                     if (received > 0 && cashPaid > 0) ...[
-                      const SizedBox(width: 12),
+                      SaleStyle.gap12,
                       Text(
-                        'ຮັບມາ: ',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: Colors.grey.shade600,
-                        ),
+                        '${SaleStyle.previewReceived}: ',
+                        style: SaleStyle.txPreviewInfoLabel,
                       ),
                       Text(
                         fmt.format(received),
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
-                          color: Colors.brown.shade700,
+                          color: SaleStyle.brown700,
                         ),
                       ),
                     ],
                   ],
                 ),
-                const SizedBox(height: 6),
+                SaleStyle.gap6,
                 if (cashPaid > 0)
                   _moneyRow(
-                    'ຈ່າຍສົດ',
-                    '${fmt.format(cashPaid)} ກີບ',
-                    color: Colors.green.shade700,
+                    SaleStyle.previewCash,
+                    '${fmt.format(cashPaid)} ${SaleStyle.currency}',
+                    color: SaleStyle.green700,
                   ),
                 if (transferPaid > 0)
                   _moneyRow(
-                    'ຈ່າຍໂອນ',
-                    '${fmt.format(transferPaid)} ກີບ',
-                    color: Colors.blue.shade700,
+                    SaleStyle.previewTransfer,
+                    '${fmt.format(transferPaid)} ${SaleStyle.currency}',
+                    color: SaleStyle.blue700,
                   ),
                 if (debt > 0)
                   _moneyRow(
-                    'ຕິດໜີ້',
-                    '${fmt.format(debt)} ກີບ',
-                    color: Colors.orange.shade800,
+                    SaleStyle.debtLabel,
+                    '${fmt.format(debt)} ${SaleStyle.currency}',
+                    color: SaleStyle.orange800,
                     bold: true,
                   ),
                 if (bills.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  _sectionLabel('ນັບແຍກໃບເງິນ'),
-                  const SizedBox(height: 6),
+                  SaleStyle.gap10,
+                  _sectionLabel(SaleStyle.previewBillsPrefix),
+                  SaleStyle.gap6,
                   Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
+                    spacing: SaleStyle.wrapSpacing,
+                    runSpacing: SaleStyle.wrapRunSpacing,
                     children: bills.entries.map((e) {
                       return Text(
                         '${fmt.format(e.key)} × ${e.value}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: Colors.brown.shade800,
+                          color: SaleStyle.brown800,
                         ),
                       );
                     }).toList(),
@@ -265,58 +236,93 @@ class SaleOrderPreviewCard extends StatelessWidget {
                 ],
                 if (isDebt) ...[
                   _dashedLine(),
-                  _sectionLabel('ຂໍ້ມູນລູກຄ້າຕິດໜີ້',
-                      color: Colors.orange.shade800),
-                  const SizedBox(height: 8),
+                  _sectionLabel(
+                    SaleStyle.previewCustLabel,
+                    color: SaleStyle.orange800,
+                  ),
+                  SaleStyle.gapSm,
                   if ((customerName ?? '').trim().isNotEmpty)
-                    _row(Icons.person, 'ຊື່', customerName!),
+                    _row(
+                      Icons.person,
+                      SaleStyle.detailCustomerPrefix,
+                      customerName!,
+                    ),
                   if ((customerPhone ?? '').trim().isNotEmpty)
-                    _row(Icons.phone, 'ເບີໂທ', customerPhone!),
+                    _row(
+                      Icons.phone,
+                      SaleStyle.detailPhonePrefix,
+                      customerPhone!,
+                    ),
                   if ((customerAddress ?? '').trim().isNotEmpty)
-                    _row(Icons.home, 'ທີ່ຢູ່', customerAddress!),
+                    _row(
+                      Icons.home,
+                      SaleStyle.detailAddrPrefix,
+                      customerAddress!,
+                    ),
                   if (appointmentDate != null)
                     _row(
                       Icons.event_available,
-                      'ນັດຈ່າຍ',
+                      SaleStyle.previewApptLabel,
                       '${appointmentDate!.day.toString().padLeft(2, '0')}/${appointmentDate!.month.toString().padLeft(2, '0')}/${appointmentDate!.year}',
                     ),
                   if ((debtNote ?? '').trim().isNotEmpty)
-                    _row(Icons.sticky_note_2, 'ໝາຍເຫດ', debtNote!),
+                    _row(
+                      Icons.sticky_note_2,
+                      SaleStyle.detailNoteLabel,
+                      debtNote!,
+                    ),
                 ],
                 if (totalImages > 0) ...[
                   _dashedLine(),
-                  _sectionLabel('ຮູບພາບແນບ'),
-                  const SizedBox(height: 8),
+                  _sectionLabel(SaleStyle.previewImgLabel),
+                  SaleStyle.gapSm,
                   Wrap(
-                    spacing: 12,
-                    runSpacing: 6,
+                    spacing: SaleStyle.wrapCardSpacing * 2,
+                    runSpacing: SaleStyle.wrapCardRunSpacing,
                     children: [
                       if (payImgCount > 0)
-                        _imgText(Icons.payments, 'ຊຳລະ', payImgCount),
+                        _imgText(
+                          Icons.payments,
+                          SaleStyle.previewImgPay,
+                          payImgCount,
+                        ),
                       if (billImgCount > 0)
                         _imgText(
-                            Icons.receipt_long, 'ໃບບິນ', billImgCount),
+                          Icons.receipt_long,
+                          SaleStyle.previewImgBill,
+                          billImgCount,
+                        ),
                       if (topUpImgCount > 0)
-                        _imgText(Icons.add_card, 'ເຕີມ', topUpImgCount),
+                        _imgText(
+                          Icons.add_card,
+                          SaleStyle.previewImgTopUp,
+                          topUpImgCount,
+                        ),
                       if (debtPayImgCount > 0)
-                        _imgText(Icons.account_balance_wallet,
-                            'ຈ່າຍໜີ້', debtPayImgCount),
+                        _imgText(
+                          Icons.account_balance_wallet,
+                          SaleStyle.previewImgDebt,
+                          debtPayImgCount,
+                        ),
                       if (debtBillCount > 0)
-                        _imgText(Icons.description, 'ໃບບິນໜີ້',
-                            debtBillCount),
+                        _imgText(
+                          Icons.description,
+                          SaleStyle.previewImgDebtBill,
+                          debtBillCount,
+                        ),
                     ],
                   ),
                 ],
                 if ((note ?? '').trim().isNotEmpty) ...[
                   _dashedLine(),
-                  _sectionLabel('ໝາຍເຫດ'),
-                  const SizedBox(height: 6),
+                  _sectionLabel(SaleStyle.sectionNote),
+                  SaleStyle.gap6,
                   Text(
                     note!,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12.5,
                       height: 1.5,
-                      color: Colors.grey.shade800,
+                      color: SaleStyle.grey800,
                     ),
                   ),
                 ],
@@ -325,16 +331,15 @@ class SaleOrderPreviewCard extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 4),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline,
-                          size: 13, color: Colors.grey.shade400),
-                      const SizedBox(width: 5),
+                      const Icon(
+                        Icons.info_outline,
+                        size: 13,
+                        color: SaleStyle.grey400,
+                      ),
+                      SaleStyle.gapSm,
                       Text(
-                        'ລວມ $totalQty ຊິ້ນ · ${items.length} ລາຍການ',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade600,
-                        ),
+                        '${SaleStyle.previewTotalQty} $totalQty ${SaleStyle.previewFooterPieces} · ${items.length} ${SaleStyle.previewFooterItems}',
+                        style: SaleStyle.txPreviewFooter,
                       ),
                     ],
                   ),
@@ -357,10 +362,10 @@ class SaleOrderPreviewCard extends StatelessWidget {
             width: 22,
             child: Text(
               '$idx.',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w900,
-                color: Colors.grey.shade500,
+                color: SaleStyle.grey500,
               ),
             ),
           ),
@@ -370,41 +375,30 @@ class SaleOrderPreviewCard extends StatelessWidget {
               children: [
                 Text(
                   it.productName,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+                  style: SaleStyle.txPreviewItemName,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                SaleStyle.gap2,
                 if (it.woodType.isNotEmpty)
-                  _subInfo('ຊະນິດ: ${it.woodType}'),
-                if (it.hasSize) _subInfo('ຂະໜາດ: ${it.dimensionText}'),
+                  _subInfo('${SaleStyle.itemDimPrefix} ${it.woodType}'),
+                if (it.hasSize)
+                  _subInfo('${SaleStyle.itemDimPrefix}: ${it.dimensionText}'),
                 _subInfo(
                   '${it.quantity} ${it.unit} × ${fmt.format(it.unitPrice)}',
-                  color: Colors.grey.shade700,
+                  color: SaleStyle.grey700,
                 ),
                 if (it.hasDiscount)
                   _subInfo(
-                    'ລົດ ${fmt.format(it.discountPerUnit)}/${it.unit} · ລວມ -${fmt.format(it.discountAmount)}',
-                    color: Colors.red.shade700,
+                    '${SaleStyle.itemDiscountPrefix} ${fmt.format(it.discountPerUnit)}/${it.unit} · ${SaleStyle.summaryTotal} -${fmt.format(it.discountAmount)}',
+                    color: SaleStyle.red700,
                     bold: true,
                   ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            '${fmt.format(it.totalAmount)}',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: Colors.brown.shade800,
-              letterSpacing: 0.2,
-            ),
-          ),
+          SaleStyle.gapSm,
+          Text(fmt.format(it.totalAmount), style: SaleStyle.txPreviewItemPrice),
         ],
       ),
     );
@@ -417,7 +411,7 @@ class SaleOrderPreviewCard extends StatelessWidget {
         text,
         style: TextStyle(
           fontSize: 11.5,
-          color: color ?? Colors.grey.shade600,
+          color: color ?? SaleStyle.grey600,
           fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
         ),
       ),
@@ -425,15 +419,7 @@ class SaleOrderPreviewCard extends StatelessWidget {
   }
 
   Widget _sectionLabel(String text, {Color? color}) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 10.5,
-        fontWeight: FontWeight.w900,
-        color: color ?? Colors.grey.shade500,
-        letterSpacing: 1.5,
-      ),
-    );
+    return Text(text, style: SaleStyle.txSectionLabel.copyWith(color: color));
   }
 
   Widget _dashedLine() {
@@ -443,8 +429,8 @@ class SaleOrderPreviewCard extends StatelessWidget {
         builder: (context, constraints) {
           const dashWidth = 4.0;
           const dashSpace = 4.0;
-          final count =
-              (constraints.maxWidth / (dashWidth + dashSpace)).floor();
+          final count = (constraints.maxWidth / (dashWidth + dashSpace))
+              .floor();
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(
@@ -452,7 +438,7 @@ class SaleOrderPreviewCard extends StatelessWidget {
               (_) => Container(
                 width: dashWidth,
                 height: 1,
-                color: Colors.grey.shade300,
+                color: SaleStyle.grey300,
               ),
             ),
           );
@@ -474,20 +460,18 @@ class SaleOrderPreviewCard extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: TextStyle(
-                fontSize: 12.5,
-                color: Colors.grey.shade600,
+              style: SaleStyle.txPreviewMoneyLabel.copyWith(
                 fontWeight: bold ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: bold ? FontWeight.w900 : FontWeight.w700,
-              color: color ?? Colors.black87,
-            ),
+            style:
+                (bold
+                        ? SaleStyle.txPreviewMoneyValueBold
+                        : SaleStyle.txPreviewMoneyValue)
+                    .copyWith(color: color),
           ),
         ],
       ),
@@ -500,26 +484,16 @@ class SaleOrderPreviewCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 13, color: Colors.grey.shade400),
-          const SizedBox(width: 8),
+          Icon(icon, size: SaleStyle.iconCalendar, color: SaleStyle.grey400),
+          SaleStyle.gapSm,
           SizedBox(
             width: 66,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey.shade600,
-              ),
-            ),
+            child: Text(label, style: SaleStyle.txPreviewInfoLabel),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-              ),
+              style: SaleStyle.txPreviewInfoValue,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -533,16 +507,9 @@ class SaleOrderPreviewCard extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13, color: Colors.grey.shade500),
-        const SizedBox(width: 4),
-        Text(
-          '$label · $count',
-          style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w700,
-            color: Colors.grey.shade700,
-          ),
-        ),
+        Icon(icon, size: SaleStyle.iconCalendar, color: SaleStyle.grey500),
+        SaleStyle.gap4,
+        Text('$label · $count', style: SaleStyle.txPreviewImgText),
       ],
     );
   }

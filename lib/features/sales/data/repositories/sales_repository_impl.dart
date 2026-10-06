@@ -3,14 +3,22 @@ import '../../domain/repositories/sales_repository.dart';
 import '../datasources/sales_remote_data_source.dart';
 import '../models/sale_order_model.dart';
 
+/// ══════════════════════════════════════════════
+/// 📦 SALES REPOSITORY IMPL
+/// แปลง Model ↔ Entity
+/// ══════════════════════════════════════════════
 class SalesRepositoryImpl implements SalesRepository {
   final SalesRemoteDataSource remoteDataSource;
   SalesRepositoryImpl({required this.remoteDataSource});
 
+  // ── ดึง: Model → Entity ──
   @override
-  Future<List<SaleOrderEntity>> getSaleOrders() =>
-      remoteDataSource.getSaleOrders();
+  Future<List<SaleOrderEntity>> getSaleOrders() async {
+    final models = await remoteDataSource.getSaleOrders();
+    return models.map((m) => m.toEntity()).toList();
+  }
 
+  // ── เพิ่ม: Entity → Model ──
   @override
   Future<void> addSaleOrder(SaleOrderEntity order) async {
     await remoteDataSource.addSaleOrder(SaleOrderModel.fromEntity(order));

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:wood/core/constants/specific/auth_style.dart';
+import 'package:wood/core/widgets/global/app_snackbar.dart';
 import '../controllers/auth_controller.dart';
 import '../../domain/entities/menu_permission.dart';
 
@@ -73,15 +75,9 @@ class _UserPermissionPageState extends State<UserPermissionPage> {
       final ok = await auth.updateUserMenuPermissions(widget.uid, menus);
       if (ok && mounted) {
         Get.back();
-        Get.snackbar(
-          'ສຳເລັດ',
-          'ອັບເດດສິດຂອງ ${widget.name} ແລ້ວ',
-          backgroundColor: Colors.green.shade700,
-          colorText: Colors.white,
-          icon: const Icon(Icons.check_circle, color: Colors.white),
-          snackPosition: SnackPosition.TOP,
-          margin: const EdgeInsets.all(12),
-          borderRadius: 12,
+        AppSnackbar.ok(
+          AuthStyle.successMsg,
+          '${AuthStyle.permissionSaveSuccess} ${widget.name} ${AuthStyle.permissionSaveSuccessSuffix}',
         );
       }
     } finally {
@@ -92,89 +88,79 @@ class _UserPermissionPageState extends State<UserPermissionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.brown[50],
+      backgroundColor: AuthStyle.bg,
       appBar: AppBar(
-        title: const Text('ກຳນົດສິດການເຂົ້າເຖິງ'),
-        backgroundColor: Colors.brown,
-        foregroundColor: Colors.white,
+        title: const Text(AuthStyle.permissionTitle),
+        backgroundColor: AuthStyle.primary,
+        foregroundColor: AuthStyle.white,
       ),
       body: Stack(
         children: [
           ListView(
-            padding: const EdgeInsets.all(16),
+            padding: AuthStyle.padPageList,
             children: [
               _header(),
-              const SizedBox(height: 16),
+              AuthStyle.gapLg,
               _presets(),
-              const SizedBox(height: 16),
+              AuthStyle.gapLg,
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: AuthStyle.padInfo,
                 decoration: BoxDecoration(
-                  color: Colors.amber.shade50,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.amber.shade300),
+                  color: AuthStyle.amber50,
+                  borderRadius: AuthStyle.r10,
+                  border: Border.all(color: AuthStyle.amber300),
                 ),
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.info_outline,
-                      size: 16,
-                      color: Colors.amber.shade900,
+                      size: AuthStyle.iconPreset,
+                      color: AuthStyle.amber900,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
+                    AuthStyle.gapSm,
+                    const Expanded(
                       child: Text(
-                        'ຖ້າບໍ່ເລືອກເມນູໃດເລີຍ ຜູ້ໃຊ້ຈະເຫັນໜ້າ "ຢູ່ລະຫວ່າງການກວດສອບ"',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: Colors.amber.shade900,
-                          fontWeight: FontWeight.w600,
-                          height: 1.4,
-                        ),
+                        AuthStyle.permissionInfo,
+                        style: AuthStyle.infoText,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              const Text(
-                'ເມນູທີ່ອະນຸຍາດ',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.brown,
+              AuthStyle.gapLg,
+              Text(
+                AuthStyle.menuAllowed,
+                style: AuthStyle.sectionLabel.copyWith(
+                  color: AuthStyle.primary,
                 ),
               ),
-              const SizedBox(height: 8),
+              AuthStyle.gapSm,
               ...MenuKey.values.map(_menuTile),
-              const SizedBox(height: 24),
+              AuthStyle.gap24W,
               SizedBox(
-                height: 48,
+                height: AuthStyle.buttonHeight,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.brown,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    backgroundColor: AuthStyle.primary,
+                    foregroundColor: AuthStyle.white,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: AuthStyle.r12,
                     ),
                   ),
                   onPressed: _saving ? null : _save,
                   icon: _saving
                       ? const SizedBox(
-                          width: 18,
-                          height: 18,
+                          width: AuthStyle.spinnerSmall,
+                          height: AuthStyle.spinnerSmall,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+                            strokeWidth: AuthStyle.spinnerStroke,
+                            color: AuthStyle.white,
                           ),
                         )
                       : const Icon(Icons.save),
                   label: Text(
-                    _saving ? 'ກຳລັງບັນທຶກ...' : 'ບັນທຶກ',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    _saving ? AuthStyle.saving : AuthStyle.save,
+                    style: AuthStyle.saveBtnText,
                   ),
                 ),
               ),
@@ -183,7 +169,7 @@ class _UserPermissionPageState extends State<UserPermissionPage> {
           if (_saving)
             Positioned.fill(
               child: Container(
-                color: Colors.black12,
+                color: AuthStyle.black12,
                 child: const SizedBox.shrink(),
               ),
             ),
@@ -194,39 +180,39 @@ class _UserPermissionPageState extends State<UserPermissionPage> {
 
   Widget _header() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: AuthStyle.padHeader,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.brown.shade700, Colors.brown.shade500],
+        gradient: const LinearGradient(
+          colors: [AuthStyle.brown700, AuthStyle.brown500],
         ),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: AuthStyle.r14,
       ),
       child: Row(
         children: [
           const CircleAvatar(
-            radius: 24,
-            backgroundColor: Colors.white24,
-            child: Icon(Icons.person, color: Colors.white, size: 26),
+            radius: AuthStyle.avatarMd,
+            backgroundColor: AuthStyle.white24,
+            child: Icon(
+              Icons.person,
+              color: AuthStyle.white,
+              size: AuthStyle.iconAvatarMd,
+            ),
           ),
-          const SizedBox(width: 12),
+          AuthStyle.gap12,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   widget.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AuthStyle.profileNameSmall,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                AuthStyle.gap2,
                 Text(
                   widget.email,
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  style: AuthStyle.profileEmail,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -244,38 +230,41 @@ class _UserPermissionPageState extends State<UserPermissionPage> {
         Expanded(
           child: OutlinedButton.icon(
             onPressed: _presetViewOnly,
-            icon: const Icon(Icons.visibility_outlined, size: 16),
-            label: const Text('ເບິ່ງຢ່າງດຽວ'),
+            icon: const Icon(
+              Icons.visibility_outlined,
+              size: AuthStyle.iconPreset,
+            ),
+            label: const Text(AuthStyle.viewOnly),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.brown,
-              side: BorderSide(color: Colors.brown.shade300),
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              foregroundColor: AuthStyle.primary,
+              side: const BorderSide(color: AuthStyle.brown300),
+              padding: AuthStyle.padPresetBtn,
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        AuthStyle.gapSm,
         Expanded(
           child: OutlinedButton.icon(
             onPressed: _presetAll,
-            icon: const Icon(Icons.done_all, size: 16),
-            label: const Text('ທັງໝົດ'),
+            icon: const Icon(Icons.done_all, size: AuthStyle.iconPreset),
+            label: const Text(AuthStyle.allMenus),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.green.shade800,
-              side: BorderSide(color: Colors.green.shade300),
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              foregroundColor: AuthStyle.successDark,
+              side: const BorderSide(color: AuthStyle.success300),
+              padding: AuthStyle.padPresetBtn,
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        AuthStyle.gapSm,
         Expanded(
           child: OutlinedButton.icon(
             onPressed: _presetNone,
-            icon: const Icon(Icons.block, size: 16),
-            label: const Text('ບໍ່ໃຫ້'),
+            icon: const Icon(Icons.block, size: AuthStyle.iconPreset),
+            label: const Text(AuthStyle.noAccess),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.red.shade700,
-              side: BorderSide(color: Colors.red.shade300),
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              foregroundColor: AuthStyle.error700,
+              side: const BorderSide(color: AuthStyle.error300),
+              padding: AuthStyle.padPresetBtn,
             ),
           ),
         ),
@@ -286,45 +275,39 @@ class _UserPermissionPageState extends State<UserPermissionPage> {
   Widget _menuTile(MenuKey k) {
     final on = _selected.contains(k);
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: AuthStyle.marginTileBottom,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AuthStyle.white,
+        borderRadius: AuthStyle.cardRadius,
         border: Border.all(
-          color: on ? Colors.brown.shade400 : Colors.grey.shade300,
-          width: on ? 1.6 : 1,
+          color: on ? AuthStyle.brown400 : AuthStyle.grey300,
+          width: on
+              ? AuthStyle.borderWidthSelected
+              : AuthStyle.borderWidthNormal,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: AuthStyle.cardLocal,
       ),
       child: CheckboxListTile(
         value: on,
         onChanged: (_) => _toggle(k),
-        activeColor: Colors.brown.shade700,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+        activeColor: AuthStyle.primary,
+        shape: const RoundedRectangleBorder(
+          borderRadius: AuthStyle.cardRadius,
         ),
         title: Row(
           children: [
-            Icon(k.icon, size: 18, color: Colors.brown.shade700),
-            const SizedBox(width: 8),
-            Text(
-              k.label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
+            Icon(
+              k.icon,
+              size: AuthStyle.iconMenuTile,
+              color: AuthStyle.primary,
             ),
+            AuthStyle.gapSm,
+            Text(k.label, style: AuthStyle.menuTileTitle),
           ],
         ),
         subtitle: Text(
-          'key: ${k.key}',
-          style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+          '${AuthStyle.keyPrefix}${k.key}',
+          style: AuthStyle.menuTileKey,
         ),
       ),
     );

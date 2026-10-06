@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:wood/core/constants/specific/wood_3d_style.dart';
 import 'wood_3d_geometry.dart';
 
 class _FaceDef {
@@ -34,9 +35,9 @@ class Wood3DPainter extends CustomPainter {
 
   Wood3DPainter(this.geometry);
 
-  static const Color _woodLight = Color(0xFFE8C99B);
-  static const Color _woodMid = Color(0xFFCE9C5E);
-  static const Color _woodDark = Color(0xFF8B5A2B);
+  static const Color _woodLight = Wood3DStyle.woodLight;
+  static const Color _woodMid = Wood3DStyle.woodMid;
+  static const Color _woodDark = Wood3DStyle.woodDark;
 
   static const _faces = [
     _FaceDef([0, 1, 2, 3], _woodMid, 'horizontal'),
@@ -76,12 +77,12 @@ class Wood3DPainter extends CustomPainter {
 
     final darkGrain = Color.lerp(
       baseColor,
-      const Color(0xFF3A1F0A),
+      Wood3DStyle.woodShadow,
       0.35 * brightness,
     )!;
     final lightGrain = Color.lerp(
       baseColor,
-      const Color(0xFFF5E0B5),
+      Wood3DStyle.woodLightGrain,
       0.35,
     )!;
 
@@ -143,9 +144,9 @@ class Wood3DPainter extends CustomPainter {
       bounds.center,
       bounds.longestSide * 0.55,
       [
-        Colors.transparent,
-        Colors.transparent,
-        Colors.black.withOpacity(0.28 * strength),
+        Wood3DStyle.transparent,
+        Wood3DStyle.transparent,
+        Wood3DStyle.black.withOpacity(0.28 * strength),
       ],
       const [0.0, 0.65, 1.0],
     );
@@ -175,9 +176,9 @@ class Wood3DPainter extends CustomPainter {
       center,
       rad,
       [
-        Colors.white.withOpacity(0.28 * strength),
-        Colors.white.withOpacity(0.08 * strength),
-        Colors.transparent,
+        Wood3DStyle.white.withOpacity(0.28 * strength),
+        Wood3DStyle.white.withOpacity(0.08 * strength),
+        Wood3DStyle.transparent,
       ],
       const [0.0, 0.4, 1.0],
     );
@@ -203,8 +204,8 @@ class Wood3DPainter extends CustomPainter {
         final brightness = 0.42 + 0.58 * lambert;
 
         Color shaded = Color.lerp(
-          Color.lerp(Colors.black, f.color, brightness)!,
-          Colors.white,
+          Color.lerp(Wood3DStyle.black, f.color, brightness)!,
+          Wood3DStyle.white,
           lambert * 0.10,
         )!;
 
@@ -233,9 +234,9 @@ class Wood3DPainter extends CustomPainter {
         bounds.topLeft,
         bounds.bottomRight,
         [
-          Color.lerp(face.color, Colors.white, 0.10)!,
+          Color.lerp(face.color, Wood3DStyle.white, 0.10)!,
           face.color,
-          Color.lerp(face.color, Colors.black, 0.12)!,
+          Color.lerp(face.color, Wood3DStyle.black, 0.12)!,
         ],
         const [0.0, 0.5, 1.0],
       );
@@ -266,7 +267,7 @@ class Wood3DPainter extends CustomPainter {
         Paint()
           ..color = Color.lerp(
             face.color,
-            const Color(0xFF3E2723),
+            Wood3DStyle.woodShadow,
             0.65,
           )!
               .withOpacity(0.55)
@@ -276,7 +277,7 @@ class Wood3DPainter extends CustomPainter {
       canvas.drawPath(
         path,
         Paint()
-          ..color = Colors.white.withOpacity(0.10 * face.brightness)
+          ..color = Wood3DStyle.white.withOpacity(0.10 * face.brightness)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 0.5,
       );
@@ -317,9 +318,9 @@ class Wood3DPainter extends CustomPainter {
       shadowCenter,
       shadowWidth * 0.5,
       [
-        Colors.black.withOpacity(0.22),
-        Colors.black.withOpacity(0.08),
-        Colors.transparent,
+        Wood3DStyle.black.withOpacity(0.22),
+        Wood3DStyle.black.withOpacity(0.08),
+        Wood3DStyle.transparent,
       ],
       const [0.0, 0.5, 1.0],
     );

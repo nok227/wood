@@ -10,58 +10,24 @@ class WoodRepositoryImpl implements WoodRepository {
   WoodRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<String> uploadImageToCloudinary(File imageFile) async {
-    return await remoteDataSource.uploadImageToCloudinary(imageFile);
-  }
-
-  WoodProductModel _toModel(WoodProduct p) => WoodProductModel(
-        id: p.id,
-        name: p.name,
-        imageUrls: p.imageUrls,
-        width: p.width,
-        length: p.length,
-        thickness: p.thickness,
-        sizeUnit: p.sizeUnit,
-        quantity: p.quantity,
-        unit: p.unit,
-        price: p.price,
-        zones: p.zones,
-        note: p.note,
-      );
-
-  WoodProduct _toEntity(WoodProductModel m) => WoodProduct(
-        id: m.id,
-        name: m.name,
-        imageUrls: m.imageUrls,
-        width: m.width,
-        length: m.length,
-        thickness: m.thickness,
-        sizeUnit: m.sizeUnit,
-        quantity: m.quantity,
-        unit: m.unit,
-        price: m.price,
-        zones: m.zones,
-        note: m.note,
-      );
+  Future<String> uploadImageToCloudinary(File imageFile) =>
+      remoteDataSource.uploadImageToCloudinary(imageFile);
 
   @override
-  Future<void> saveWoodProduct(WoodProduct product) async {
-    await remoteDataSource.saveWoodProduct(_toModel(product));
-  }
+  Future<void> saveWoodProduct(WoodProduct product) =>
+      remoteDataSource.saveWoodProduct(WoodProductModel.fromEntity(product));
 
   @override
-  Future<void> updateWoodProduct(WoodProduct product) async {
-    await remoteDataSource.updateWoodProduct(_toModel(product));
-  }
+  Future<void> updateWoodProduct(WoodProduct product) =>
+      remoteDataSource.updateWoodProduct(WoodProductModel.fromEntity(product));
 
   @override
-  Future<void> deleteWoodProduct(String id) async {
-    await remoteDataSource.deleteWoodProduct(id);
-  }
+  Future<void> deleteWoodProduct(String id) =>
+      remoteDataSource.deleteWoodProduct(id);
 
   @override
   Future<List<WoodProduct>> getWoodProducts() async {
     final models = await remoteDataSource.getWoodProducts();
-    return models.map(_toEntity).toList();
+    return models.map((m) => m.toEntity()).toList();
   }
 }

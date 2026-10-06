@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wood/core/constants/specific/wood_style.dart';
 
 class WoodListSkeleton extends StatefulWidget {
   final int groupCount;
@@ -17,7 +18,7 @@ class _WoodListSkeletonState extends State<WoodListSkeleton>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: WoodStyle.shimmer,
     )..repeat();
   }
 
@@ -32,7 +33,7 @@ class _WoodListSkeletonState extends State<WoodListSkeleton>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) => ListView.builder(
-        padding: const EdgeInsets.all(8),
+        padding: WoodStyle.padPage,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: widget.groupCount,
         itemBuilder: (context, index) => _ShimmerGroup(
@@ -62,35 +63,28 @@ class _ShimmerGroup extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.brown.shade300, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: WoodStyle.white,
+        borderRadius: WoodStyle.cardRadius,
+        border: Border.all(color: WoodStyle.brown300, width: 1.2),
+        boxShadow: WoodStyle.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 12, vertical: 9),
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.brown.shade300, Colors.brown.shade200],
+                colors: [WoodStyle.brown300, WoodStyle.brown200],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(11),
-              ),
+              borderRadius: WoodStyle.r11,
             ),
             child: Row(
               children: [
-                _box(w: 16, h: 16, r: 4, color: Colors.brown.shade200),
+                _box(w: 16, h: 16, r: 4, color: WoodStyle.brown200),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
@@ -100,17 +94,17 @@ class _ShimmerGroup extends StatelessWidget {
                           w: 100,
                           h: 13,
                           r: 4,
-                          color: Colors.brown.shade200),
+                          color: WoodStyle.brown200),
                       const SizedBox(height: 3),
                       _box(
                           w: 130,
                           h: 10,
                           r: 4,
-                          color: Colors.brown.shade200),
+                          color: WoodStyle.brown200),
                     ],
                   ),
                 ),
-                _box(w: 28, h: 18, r: 10, color: Colors.brown.shade200),
+                _box(w: 28, h: 18, r: 10, color: WoodStyle.brown200),
               ],
             ),
           ),
@@ -120,13 +114,14 @@ class _ShimmerGroup extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 for (int i = 0; i < itemCounts.length; i++) ...[
-                  _shimmerSubHeader(progress),
+                  _shimmerSubHeader(),
                   const SizedBox(height: 4),
                   for (int j = 0; j < itemCounts[i]; j++) ...[
-                    _ShimmerProductCard(progress: progress),
-                    if (j < itemCounts[i] - 1) _shimmerDivider(progress),
+                    const _ShimmerProductCard(),
+                    if (j < itemCounts[i] - 1) _shimmerDivider(),
                   ],
-                  if (i < itemCounts.length - 1) const SizedBox(height: 8),
+                  if (i < itemCounts.length - 1)
+                    const SizedBox(height: 8),
                 ],
               ],
             ),
@@ -136,32 +131,32 @@ class _ShimmerGroup extends StatelessWidget {
     );
   }
 
-  Widget _shimmerSubHeader(double progress) {
+  Widget _shimmerSubHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.brown.shade50,
-        borderRadius: BorderRadius.circular(8),
+        color: WoodStyle.brown50,
+        borderRadius: WoodStyle.r8,
         border: Border.all(
-          color: Colors.brown.shade200.withOpacity(0.35),
+          color: WoodStyle.brown200.withOpacity(0.35),
           width: 1.2,
         ),
       ),
       child: Row(
         children: [
-          _box(w: 13, h: 13, r: 3, color: Colors.brown.shade100),
+          _box(w: 13, h: 13, r: 3, color: WoodStyle.brown100),
           const SizedBox(width: 6),
           Expanded(
-            child: _box(
-                w: 100, h: 11, r: 4, color: Colors.brown.shade100),
+            child:
+                _box(w: 100, h: 11, r: 4, color: WoodStyle.brown100),
           ),
-          _box(w: 50, h: 14, r: 6, color: Colors.brown.shade100),
+          _box(w: 50, h: 14, r: 6, color: WoodStyle.brown100),
         ],
       ),
     );
   }
 
-  Widget _shimmerDivider(double progress) {
+  Widget _shimmerDivider() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       child: LayoutBuilder(
@@ -177,7 +172,7 @@ class _ShimmerGroup extends StatelessWidget {
               (_) => Container(
                 width: dashWidth,
                 height: 1,
-                color: Colors.grey.shade200,
+                color: WoodStyle.grey200,
               ),
             ),
           );
@@ -188,8 +183,7 @@ class _ShimmerGroup extends StatelessWidget {
 }
 
 class _ShimmerProductCard extends StatelessWidget {
-  final double progress;
-  const _ShimmerProductCard({required this.progress});
+  const _ShimmerProductCard();
 
   @override
   Widget build(BuildContext context) {
@@ -284,7 +278,7 @@ class _ShimmerBox extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.grey.shade300,
+        color: WoodStyle.grey300,
         borderRadius: BorderRadius.circular(radius),
       ),
     );

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+
+import 'package:wood/core/constants/specific/wood_style.dart';
 import 'package:wood/core/utils/currency_formatter.dart';
-import 'package:wood/core/widgets/custom_app_bar.dart';
+import 'package:wood/core/widgets/shared/custom_app_bar.dart';
 import '../../controllers/wood_product_controller.dart';
 import '../../widgets/wood_product_preview_card.dart';
 import '../../widgets/wood_form_section.dart';
@@ -37,23 +38,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
   @override
   bool get wantKeepAlive => true;
 
-  // ══════════════════════════════════════════════
-  // 🔍 ກວດສອບສິນຄ້າຊ້ຳ
-  // ══════════════════════════════════════════════
-  Set<String> _normalizeZones(List<String> input) => input
-      .map((z) => z.trim().toLowerCase())
-      .where((z) => z.isNotEmpty)
-      .toSet();
-
-  bool _sameZones(Set<String> a, Set<String> b) =>
-      a.length == b.length && a.containsAll(b);
-
-  bool _numEq(num a, String bStr) {
-    final b = double.tryParse(bStr);
-    if (b == null) return false;
-    return (a - b).abs() < 0.001;
-  }
-
+  // ══════════════════════════════════════════
+  // ✅ Done getters
+  // ══════════════════════════════════════════
   bool get _doneImages =>
       controller.existingImageUrls.isNotEmpty ||
       controller.selectedImages.isNotEmpty;
@@ -82,7 +69,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
   bool get _doneUnit {
     final u = controller.selectedUnit.value.trim();
     if (u.isEmpty) return false;
-    if (u == 'ອື່ນໆ') {
+    if (u == WoodStyle.unitOther) {
       return controller.customUnitController.text.trim().isNotEmpty;
     }
     return true;
@@ -108,14 +95,14 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     super.build(context);
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: WoodStyle.bg,
       appBar: widget.isPage
           ? CustomAppBar(
               titleWidget: Obx(
                 () => Text(
                   controller.editingProductId.value == null
-                      ? 'ເພີ່ມໄມ້ໃໝ່'
-                      : 'ແກ້ໄຂຂໍ້ມູນໄມ້',
+                      ? WoodStyle.formTitleAdd
+                      : WoodStyle.formTitleEdit,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 18,
@@ -125,7 +112,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
             )
           : null,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: WoodStyle.padForm,
         child: ListenableBuilder(
           listenable: _formListenable,
           builder: (context, _) => Column(
@@ -135,18 +122,18 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
               Obx(
                 () => WoodFormSection(
                   number: '1',
-                  title: 'ຮູບໄມ້ (ສູງສຸດ 6 ຮູບ)',
+                  title: WoodStyle.secImages,
                   icon: Icons.photo_library_outlined,
                   done: _doneImages,
                   child: WoodFormImagePicker(controller: controller),
                 ),
               ),
-              const SizedBox(height: 14),
+              WoodStyle.gapLg,
 
               // ② ຊະນິດໄມ້
               WoodFormSection(
                 number: '2',
-                title: 'ຊະນິດໄມ້',
+                title: WoodStyle.secWoodType,
                 icon: Icons.local_florist,
                 done: _doneWoodType,
                 child: Column(
@@ -154,7 +141,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                   children: [
                     TextField(
                       controller: controller.woodTypeController,
-                      decoration: _inputDeco('ຊະນິດໄມ້'),
+                      decoration: _inputDeco(WoodStyle.secWoodType),
                     ),
                     Obx(
                       () => _suggestion(
@@ -169,12 +156,12 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
+              WoodStyle.gapLg,
 
               // ③ ຊື່ໄມ້
               WoodFormSection(
                 number: '3',
-                title: 'ຊື່ໄມ້',
+                title: WoodStyle.secName,
                 icon: Icons.inventory_2_outlined,
                 done: _doneName,
                 child: Column(
@@ -182,7 +169,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                   children: [
                     TextField(
                       controller: controller.nameController,
-                      decoration: _inputDeco('ຊື່ໄມ້'),
+                      decoration: _inputDeco(WoodStyle.secName),
                     ),
                     Obx(
                       () => _suggestion(
@@ -197,47 +184,47 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
+              WoodStyle.gapLg,
 
               // ④ ໂຊນ
               Obx(
                 () => WoodFormSection(
                   number: '4',
-                  title: 'ໂຊນ',
+                  title: WoodStyle.secZone,
                   icon: Icons.place_outlined,
                   done: _doneZone,
                   warning: true,
                   child: WoodFormZoneSelector(controller: controller),
                 ),
               ),
-              const SizedBox(height: 14),
+              WoodStyle.gapLg,
 
               // ⑤ ຂະໜາດ
               WoodFormSection(
                 number: '5',
-                title: 'ຂະໜາດ',
+                title: WoodStyle.secSize,
                 icon: Icons.straighten,
                 done: _doneSize,
                 child: _sizeRow(),
               ),
-              const SizedBox(height: 14),
+              WoodStyle.gapLg,
 
               // ⑥ ຈຳນວນ + ໜ່ວຍນັບ
               Obx(
                 () => WoodFormSection(
                   number: '6',
-                  title: 'ຈຳນວນ ແລະ ໜ່ວຍນັບ',
+                  title: WoodStyle.secQtyUnit,
                   icon: Icons.numbers,
                   done: _doneUnit,
                   child: _qtyUnitRow(),
                 ),
               ),
-              const SizedBox(height: 14),
+              WoodStyle.gapLg,
 
               // ⑦ ລາຄາ
               WoodFormSection(
                 number: '7',
-                title: 'ລາຄາຂາຍ',
+                title: WoodStyle.secPrice,
                 icon: Icons.sell_outlined,
                 done: _donePrice,
                 child: TextField(
@@ -249,16 +236,16 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     CurrencyFormatter(),
                   ],
-                  decoration: _inputDeco('ລາຄາຂາຍ xxx ກີບ')
-                      .copyWith(suffixText: 'ກີບ '),
+                  decoration: _inputDeco(WoodStyle.priceLabelInput)
+                      .copyWith(suffixText: '${WoodStyle.currency} '),
                 ),
               ),
-              const SizedBox(height: 14),
+              WoodStyle.gapLg,
 
               // ⑧ ໝາຍເຫດ
               WoodFormSection(
                 number: '8',
-                title: 'ໝາຍເຫດ',
+                title: WoodStyle.secNote,
                 icon: Icons.sticky_note_2_outlined,
                 done: _doneNote,
                 warning: true,
@@ -268,13 +255,12 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                   minLines: 2,
                   keyboardType: TextInputType.multiline,
                   textInputAction: TextInputAction.newline,
-                  decoration: _inputDeco(
-                    'ໝາຍເຫດເພີ່ມເຕີມ (ຖ້າມີ) — ເຊັ່ນ ສີໄມ້, ຄຸນນະພາບ, ຂໍ້ຄວນລະວັງ',
-                  ).copyWith(alignLabelWithHint: true),
+                  decoration: _inputDeco(WoodStyle.noteHint)
+                      .copyWith(alignLabelWithHint: true),
                 ),
               ),
 
-              // Preview
+              // ── Preview ──
               Obx(() {
                 if (!_hasAnyInput) return const SizedBox.shrink();
                 return Padding(
@@ -297,7 +283,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                         ) ??
                         0,
                     sizeUnit: controller.selectedSizeUnit.value,
-                    unit: controller.selectedUnit.value == 'ອື່ນໆ'
+                    unit: controller.selectedUnit.value == WoodStyle.unitOther
                         ? controller.customUnitController.text.trim()
                         : controller.selectedUnit.value,
                     price: double.tryParse(
@@ -315,7 +301,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
 
               const SizedBox(height: 20),
 
-              // ປຸ່ມ ບັນທຶກ/ຍົກເລີກ
+              // ── ປຸ່ມ ບັນທຶກ/ຍົກເລີກ ──
               Obx(() {
                 if (controller.isSaving.value) return _savingBox();
                 return Row(
@@ -323,20 +309,21 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
+                          minimumSize:
+                              const Size.fromHeight(WoodStyle.buttonHeight),
                           elevation: 0,
-                          backgroundColor: Colors.blueAccent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          backgroundColor: WoodStyle.blueAccent,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: WoodStyle.r12,
                           ),
                         ),
                         onPressed: _onSave,
                         child: Text(
                           controller.editingProductId.value == null
-                              ? 'ບັນທຶກ'
-                              : 'ບັນທຶກແກ້ໄຂ',
+                              ? WoodStyle.saveAdd
+                              : WoodStyle.saveEdit,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: WoodStyle.white,
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
                           ),
@@ -347,21 +334,22 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     Expanded(
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                          side: BorderSide(color: Colors.grey.shade300),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          minimumSize:
+                              const Size.fromHeight(WoodStyle.buttonHeight),
+                          side: const BorderSide(color: WoodStyle.grey300),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: WoodStyle.r12,
                           ),
-                          backgroundColor: Colors.white,
+                          backgroundColor: WoodStyle.white,
                         ),
                         onPressed: () {
                           controller.cancelEdit();
                           if (widget.isPage) Get.back();
                         },
-                        child: Text(
-                          'ຍົກເລີກ',
+                        child: const Text(
+                          WoodStyle.cancel,
                           style: TextStyle(
-                            color: Colors.grey.shade700,
+                            color: WoodStyle.grey700,
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
                           ),
@@ -378,6 +366,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     );
   }
 
+  // ══════════════════════════════════════════
+  // 📐 ຂະໜາດ
+  // ══════════════════════════════════════════
   Widget _sizeRow() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -390,7 +381,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: _inputDeco('ກວ້າງ'),
+                decoration: _inputDeco(WoodStyle.width),
               ),
             ),
             const SizedBox(width: 8),
@@ -400,7 +391,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: _inputDeco('ຍາວ'),
+                decoration: _inputDeco(WoodStyle.length),
               ),
             ),
             const SizedBox(width: 8),
@@ -410,7 +401,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: _inputDeco('ໜາ'),
+                decoration: _inputDeco(WoodStyle.thickness),
               ),
             ),
           ],
@@ -420,9 +411,12 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
           () => DropdownButtonFormField<String>(
             value: controller.selectedSizeUnit.value,
             isExpanded: true,
-            decoration: _inputDeco('ໜ່ວຍຂະໜາດ'),
+            decoration: _inputDeco(WoodStyle.sizeUnitLabel),
             items: controller.sizeUnitOptions
-                .map((u) => DropdownMenuItem(value: u, child: Text(u)))
+                .map((u) => DropdownMenuItem(
+                      value: u,
+                      child: Text(u, overflow: TextOverflow.ellipsis),
+                    ))
                 .toList(),
             onChanged: (v) {
               if (v != null) controller.selectedSizeUnit.value = v;
@@ -433,6 +427,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     );
   }
 
+  // ══════════════════════════════════════════
+  // 🔢 ຈຳນວນ + ໜ່ວຍນັບ
+  // ══════════════════════════════════════════
   Widget _qtyUnitRow() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -445,9 +442,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                 controller: controller.quantityController,
                 readOnly: true,
                 enabled: false,
-                decoration: _inputDeco('ຈຳນວນ').copyWith(
+                decoration: _inputDeco(WoodStyle.qtyLabel).copyWith(
                   filled: true,
-                  fillColor: Colors.grey.shade100,
+                  fillColor: WoodStyle.grey100,
                 ),
               ),
             ),
@@ -458,16 +455,20 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     ? null
                     : controller.selectedUnit.value,
                 isExpanded: true,
-                hint: Text(
-                  'ເລືອກໜ່ວຍນັບ',
+                hint: const Text(
+                  WoodStyle.unitHint,
                   style: TextStyle(
-                    color: Colors.grey.shade500,
+                    color: WoodStyle.grey500,
                     fontSize: 14,
                   ),
                 ),
-                decoration: _inputDeco('ໜ່ວຍນັບ'),
+                decoration: _inputDeco(WoodStyle.unitLabel),
                 items: controller.unitOptions
-                    .map((u) => DropdownMenuItem(value: u, child: Text(u)))
+                    .map((u) => DropdownMenuItem(
+                          value: u,
+                          child:
+                              Text(u, overflow: TextOverflow.ellipsis),
+                        ))
                     .toList(),
                 onChanged: (v) {
                   if (v != null) controller.selectedUnit.value = v;
@@ -476,28 +477,31 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
             ),
           ],
         ),
-        if (controller.selectedUnit.value == 'ອື່ນໆ')
+        if (controller.selectedUnit.value == WoodStyle.unitOther)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: TextField(
               controller: controller.customUnitController,
-              decoration: _inputDeco('ລະບຸໜ່ວຍນັບ'),
+              decoration: _inputDeco(WoodStyle.customUnit),
             ),
           ),
       ],
     );
   }
 
+  // ══════════════════════════════════════════
+  // ⏳ Saving box
+  // ══════════════════════════════════════════
   Widget _savingBox() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: WoodStyle.padForm,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.brown.shade200),
+        color: WoodStyle.white,
+        borderRadius: WoodStyle.r12,
+        border: Border.all(color: WoodStyle.brown200),
         boxShadow: [
           BoxShadow(
-            color: Colors.brown.withOpacity(0.08),
+            color: WoodStyle.brown700.withOpacity(0.08),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -506,13 +510,13 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
       child: Column(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: WoodStyle.r4,
             child: LinearProgressIndicator(
               value: controller.saveProgress.value > 0
                   ? controller.saveProgress.value / 100
                   : null,
-              backgroundColor: Colors.brown.shade50,
-              color: Colors.brown,
+              backgroundColor: WoodStyle.brown50,
+              color: WoodStyle.brown700,
               minHeight: 8,
             ),
           ),
@@ -524,28 +528,28 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.2,
-                  color: Colors.brown,
+                  color: WoodStyle.brown700,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   controller.saveStep.value.isEmpty
-                      ? 'ກຳລັງບັນທຶກ...'
+                      ? WoodStyle.savingProgress
                       : controller.saveStep.value,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: Colors.brown.shade800,
+                    color: WoodStyle.brown800,
                   ),
                 ),
               ),
               Text(
                 '${controller.saveProgress.value}%',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
-                  color: Colors.brown.shade800,
+                  color: WoodStyle.brown800,
                 ),
               ),
             ],
@@ -560,11 +564,16 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     final ok = await controller.saveProduct();
     if (ok) {
       if (widget.isPage) Get.back();
-      Get.snackbar('ສຳເລັດ',
-          isEditing ? 'ແກ້ໄຂຂໍ້ມູນແລ້ວ' : 'ບັນທຶກຂໍ້ມູນແລ້ວ');
+      Get.snackbar(
+        WoodStyle.successMsg,
+        isEditing ? WoodStyle.savedEdit : WoodStyle.savedNew,
+      );
     }
   }
 
+  // ══════════════════════════════════════════
+  // 💡 Suggestion chips
+  // ══════════════════════════════════════════
   Widget _suggestion(List<String> items, ValueChanged<String> onTap) {
     if (items.isEmpty) return const SizedBox.shrink();
     final sorted = List<String>.from(items);
@@ -575,16 +584,12 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
         children: [
           Row(
             children: [
-              Icon(Icons.lightbulb_outline,
-                  size: 13, color: Colors.brown.shade400),
+              const Icon(Icons.lightbulb_outline,
+                  size: 13, color: WoodStyle.brown400),
               const SizedBox(width: 4),
               Text(
-                'ເຄີຍປ້ອນ (${sorted.length})',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.brown.shade500,
-                ),
+                '${WoodStyle.prevInput} (${sorted.length})',
+                style: WoodStyle.suggestionHeader,
               ),
             ],
           ),
@@ -594,16 +599,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
             runSpacing: 6,
             children: sorted.map((t) {
               return ActionChip(
-                label: Text(
-                  t,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.brown,
-                  ),
-                ),
-                backgroundColor: Colors.brown.shade50,
-                side: BorderSide(color: Colors.brown.shade200),
+                label: Text(t, style: WoodStyle.suggestionChip),
+                backgroundColor: WoodStyle.brown50,
+                side: const BorderSide(color: WoodStyle.brown200),
                 visualDensity: VisualDensity.compact,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 onPressed: () => onTap(t),
@@ -615,20 +613,23 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     );
   }
 
+  // ══════════════════════════════════════════
+  // 🎨 Input decoration
+  // ══════════════════════════════════════════
   InputDecoration _inputDeco(String label) => InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+        labelStyle: WoodStyle.formLabel,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: WoodStyle.white,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+        enabledBorder: const OutlineInputBorder(
+          borderRadius: WoodStyle.r12,
+          borderSide: BorderSide(color: WoodStyle.grey300, width: 1),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.black87, width: 1.5),
+        focusedBorder: const OutlineInputBorder(
+          borderRadius: WoodStyle.r12,
+          borderSide: BorderSide(color: WoodStyle.black87, width: 1.5),
         ),
       );
 }

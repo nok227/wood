@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:wood/core/constants/global/app_colors.dart';
+import 'package:wood/core/constants/global/app_layout.dart';
 
 class OptionTile extends StatelessWidget {
   final IconData icon;
@@ -24,13 +26,13 @@ class OptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: AppLayout.r12,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200, width: 1),
+          color: AppColors.grey50,
+          borderRadius: AppLayout.r12,
+          border: Border.all(color: AppColors.grey200, width: 1),
         ),
         child: Row(
           children: [
@@ -61,16 +63,16 @@ class OptionTile extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 11.5,
-                      color: Colors.grey.shade600,
+                      color: AppColors.grey600,
                     ),
                   ),
                 ],
               ),
             ),
             trailing ??
-                Icon(
+                const Icon(
                   Icons.chevron_right,
-                  color: Colors.grey.shade400,
+                  color: AppColors.grey400,
                   size: 20,
                 ),
           ],

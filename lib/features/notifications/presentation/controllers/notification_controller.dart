@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:app_badge_plus/app_badge_plus.dart';
 import 'package:get/get.dart';
@@ -15,7 +14,16 @@ class NotificationController extends GetxController {
 
   static const int ttlDays = 7;
 
-  String? get _uid => FirebaseAuth.instance.currentUser?.uid;
+  // ⭐ เปลี่ยน: ใช้ AuthController แทน FirebaseAuth ตรง
+  String? get _uid {
+    if (!Get.isRegistered<AuthController>()) return null;
+    return Get.find<AuthController>().currentUser.value?.uid;
+  }
+
+  bool get _isAdmin {
+    if (!Get.isRegistered<AuthController>()) return false;
+    return Get.find<AuthController>().isAdmin;
+  }
 
   @override
   void onInit() {
@@ -53,15 +61,7 @@ class NotificationController extends GetxController {
   }
 
   List<AppNotification> get _visible {
-    bool isAdmin = false;
-    if (Get.isRegistered<AuthController>()) {
-      try {
-        isAdmin = Get.find<AuthController>().isAdmin;
-      } catch (_) {
-        isAdmin = false;
-      }
-    }
-
+    final isAdmin = _isAdmin;
     final uid = _uid;
 
     return allNotifications.where((n) {
@@ -94,13 +94,11 @@ class NotificationController extends GetxController {
     Map<String, dynamic>? meta,
   }) async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      bool isAdmin = false;
-      if (Get.isRegistered<AuthController>()) {
-        try {
-          isAdmin = Get.find<AuthController>().isAdmin;
-        } catch (_) {}
-      }
+      final authCtrl = Get.isRegistered<AuthController>()
+          ? Get.find<AuthController>()
+          : null;
+      final actorEmail = authCtrl?.currentUser.value?.email ?? 'unknown';
+      final isAdmin = authCtrl?.isAdmin ?? false;
 
       final now = DateTime.now();
       final expireAt = now.add(Duration(days: ttlDays));
@@ -110,7 +108,7 @@ class NotificationController extends GetxController {
         type: type,
         title: title,
         message: message,
-        actorEmail: user?.email ?? 'unknown',
+        actorEmail: actorEmail,
         actorIsAdmin: isAdmin,
         audience: audience,
         date: now,

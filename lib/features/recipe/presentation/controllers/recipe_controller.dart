@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:get/get.dart';
 import 'package:wood/core/utils/cloudinary_service.dart';
+import 'package:wood/core/widgets/global/app_snackbar.dart';
 import '../../domain/entities/recipe.dart';
 import '../../domain/repositories/recipe_repository.dart';
 
@@ -30,12 +31,15 @@ class RecipeController extends GetxController {
       final list = await repository.getRecipes();
       allRecipes.assignAll(list);
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດດຶງຂໍ້ມູນໄດ້: $e');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດດຶງຂໍ້ມູນໄດ້: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
+  // ══════════════════════════════════════════
+  // Filtered
+  // ══════════════════════════════════════════
   List<RecipeEntity> get filteredRecipes {
     final q = searchQuery.value.trim().toLowerCase();
     final cat = selectedCategory.value;
@@ -46,8 +50,8 @@ class RecipeController extends GetxController {
       if (st != 'all' && r.status.name != st) return false;
       if (q.isNotEmpty) {
         final matchName = r.name.toLowerCase().contains(q);
-        final matchIng = r.ingredients
-            .any((i) => i.toLowerCase().contains(q));
+        final matchIng =
+            r.ingredients.any((i) => i.toLowerCase().contains(q));
         final matchSteps = (r.steps ?? '').toLowerCase().contains(q);
         if (!matchName && !matchIng && !matchSteps) return false;
       }
@@ -79,12 +83,18 @@ class RecipeController extends GetxController {
     return list;
   }
 
+  // ══════════════════════════════════════════
+  // Counts
+  // ══════════════════════════════════════════
   int get totalCount => allRecipes.length;
   int get wantCount =>
       allRecipes.where((r) => r.status == RecipeStatus.want).length;
   int get neverCount =>
       allRecipes.where((r) => r.status == RecipeStatus.never).length;
 
+  // ══════════════════════════════════════════
+  // CRUD
+  // ══════════════════════════════════════════
   Future<bool> addRecipe({
     required String name,
     required RecipeCategory category,
@@ -115,7 +125,7 @@ class RecipeController extends GetxController {
       allRecipes.insert(0, recipe);
       return true;
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດບັນທຶກໄດ້: $e');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດບັນທຶກໄດ້: $e');
       return false;
     }
   }
@@ -156,7 +166,7 @@ class RecipeController extends GetxController {
       allRecipes[idx] = updated;
       return true;
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດອັບເດດໄດ້: $e');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດອັບເດດໄດ້: $e');
       return false;
     }
   }
@@ -172,9 +182,9 @@ class RecipeController extends GetxController {
           await CloudinaryService.deleteImages(removed.imageUrls);
         } catch (_) {}
       }
-      Get.snackbar('ສຳເລັດ', 'ລຶບຮຽບຮ້ອຍແລ້ວ');
+      AppSnackbar.ok('ສຳເລັດ', 'ລຶບຮຽບຮ້ອຍແລ້ວ');
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດລຶບໄດ້: $e');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດລຶບໄດ້: $e');
     }
   }
 
@@ -189,10 +199,13 @@ class RecipeController extends GetxController {
         updatedAt: DateTime.now(),
       );
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດອັບເດດໄດ້: $e');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດອັບເດດໄດ້: $e');
     }
   }
 
+  // ══════════════════════════════════════════
+  // Random / Filter
+  // ══════════════════════════════════════════
   RecipeEntity? pickRandom({bool dueOnly = true}) {
     final pool = filteredRecipes.where((r) {
       if (!dueOnly) return true;
@@ -218,6 +231,9 @@ class RecipeController extends GetxController {
       selectedStatus.value != 'all' ||
       searchQuery.value.isNotEmpty;
 
+  // ══════════════════════════════════════════
+  // Upload
+  // ══════════════════════════════════════════
   Future<String?> uploadImage(dynamic file) async {
     try {
       return await CloudinaryService.uploadImage(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:wood/core/constants/specific/home_style.dart';
+import 'package:wood/core/widgets/global/app_snackbar.dart';
 import 'package:wood/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wood/features/auth/presentation/pages/register_page.dart';
 import 'package:wood/features/auth/presentation/pages/profile_view_page.dart';
@@ -14,21 +16,24 @@ class PendingApprovalPage extends StatelessWidget {
     final user = auth.currentUser.value;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F0EA),
+      backgroundColor: HomeStyle.bg,
       appBar: AppBar(
-        title: const Text('ລໍຖ້າການອະນຸມັດ'),
-        backgroundColor: Colors.brown,
-        foregroundColor: Colors.white,
+        title: const Text(HomeStyle.pendingTitle),
+        backgroundColor: HomeStyle.primary,
+        foregroundColor: HomeStyle.white,
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.account_circle, size: 26),
-            tooltip: 'ໂປຣຟາຍ',
+            icon: const Icon(
+              Icons.account_circle,
+              size: HomeStyle.iconProfileSize,
+            ),
+            tooltip: HomeStyle.profileTooltip,
             onPressed: () => Get.to(() => const ProfileViewPage()),
           ),
           IconButton(
-            icon: const Icon(Icons.logout, size: 22),
-            tooltip: 'ອອກຈາກລະບົບ',
+            icon: const Icon(Icons.logout, size: HomeStyle.iconLogoutSize),
+            tooltip: HomeStyle.logoutTooltip,
             onPressed: () => _showLogoutSheet(auth),
           ),
         ],
@@ -36,122 +41,114 @@ class PendingApprovalPage extends StatelessWidget {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: HomeStyle.padPendingPage,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // ── Hero icon ──
                 TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0.8, end: 1.0),
-                  duration: const Duration(milliseconds: 1200),
+                  duration: HomeStyle.heroScale,
                   curve: Curves.easeInOut,
                   builder: (context, scale, child) {
                     return Transform.scale(scale: scale, child: child);
                   },
                   child: Container(
-                    width: 120,
-                    height: 120,
+                    width: HomeStyle.heroSize,
+                    height: HomeStyle.heroSize,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         colors: [
-                          Colors.amber.shade200,
-                          Colors.orange.shade300,
+                          HomeStyle.pendingGradStart,
+                          HomeStyle.pendingGradEnd,
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.orange.withOpacity(0.35),
-                          blurRadius: 24,
-                          spreadRadius: 4,
+                          color: HomeStyle.pendingGlow.withOpacity(
+                            HomeStyle.opacityHero,
+                          ),
+                          blurRadius: HomeStyle.blurHero,
+                          spreadRadius: HomeStyle.spreadHero,
                         ),
                       ],
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.hourglass_top_rounded,
-                      size: 60,
-                      color: Colors.orange.shade900,
+                      size: HomeStyle.heroIconSize,
+                      color: HomeStyle.warning900,
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                HomeStyle.gap32,
+
+                // ── Heading ──
                 const Text(
-                  'ຢູ່ລະຫວ່າງການກວດສອບ',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.brown,
-                    letterSpacing: 0.5,
-                  ),
+                  HomeStyle.pendingHeading,
+                  style: HomeStyle.heroTitle,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 12),
+                HomeStyle.gapMd,
+
+                // ── Info card ──
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: HomeStyle.padInfoCard,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
+                    color: HomeStyle.white,
+                    borderRadius: HomeStyle.r14,
                     border: Border.all(
-                      color: Colors.orange.shade200,
-                      width: 1.5,
+                      color: HomeStyle.warning300,
+                      width: HomeStyle.borderWarning,
                     ),
                   ),
                   child: Column(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.info_outline,
-                        color: Colors.orange.shade700,
-                        size: 22,
+                        color: HomeStyle.warning,
+                        size: HomeStyle.iconMdSize,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'ບັນຊີຂອງທ່ານຍັງບໍ່ໄດ້ຮັບການກຳນົດສິດ',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.brown.shade800,
-                        ),
+                      HomeStyle.gapSm,
+                      const Text(
+                        HomeStyle.pendingInfoTitle,
+                        style: HomeStyle.infoTitle,
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'ກະລຸນາລໍຖ້າໃຫ້ Admin ກຳນົດສິດການເຂົ້າເຖິງ\n'
-                        'ຈຶ່ງຈະສາມາດເຂົ້າໃຊ້ງານໄດ້',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: Colors.grey.shade700,
-                          height: 1.5,
-                        ),
+                      HomeStyle.gapSm,
+                      const Text(
+                        HomeStyle.pendingInfoBody,
+                        style: HomeStyle.infoBody,
                         textAlign: TextAlign.center,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                HomeStyle.gap24,
+
+                // ── User card ──
                 if (user != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
+                    padding: HomeStyle.padUserCard,
                     decoration: BoxDecoration(
-                      color: Colors.brown.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.brown.shade200),
+                      color: HomeStyle.brown50,
+                      borderRadius: HomeStyle.r12,
+                      border: Border.all(color: HomeStyle.brown200),
                     ),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.brown.shade200,
+                        const CircleAvatar(
+                          radius: HomeStyle.avatarRadius,
+                          backgroundColor: HomeStyle.brown200,
                           child: Icon(
                             Icons.person,
-                            size: 20,
-                            color: Colors.brown.shade800,
+                            size: HomeStyle.avatarIconSize,
+                            color: HomeStyle.brown800,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        HomeStyle.gapMd,
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,22 +156,15 @@ class PendingApprovalPage extends StatelessWidget {
                               Text(
                                 user.displayName ??
                                     user.email?.split('@').first ??
-                                    'ຜູ້ໃຊ້',
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.brown,
-                                ),
+                                    HomeStyle.defaultUserName,
+                                style: HomeStyle.userName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 2),
+                              HomeStyle.gap2,
                               Text(
-                                user.email ?? '-',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  color: Colors.brown.shade600,
-                                ),
+                                user.email ?? HomeStyle.dash,
+                                style: HomeStyle.userEmail,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -184,31 +174,27 @@ class PendingApprovalPage extends StatelessWidget {
                       ],
                     ),
                   ),
-                const SizedBox(height: 24),
+                HomeStyle.gap24,
+
+                // ── Refresh button ──
                 OutlinedButton.icon(
                   onPressed: () {
-                    Get.snackbar(
-                      'ກຳລັງກວດສອບ',
-                      'ກຳລັງກວດສອບສິດອີກຄັ້ງ...',
-                      backgroundColor: Colors.brown,
-                      colorText: Colors.white,
-                      snackPosition: SnackPosition.TOP,
-                      duration: const Duration(seconds: 1),
-                      margin: const EdgeInsets.all(12),
-                      borderRadius: 12,
+                    AppSnackbar.info(
+                      HomeStyle.pendingRefreshToastTitle,
+                      HomeStyle.pendingRefreshToastMsg,
                     );
                   },
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('ກວດສອບອີກຄັ້ງ'),
+                  icon: const Icon(
+                    Icons.refresh,
+                    size: HomeStyle.iconRefreshSize,
+                  ),
+                  label: const Text(HomeStyle.pendingRefreshBtn),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.brown,
-                    side: BorderSide(color: Colors.brown.shade300),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    foregroundColor: HomeStyle.primary,
+                    side: const BorderSide(color: HomeStyle.brown300),
+                    padding: HomeStyle.padRefreshBtn,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: HomeStyle.r12,
                     ),
                   ),
                 ),
@@ -220,6 +206,9 @@ class PendingApprovalPage extends StatelessWidget {
     );
   }
 
+  // ══════════════════════════════════════════════
+  // 🚪 Logout bottom sheet
+  // ══════════════════════════════════════════════
   void _showLogoutSheet(AuthController auth) {
     var isLoggingOut = false;
 
@@ -227,15 +216,15 @@ class PendingApprovalPage extends StatelessWidget {
       StatefulBuilder(
         builder: (context, setSheetState) {
           return Container(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            padding: HomeStyle.padLogoutSheet,
             decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              color: HomeStyle.white,
+              borderRadius: HomeStyle.topR24,
             ),
             child: SafeArea(
               top: false,
               child: AnimatedSize(
-                duration: const Duration(milliseconds: 280),
+                duration: HomeStyle.sheetAnim,
                 curve: Curves.easeOutCubic,
                 child: isLoggingOut
                     ? _loadingContent()
@@ -256,8 +245,8 @@ class PendingApprovalPage extends StatelessWidget {
         },
       ),
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.4),
+      backgroundColor: HomeStyle.transparent,
+      barrierColor: HomeStyle.textPrimary.withOpacity(HomeStyle.opacityBarrier),
     );
   }
 
@@ -268,109 +257,104 @@ class PendingApprovalPage extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // ── Handle ──
         Container(
-          width: 40,
-          height: 4,
+          width: HomeStyle.handleBarW,
+          height: HomeStyle.handleBarH,
           decoration: BoxDecoration(
-            color: Colors.grey.shade300,
-            borderRadius: BorderRadius.circular(2),
+            color: HomeStyle.grey300,
+            borderRadius: HomeStyle.r4,
           ),
         ),
-        const SizedBox(height: 20),
+        HomeStyle.gap20,
+
+        // ── Logout icon circle ──
         Container(
-          width: 72,
-          height: 72,
+          width: HomeStyle.logoutIconCircle,
+          height: HomeStyle.logoutIconCircle,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [Colors.red.shade400, Colors.red.shade600],
+            gradient: const LinearGradient(
+              colors: [HomeStyle.logoutGradStart, HomeStyle.logoutGradEnd],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.red.withOpacity(0.3),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
+                color: HomeStyle.errorRed.withOpacity(
+                  HomeStyle.opacityLogoutGlow,
+                ),
+                blurRadius: HomeStyle.blurLogout,
+                offset: const Offset(0, HomeStyle.offsetLogoutY),
               ),
             ],
           ),
           child: const Icon(
             Icons.logout_rounded,
-            color: Colors.white,
-            size: 34,
+            color: HomeStyle.white,
+            size: HomeStyle.logoutIconSize,
           ),
         ),
-        const SizedBox(height: 16),
+        HomeStyle.gapLg,
+
+        // ── Title ──
+        const Text(HomeStyle.logoutTitle, style: HomeStyle.logoutTitleStyle),
+        HomeStyle.gap6,
         const Text(
-          'ອອກຈາກລະບົບ',
-          style: TextStyle(
-            fontSize: 19,
-            fontWeight: FontWeight.w900,
-            color: Colors.black87,
-            letterSpacing: 0.3,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'ທ່ານຕ້ອງການອອກຈາກລະບົບແມ່ນບໍ່?',
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.grey.shade600,
-          ),
+          HomeStyle.logoutMsg,
+          style: HomeStyle.logoutMsgStyle,
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 24),
+        HomeStyle.gap24,
+
+        // ── Buttons ──
         Row(
           children: [
             Expanded(
               child: SizedBox(
-                height: 48,
+                height: HomeStyle.btnHeight,
                 child: OutlinedButton(
                   onPressed: onCancel,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.grey.shade700,
-                    side: BorderSide(
-                      color: Colors.grey.shade300,
-                      width: 1.4,
+                    foregroundColor: HomeStyle.grey700,
+                    side: const BorderSide(
+                      color: HomeStyle.grey300,
+                      width: HomeStyle.borderCancel,
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: HomeStyle.r12,
                     ),
                   ),
                   child: const Text(
-                    'ຍົກເລີກ',
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    HomeStyle.cancel,
+                    style: HomeStyle.cancelBtnText,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            HomeStyle.gapMd,
             Expanded(
               flex: 2,
               child: SizedBox(
-                height: 48,
+                height: HomeStyle.btnHeight,
                 child: ElevatedButton.icon(
                   onPressed: onConfirm,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade600,
-                    foregroundColor: Colors.white,
+                    backgroundColor: HomeStyle.error600,
+                    foregroundColor: HomeStyle.white,
                     elevation: 0,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    shadowColor: HomeStyle.transparent,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: HomeStyle.r12,
                     ),
                   ),
-                  icon: const Icon(Icons.logout_rounded, size: 18),
+                  icon: const Icon(
+                    Icons.logout_rounded,
+                    size: HomeStyle.iconLogoutBtnSize,
+                  ),
                   label: const Text(
-                    'ອອກຈາກລະບົບ',
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    HomeStyle.logoutBtn,
+                    style: HomeStyle.logoutBtnText,
                   ),
                 ),
               ),
@@ -386,41 +370,27 @@ class PendingApprovalPage extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 40,
-          height: 4,
+          width: HomeStyle.handleBarW,
+          height: HomeStyle.handleBarH,
           decoration: BoxDecoration(
-            color: Colors.grey.shade300,
-            borderRadius: BorderRadius.circular(2),
+            color: HomeStyle.grey300,
+            borderRadius: HomeStyle.r4,
           ),
         ),
-        const SizedBox(height: 32),
+        HomeStyle.gap32,
         const SizedBox(
-          width: 56,
-          height: 56,
+          width: HomeStyle.loadingIndicator,
+          height: HomeStyle.loadingIndicator,
           child: CircularProgressIndicator(
-            color: Colors.brown,
-            strokeWidth: 3.5,
+            color: HomeStyle.primary,
+            strokeWidth: HomeStyle.loadingStrokeWidth,
           ),
         ),
-        const SizedBox(height: 24),
-        const Text(
-          'ກຳລັງອອກຈາກລະບົບ...',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: Colors.brown,
-            letterSpacing: 0.2,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'ກະລຸນາລໍຖ້າໜຶ່ງຄູ່',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade500,
-          ),
-        ),
-        const SizedBox(height: 32),
+        HomeStyle.gap24,
+        const Text(HomeStyle.loggingOut, style: HomeStyle.logoutLoadingText),
+        HomeStyle.gap6,
+        const Text(HomeStyle.logoutWait, style: HomeStyle.logoutLoadingHint),
+        HomeStyle.gap32,
       ],
     );
   }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:wood/core/constants/global/app_colors.dart';
+import 'package:wood/core/constants/global/app_durations.dart';
+import 'package:wood/core/widgets/global/wave_text.dart';
 import 'package:wood/features/notifications/presentation/controllers/notification_controller.dart';
 import 'package:wood/features/notifications/presentation/pages/notification_page.dart';
 import 'package:wood/features/recipe/presentation/pages/library/recipe_library_page.dart';
 import 'package:wood/features/auth/presentation/pages/profile_view_page.dart';
-import 'wave_text.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
@@ -25,7 +27,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: titleWidget ??
           WaveText(
             text: title!,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
             replayOnRouteChange: false,
           ),
       actions: [
@@ -35,7 +40,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           onPressed: () => Get.to(
             () => const RecipeLibraryPage(),
             transition: Transition.downToUp,
-            duration: const Duration(milliseconds: 300),
+            duration: AppDurations.normal,
           ),
         ),
         Obx(() {
@@ -47,12 +52,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           return IconButton(
             icon: Badge(
               isLabelVisible: unread > 0,
-              backgroundColor: Colors.red.shade700,
+              backgroundColor: AppColors.error700,
               label: Text(
                 unread > 99 ? '99+' : '$unread',
                 style: const TextStyle(
                   fontSize: 10,
-                  color: Colors.white,
+                  color: AppColors.white,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -62,7 +67,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             onPressed: () => Get.to(
               () => const NotificationPage(),
               transition: Transition.downToUp,
-              duration: const Duration(milliseconds: 300),
+              duration: AppDurations.normal,
             ),
           );
         }),
@@ -72,7 +77,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           onPressed: () => Get.to(
             () => const ProfileViewPage(),
             transition: Transition.downToUp,
-            duration: const Duration(milliseconds: 300),
+            duration: AppDurations.normal,
           ),
         ),
       ],

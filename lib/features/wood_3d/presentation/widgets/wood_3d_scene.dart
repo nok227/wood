@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:wood/core/constants/specific/wood_3d_style.dart';
 import 'wood_3d_geometry.dart';
 import 'wood_3d_painter.dart';
 
@@ -64,7 +65,7 @@ class _Wood3DSceneState extends State<Wood3DScene> {
   static const double _defaultZoom = 1.0;
 
   TextStyle get _labelStyle => TextStyle(
-        color: widget.showColor ? Colors.white : Colors.black,
+        color: widget.showColor ? Wood3DStyle.white : Wood3DStyle.black,
         fontSize: 10,
         fontWeight: FontWeight.bold,
       );
@@ -127,7 +128,7 @@ class _Wood3DSceneState extends State<Wood3DScene> {
   }
 
   void _onScaleEnd(ScaleEndDetails _) {
-    _stopTimer = Timer(const Duration(milliseconds: 150), () {
+    _stopTimer = Timer(Wood3DStyle.fast, () {
       if (mounted) setState(() => _dragging = false);
     });
   }
@@ -368,20 +369,20 @@ class _Wood3DSceneState extends State<Wood3DScene> {
       (
         'width',
         g.widthAnchor(size),
-        'ກວ້າງ ${_formatDimWithConversions(widget.width, widget.sizeUnit)}',
-        Colors.blue,
+        '${Wood3DStyle.labelWidth} ${_formatDimWithConversions(widget.width, widget.sizeUnit)}',
+        Wood3DStyle.info,
       ),
       (
         'length',
         g.lengthAnchor(size),
-        'ຍາວ ${_formatDimWithConversions(widget.length, widget.sizeUnit)}',
-        Colors.green,
+        '${Wood3DStyle.labelLength} ${_formatDimWithConversions(widget.length, widget.sizeUnit)}',
+        Wood3DStyle.green700,
       ),
       (
         'thickness',
         g.thicknessAnchor(size),
-        'ໜາ ${_formatDimWithConversions(widget.thickness, widget.sizeUnit)}',
-        Colors.orange,
+        '${Wood3DStyle.labelThickness} ${_formatDimWithConversions(widget.thickness, widget.sizeUnit)}',
+        Wood3DStyle.orange800,
       ),
     ];
 
@@ -413,7 +414,8 @@ class _Wood3DSceneState extends State<Wood3DScene> {
         anchor.dy.clamp(rect.top, rect.bottom).toDouble(),
       );
       arrows.add(
-        _ArrowSpec(anchor, lineEnd, widget.showColor ? color : Colors.black87),
+        _ArrowSpec(anchor, lineEnd,
+            widget.showColor ? color : Wood3DStyle.black87),
       );
 
       texts.add(
@@ -423,13 +425,16 @@ class _Wood3DSceneState extends State<Wood3DScene> {
           child: FractionalTranslation(
             translation: const Offset(-0.5, -0.5),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: Wood3DStyle.labelPadH,
+                  vertical: Wood3DStyle.labelPadV),
               decoration: widget.showColor
                   ? BoxDecoration(
                       color: color,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: Wood3DStyle.r4,
                       boxShadow: const [
-                        BoxShadow(color: Colors.black26, blurRadius: 2),
+                        BoxShadow(
+                            color: Wood3DStyle.black26, blurRadius: 2),
                       ],
                     )
                   : null,
@@ -465,33 +470,23 @@ class _Wood3DSceneState extends State<Wood3DScene> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    _viewBtn(
-                      'ດ້ານເທິງ',
-                      Icons.navigation,
-                      () => _setView(Rot3.top),
-                    ),
+                    _viewBtn(Wood3DStyle.viewTop, Icons.navigation,
+                        () => _setView(Rot3.top)),
                     const SizedBox(height: 6),
-                    _viewBtn(
-                      'ດ້ານໜ້າ',
-                      Icons.crop_square,
-                      () => _setView(Rot3.front),
-                    ),
+                    _viewBtn(Wood3DStyle.viewFront, Icons.crop_square,
+                        () => _setView(Rot3.front)),
                     const SizedBox(height: 6),
-                    _viewBtn(
-                      'ດ້ານຂ້າງ',
-                      Icons.view_column,
-                      () => _setView(Rot3.side),
-                    ),
+                    _viewBtn(Wood3DStyle.viewSide, Icons.view_column,
+                        () => _setView(Rot3.side)),
                     const SizedBox(height: 6),
-                    _viewBtn(
-                      'ດ້ານສະຫຼຽງ (ເລີ່ມຕົ້ນ)',
-                      Icons.restart_alt,
-                      _resetView,
-                    ),
+                    _viewBtn(Wood3DStyle.viewReset, Icons.restart_alt,
+                        _resetView),
                     if (widget.onToggleColor != null) ...[
                       const SizedBox(height: 6),
                       _viewBtn(
-                        widget.showColor ? 'ປິດສີ' : 'ສີ',
+                        widget.showColor
+                            ? Wood3DStyle.colorOff
+                            : Wood3DStyle.colorOn,
                         widget.showColor
                             ? Icons.format_color_reset
                             : Icons.palette,
@@ -508,8 +503,8 @@ class _Wood3DSceneState extends State<Wood3DScene> {
           ),
           FloatingActionButton.small(
             heroTag: 'toggle_3d_quick_views',
-            backgroundColor: Colors.brown[700],
-            foregroundColor: Colors.white,
+            backgroundColor: Wood3DStyle.brown700,
+            foregroundColor: Wood3DStyle.white,
             elevation: 3,
             onPressed: () {
               setState(() {
@@ -522,7 +517,7 @@ class _Wood3DSceneState extends State<Wood3DScene> {
               curve: Curves.fastOutSlowIn,
               child: Icon(
                 _showQuickViews ? Icons.close : Icons.explore,
-                size: 20,
+                size: Wood3DStyle.quickFabIcon,
               ),
             ),
           ),
@@ -539,26 +534,29 @@ class _Wood3DSceneState extends State<Wood3DScene> {
     bool active = false,
   }) {
     final bgColor = active
-        ? Colors.brown.shade700
-        : Colors.white.withOpacity(0.95);
-    final fgColor = active ? Colors.white : Colors.brown.shade700;
-    final textColor = active ? Colors.white : Colors.brown.shade900;
+        ? Wood3DStyle.brown700
+        : Wood3DStyle.white.withOpacity(0.95);
+    final fgColor = active ? Wood3DStyle.white : Wood3DStyle.brown700;
+    final textColor = active ? Wood3DStyle.white : Wood3DStyle.brown900;
 
     return Container(
-      height: 32,
+      height: Wood3DStyle.viewBtnH,
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: active ? Colors.brown.shade800 : Colors.brown,
+          color: active ? Wood3DStyle.brown800 : Wood3DStyle.brown700,
           width: active ? 1.4 : 0.8,
         ),
         boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1)),
+          BoxShadow(
+              color: Wood3DStyle.black12,
+              blurRadius: 2,
+              offset: Offset(0, 1)),
         ],
       ),
       child: Material(
-        color: Colors.transparent,
+        color: Wood3DStyle.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
@@ -601,7 +599,7 @@ class _Wood3DSceneState extends State<Wood3DScene> {
       onDoubleTap: _resetView,
       child: Container(
         width: double.infinity,
-        color: Colors.brown[50],
+        color: Wood3DStyle.brown50,
         child: ClipRect(
           child: LayoutBuilder(
             builder: (context, constraints) {

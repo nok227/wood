@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:wood/core/constants/specific/wood_style.dart';
 
 class WoodProductPreviewCard extends StatelessWidget {
   final List<String> existingImages;
@@ -46,16 +47,16 @@ class WoodProductPreviewCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.green.shade50, Colors.white],
+        gradient: const LinearGradient(
+          colors: [WoodStyle.green50, WoodStyle.white],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.green.shade400, width: 2),
+        borderRadius: WoodStyle.r16,
+        border: Border.all(color: WoodStyle.green400, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.15),
+            color: WoodStyle.success.withOpacity(0.15),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -64,28 +65,23 @@ class WoodProductPreviewCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // ── Header ──
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.green.shade700,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(14)),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 14, vertical: 12),
+            decoration: const BoxDecoration(
+              color: WoodStyle.success,
+              borderRadius: WoodStyle.r14,
             ),
             child: Row(
               children: [
                 const Icon(Icons.visibility,
-                    color: Colors.white, size: 20),
+                    color: WoodStyle.white, size: 20),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
-                    'ກວດເບິ່ງຂໍ້ມູນກ່ອນບັນທຶກ',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.3,
-                    ),
+                    WoodStyle.previewTitleText,
+                    style: WoodStyle.previewTitle,
                   ),
                 ),
                 if (isEditing)
@@ -93,21 +89,18 @@ class WoodProductPreviewCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.25),
-                      borderRadius: BorderRadius.circular(8),
+                      color: WoodStyle.white.withOpacity(0.25),
+                      borderRadius: WoodStyle.r8,
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.edit, color: Colors.white, size: 11),
+                        Icon(Icons.edit,
+                            color: WoodStyle.white, size: 11),
                         SizedBox(width: 3),
                         Text(
-                          'ແກ້ໄຂ',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          WoodStyle.editBadge,
+                          style: WoodStyle.previewEditBadge,
                         ),
                       ],
                     ),
@@ -121,11 +114,13 @@ class WoodProductPreviewCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (totalImages > 0) ...[
-                  _label(Icons.photo_library_outlined,
-                      'ຮູບພາບ ($totalImages)'),
+                  _label(
+                    Icons.photo_library_outlined,
+                    '${WoodStyle.imagesLabel} ($totalImages)',
+                  ),
                   const SizedBox(height: 6),
                   SizedBox(
-                    height: 60,
+                    height: WoodStyle.thumbPreview,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: [
@@ -135,12 +130,13 @@ class WoodProductPreviewCard extends StatelessWidget {
                               imageUrl: existingImages[i],
                               fit: BoxFit.cover,
                               memCacheWidth: 120,
-                              placeholder: (c, u) => Container(
-                                  color: Colors.grey.shade100),
+                              placeholder: (c, u) =>
+                                  const ColoredBox(color: WoodStyle.grey100),
                               errorWidget: (_, __, ___) => const Icon(
-                                  Icons.broken_image,
-                                  size: 20,
-                                  color: Colors.grey),
+                                Icons.broken_image,
+                                size: 20,
+                                color: WoodStyle.grey500,
+                              ),
                             ),
                           );
                         }),
@@ -156,22 +152,22 @@ class WoodProductPreviewCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                 ],
-                _row(Icons.local_florist, 'ຊະນິດໄມ້',
-                    woodType.isEmpty ? '-' : woodType),
+                _row(Icons.local_florist, WoodStyle.secWoodType,
+                    woodType.isEmpty ? WoodStyle.dash : woodType),
                 const SizedBox(height: 6),
-                _row(Icons.inventory_2_outlined, 'ຊື່ໄມ້',
-                    name.isEmpty ? '-' : name),
+                _row(Icons.inventory_2_outlined, WoodStyle.secName,
+                    name.isEmpty ? WoodStyle.dash : name),
                 const SizedBox(height: 6),
                 _row(
                   Icons.straighten,
-                  'ຂະໜາດ',
+                  WoodStyle.secSize,
                   '${_fmtNum(width)} × ${_fmtNum(length)} × ${_fmtNum(thickness)} $sizeUnit',
                 ),
                 const SizedBox(height: 6),
                 _zoneRow(zones),
                 const SizedBox(height: 6),
-                _row(Icons.numbers, 'ໜ່ວຍນັບ',
-                    unit.isEmpty ? '-' : unit),
+                _row(Icons.numbers, WoodStyle.unitLabel,
+                    unit.isEmpty ? WoodStyle.dash : unit),
                 if (hasNote) ...[
                   const SizedBox(height: 8),
                   _noteBox(note.trim()),
@@ -181,16 +177,16 @@ class WoodProductPreviewCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       colors: [
-                        Colors.green.shade700,
-                        Colors.green.shade600
+                        WoodStyle.success,
+                        WoodStyle.green600,
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: WoodStyle.r10,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.green.withOpacity(0.3),
+                        color: WoodStyle.success.withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
@@ -199,22 +195,22 @@ class WoodProductPreviewCard extends StatelessWidget {
                   child: Row(
                     children: [
                       const Icon(Icons.sell,
-                          color: Colors.white, size: 20),
+                          color: WoodStyle.white, size: 20),
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(
-                          'ລາຄາຂາຍ',
+                          WoodStyle.priceLabelFull,
                           style: TextStyle(
-                            color: Colors.white,
+                            color: WoodStyle.white,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                       Text(
-                        '${fmt.format(price)} ກີບ',
+                        '${fmt.format(price)} ${WoodStyle.currency}',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: WoodStyle.white,
                           fontSize: 22,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.5,
@@ -231,29 +227,30 @@ class WoodProductPreviewCard extends StatelessWidget {
     );
   }
 
+  // ── Note box ──
   Widget _noteBox(String text) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(10),
+      padding: WoodStyle.padCard,
       decoration: BoxDecoration(
-        color: Colors.amber.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.amber.shade300),
+        color: WoodStyle.amber50,
+        borderRadius: WoodStyle.r8,
+        border: Border.all(color: WoodStyle.amber300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.sticky_note_2_outlined,
-                  size: 14, color: Colors.amber.shade900),
+              const Icon(Icons.sticky_note_2_outlined,
+                  size: 14, color: WoodStyle.amber900),
               const SizedBox(width: 5),
-              Text(
-                'ໝາຍເຫດ',
+              const Text(
+                WoodStyle.note,
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w900,
-                  color: Colors.amber.shade900,
+                  color: WoodStyle.amber900,
                   letterSpacing: 0.2,
                 ),
               ),
@@ -262,9 +259,9 @@ class WoodProductPreviewCard extends StatelessWidget {
           const SizedBox(height: 5),
           Text(
             text,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12.5,
-              color: Colors.brown.shade900,
+              color: WoodStyle.brown900,
               height: 1.4,
             ),
           ),
@@ -273,31 +270,32 @@ class WoodProductPreviewCard extends StatelessWidget {
     );
   }
 
+  // ── Zone row ──
   Widget _zoneRow(List<String> zones) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.place_outlined,
-            size: 14, color: Colors.brown.shade400),
+        const Icon(Icons.place_outlined,
+            size: 14, color: WoodStyle.brown400),
         const SizedBox(width: 6),
-        SizedBox(
+        const SizedBox(
           width: 78,
           child: Text(
-            'ໂຊນ',
+            WoodStyle.secZone,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: WoodStyle.grey600,
             ),
           ),
         ),
         Expanded(
           child: zones.isEmpty
-              ? Text(
-                  'ບໍ່ລະບຸ',
+              ? const Text(
+                  WoodStyle.notSpecified,
                   style: TextStyle(
                     fontSize: 12.5,
                     fontStyle: FontStyle.italic,
-                    color: Colors.grey.shade500,
+                    color: WoodStyle.grey500,
                   ),
                 )
               : Wrap(
@@ -309,17 +307,17 @@ class WoodProductPreviewCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.green.shade50,
-                            borderRadius: BorderRadius.circular(5),
-                            border: Border.all(
-                                color: Colors.green.shade400),
+                            color: WoodStyle.green50,
+                            borderRadius: WoodStyle.r5,
+                            border:
+                                Border.all(color: WoodStyle.green400),
                           ),
                           child: Text(
                             z,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: Colors.green.shade800,
+                              color: WoodStyle.green800,
                             ),
                           ),
                         ),
@@ -334,14 +332,15 @@ class WoodProductPreviewCard extends StatelessWidget {
   Widget _label(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: 13, color: Colors.green.shade700),
+        const Icon(Icons.photo_library_outlined,
+            size: 13, color: WoodStyle.success),
         const SizedBox(width: 5),
         Text(
           text,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Colors.green.shade800,
+            color: WoodStyle.green800,
           ),
         ),
       ],
@@ -351,15 +350,15 @@ class WoodProductPreviewCard extends StatelessWidget {
   Widget _row(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: Colors.brown.shade400),
+        Icon(icon, size: 14, color: WoodStyle.brown400),
         const SizedBox(width: 6),
         SizedBox(
           width: 78,
           child: Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: WoodStyle.grey600,
             ),
           ),
         ),
@@ -369,7 +368,7 @@ class WoodProductPreviewCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: WoodStyle.black87,
             ),
           ),
         ),
@@ -384,14 +383,12 @@ class WoodProductPreviewCard extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Container(
-            width: 60,
-            height: 60,
+            width: WoodStyle.thumbPreview,
+            height: WoodStyle.thumbPreview,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: WoodStyle.r8,
               border: Border.all(
-                color: isNew
-                    ? Colors.green.shade400
-                    : Colors.grey.shade300,
+                color: isNew ? WoodStyle.green400 : WoodStyle.grey300,
                 width: isNew ? 2 : 1.2,
               ),
             ),
@@ -408,13 +405,13 @@ class WoodProductPreviewCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade700,
-                  borderRadius: BorderRadius.circular(4),
+                  color: WoodStyle.success,
+                  borderRadius: WoodStyle.r4,
                 ),
                 child: const Text(
-                  'ໃໝ່',
+                  WoodStyle.newImg,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: WoodStyle.white,
                     fontSize: 8,
                     fontWeight: FontWeight.w900,
                   ),

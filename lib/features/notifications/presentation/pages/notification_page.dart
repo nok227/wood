@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import 'package:wood/core/constants/specific/notification_style.dart';
 import 'package:wood/features/notifications/presentation/widgets/notification_skeleton.dart';
 
 import '../../domain/entities/app_notification.dart';
@@ -26,16 +27,16 @@ class _NotificationPageState extends State<NotificationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.brown[50],
+      backgroundColor: NotificationStyle.brown50,
       appBar: AppBar(
-        backgroundColor: Colors.brown,
-        foregroundColor: Colors.white,
-        title: const Text('ແຈ້ງເຕືອນ'),
+        backgroundColor: NotificationStyle.primary,
+        foregroundColor: NotificationStyle.white,
+        title: const Text(NotificationStyle.pageTitle),
         actions: [
           Obx(() {
             final hasUnread = ctrl.unreadCount > 0;
             return IconButton(
-              tooltip: 'ອ່ານທັງໝົດ',
+              tooltip: NotificationStyle.markAllRead,
               icon: const Icon(Icons.done_all),
               onPressed: hasUnread ? () => ctrl.markAllRead() : null,
             );
@@ -43,7 +44,7 @@ class _NotificationPageState extends State<NotificationPage> {
           Obx(() {
             final has = ctrl.visibleNotifications.isNotEmpty;
             return IconButton(
-              tooltip: 'ລ້າງທັງໝົດ',
+              tooltip: NotificationStyle.clearAll,
               icon: const Icon(Icons.delete_sweep_outlined),
               onPressed: has ? _confirmClear : null,
             );
@@ -60,14 +61,16 @@ class _NotificationPageState extends State<NotificationPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.notifications_none,
-                    size: 64, color: Colors.brown.shade200),
-                const SizedBox(height: 12),
-                Text('ຍັງບໍ່ມີແຈ້ງເຕືອນ',
-                    style: TextStyle(
-                        color: Colors.brown.shade400,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold)),
+                const Icon(
+                  Icons.notifications_none,
+                  size: NotificationStyle.emptyIconSize,
+                  color: NotificationStyle.brown200,
+                ),
+                NotificationStyle.gapMd,
+                const Text(
+                  NotificationStyle.empty,
+                  style: NotificationStyle.emptyText,
+                ),
               ],
             ),
           );
@@ -76,10 +79,10 @@ class _NotificationPageState extends State<NotificationPage> {
         final groups = _groupByDate(list);
 
         return RefreshIndicator(
-          color: Colors.brown,
+          color: NotificationStyle.primary,
           onRefresh: ctrl.fetchNotifications,
           child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+            padding: NotificationStyle.padList,
             itemCount: groups.length,
             itemBuilder: (_, i) {
               final g = groups[i];
@@ -87,19 +90,13 @@ class _NotificationPageState extends State<NotificationPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding:
-                        const EdgeInsets.only(top: 8, bottom: 6, left: 4),
+                    padding: NotificationStyle.padGroupHeader,
                     child: Text(
                       g.label,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.brown.shade700,
-                        letterSpacing: 0.3,
-                      ),
+                      style: NotificationStyle.dateGroup,
                     ),
                   ),
-                  ...g.items.map((n) => _tile(n)),
+                  ...g.items.map(_tile),
                 ],
               );
             },
@@ -112,24 +109,27 @@ class _NotificationPageState extends State<NotificationPage> {
   List<_Group> _groupByDate(List<AppNotification> list) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final yest = today.subtract(const Duration(days: 1));
+    final yest = today.subtract(NotificationStyle.daysOne);
 
     final map = <String, List<AppNotification>>{};
     for (final n in list) {
       final d = DateTime(n.date.year, n.date.month, n.date.day);
       String key;
       if (d == today) {
-        key = 'ມື້ນີ້';
+        key = NotificationStyle.today;
       } else if (d == yest) {
-        key = 'ມື້ວານນີ້';
+        key = NotificationStyle.yesterday;
       } else {
-        key = DateFormat('dd/MM/yyyy').format(d);
+        key = DateFormat(NotificationStyle.dateFormat).format(d);
       }
       map.putIfAbsent(key, () => []).add(n);
     }
     return map.entries.map((e) => _Group(e.key, e.value)).toList();
   }
 
+  // ══════════════════════════════════════════════
+  // 📬 Tile
+  // ══════════════════════════════════════════════
   Widget _tile(AppNotification n) {
     final c = n.color;
     final isRead = ctrl.isReadByMe(n);
@@ -139,46 +139,61 @@ class _NotificationPageState extends State<NotificationPage> {
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: NotificationStyle.padDismiss,
+        margin: NotificationStyle.padTileMargin,
         decoration: BoxDecoration(
-          color: Colors.red.shade700,
-          borderRadius: BorderRadius.circular(10),
+          color: NotificationStyle.error700,
+          borderRadius: NotificationStyle.r10,
         ),
-        child: const Icon(Icons.delete, color: Colors.white),
+        child: const Icon(Icons.delete, color: NotificationStyle.white),
       ),
       onDismissed: (_) => ctrl.deleteOne(n.id),
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: NotificationStyle.r10,
         onTap: () {
           if (!isRead) ctrl.markRead(n.id);
         },
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          padding: const EdgeInsets.all(12),
+          margin: NotificationStyle.padTileMargin,
+          padding: NotificationStyle.padCard,
           decoration: BoxDecoration(
-            color: isRead ? Colors.white : c.withOpacity(0.06),
-            borderRadius: BorderRadius.circular(10),
+            color: isRead
+                ? NotificationStyle.white
+                : c.withOpacity(NotificationStyle.tileBgOpacity),
+            borderRadius: NotificationStyle.r10,
             border: Border.all(
-              color:
-                  isRead ? Colors.grey.shade200 : c.withOpacity(0.35),
-              width: isRead ? 1 : 1.4,
+              color: isRead
+                  ? NotificationStyle.grey200
+                  : c.withOpacity(NotificationStyle.tileBorderOpacity),
+              width: isRead
+                  ? NotificationStyle.borderWidthRead
+                  : NotificationStyle.borderWidthUnread,
             ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ── Icon badge ──
               Container(
-                width: 38,
-                height: 38,
+                width: NotificationStyle.iconBadge,
+                height: NotificationStyle.iconBadge,
                 decoration: BoxDecoration(
-                  color: c.withOpacity(0.12),
+                  color: c.withOpacity(NotificationStyle.iconBadgeBgOpacity),
                   shape: BoxShape.circle,
-                  border: Border.all(color: c.withOpacity(0.35)),
+                  border: Border.all(
+                    color: c.withOpacity(
+                        NotificationStyle.iconBadgeBorderOpacity),
+                  ),
                 ),
-                child: Icon(n.icon, color: c, size: 20),
+                child: Icon(
+                  n.icon,
+                  color: c,
+                  size: NotificationStyle.iconMd,
+                ),
               ),
-              const SizedBox(width: 10),
+              NotificationStyle.gap10,
+
+              // ── Content ──
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,19 +203,15 @@ class _NotificationPageState extends State<NotificationPage> {
                         Expanded(
                           child: Text(
                             n.title,
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: isRead
-                                  ? FontWeight.w600
-                                  : FontWeight.w900,
-                              color: Colors.brown.shade900,
-                            ),
+                            style: isRead
+                                ? NotificationStyle.notiTitle
+                                : NotificationStyle.notiTitleUnread,
                           ),
                         ),
                         if (!isRead)
                           Container(
-                            width: 8,
-                            height: 8,
+                            width: NotificationStyle.dotSize,
+                            height: NotificationStyle.dotSize,
                             decoration: BoxDecoration(
                               color: c,
                               shape: BoxShape.circle,
@@ -208,55 +219,52 @@ class _NotificationPageState extends State<NotificationPage> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 3),
+                    NotificationStyle.gap3,
                     Text(
                       n.message,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade800,
-                        height: 1.35,
-                      ),
+                      style: NotificationStyle.notiMessage,
                     ),
-                    const SizedBox(height: 6),
+                    NotificationStyle.gap6,
                     Row(
                       children: [
-                        Icon(Icons.person_outline,
-                            size: 11, color: Colors.grey.shade600),
-                        const SizedBox(width: 3),
+                        const Icon(
+                          Icons.person_outline,
+                          size: NotificationStyle.iconActorSize,
+                          color: NotificationStyle.grey600,
+                        ),
+                        NotificationStyle.gap3,
                         Flexible(
                           child: Text(
                             n.actorEmail,
-                            style: TextStyle(
-                                fontSize: 10.5,
-                                color: Colors.grey.shade600),
+                            style: NotificationStyle.actorEmail,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (n.actorIsAdmin) ...[
-                          const SizedBox(width: 4),
+                          NotificationStyle.gapXs,
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 5, vertical: 1),
+                            padding: NotificationStyle.padAdminBadge,
                             decoration: BoxDecoration(
-                              color: Colors.amber.shade200,
-                              borderRadius: BorderRadius.circular(4),
+                              color: NotificationStyle.amber200,
+                              borderRadius: NotificationStyle.r4,
                             ),
-                            child: Text('Admin',
-                                style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.amber.shade900)),
+                            child: const Text(
+                              NotificationStyle.adminLabel,
+                              style: NotificationStyle.adminBadge,
+                            ),
                           ),
                         ],
                         const Spacer(),
-                        Icon(Icons.access_time,
-                            size: 10, color: Colors.grey.shade500),
-                        const SizedBox(width: 3),
+                        const Icon(
+                          Icons.access_time,
+                          size: NotificationStyle.iconTimeSize,
+                          color: NotificationStyle.grey500,
+                        ),
+                        NotificationStyle.gap3,
                         Text(
-                          DateFormat('HH:mm').format(n.date),
-                          style: TextStyle(
-                              fontSize: 10.5,
-                              color: Colors.grey.shade600),
+                          DateFormat(NotificationStyle.timeFormat)
+                              .format(n.date),
+                          style: NotificationStyle.timeText,
                         ),
                       ],
                     ),
@@ -270,15 +278,17 @@ class _NotificationPageState extends State<NotificationPage> {
     );
   }
 
+  // ══════════════════════════════════════════════
+  // 🗑 Confirm clear
+  // ══════════════════════════════════════════════
   void _confirmClear() {
     Get.defaultDialog(
-      title: 'ລ້າງແຈ້ງເຕືອນ',
-      middleText: 'ຕ້ອງການລ້າງແຈ້ງເຕືອນທັງໝົດທີ່ສະແດງຢູ່ບໍ?\n'
-          '(ຈະລ້າງສະເພາະບັນຊີຂອງທ່ານເທົ່ານັ້ນ)',
-      textConfirm: 'ລ້າງ',
-      textCancel: 'ຍົກເລີກ',
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.red.shade700,
+      title: NotificationStyle.clearConfirm,
+      middleText: NotificationStyle.clearConfirmMsg,
+      textConfirm: NotificationStyle.clearBtn,
+      textCancel: NotificationStyle.cancel,
+      confirmTextColor: NotificationStyle.white,
+      buttonColor: NotificationStyle.error700,
       onConfirm: () {
         Get.back();
         ctrl.clearVisible();

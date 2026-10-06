@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sign_in_button/sign_in_button.dart';
+import 'package:wood/core/constants/specific/auth_style.dart';
 import '../controllers/auth_controller.dart';
 import 'register_page.dart';
 
@@ -14,62 +15,63 @@ class LoginPage extends StatelessWidget {
     final controller = Get.find<AuthController>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('ເຂົ້າສູ່ລະບົບ')),
+      appBar: AppBar(title: const Text(AuthStyle.loginTitle)),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+        padding: AuthStyle.padPageAuth,
         child: Form(
           key: _formKey,
           child: Column(
             children: [
-              const SizedBox(height: 20),
+              AuthStyle.gap20W,
               TextFormField(
                 controller: controller.emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
-                  labelText: 'ອີເມວ',
+                  labelText: AuthStyle.emailLabel,
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.email_outlined),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'ກະລຸນາປ້ອນອີເມວ';
+                    return AuthStyle.emailRequired;
                   }
                   if (!GetUtils.isEmail(value.trim())) {
-                    return 'ຮູບແບບອີເມວບໍ່ຖືກຕ້ອງ';
+                    return AuthStyle.emailInvalid;
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              AuthStyle.gapLg,
               TextFormField(
                 controller: controller.passwordController,
                 obscureText: true,
                 decoration: const InputDecoration(
-                  labelText: 'ລະຫັດຜ່ານ',
+                  labelText: AuthStyle.passwordLabel,
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.lock_outline),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'ກະລຸນາປ້ອນລະຫັດຜ່ານ';
+                    return AuthStyle.passwordRequired;
                   }
                   if (value.trim().length < 6) {
-                    return 'ລະຫັດຜ່ານຕ້ອງຢ່າງນ້ອຍ 6 ຕົວອັກສອນ';
+                    return AuthStyle.passwordTooShort;
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
+              AuthStyle.gap24W,
               Obx(() => controller.isLoading.value
                   ? const CircularProgressIndicator()
                   : Column(
                       children: [
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(48),
-                            backgroundColor: Colors.brown,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                            minimumSize: const Size.fromHeight(
+                                AuthStyle.buttonHeight),
+                            backgroundColor: AuthStyle.primary,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: AuthStyle.inputRadius,
                             ),
                           ),
                           onPressed: () {
@@ -78,36 +80,36 @@ class LoginPage extends StatelessWidget {
                             }
                           },
                           child: const Text(
-                            'ເຂົ້າສູ່ລະບົບ',
-                            style: TextStyle(color: Colors.white, fontSize: 16),
+                            AuthStyle.loginBtn,
+                            style: AuthStyle.loginBtnText,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        const Text('ຫຼື'),
-                        const SizedBox(height: 16),
+                        AuthStyle.gapLg,
+                        const Text(AuthStyle.orLabel),
+                        AuthStyle.gapLg,
                         SizedBox(
                           width: double.infinity,
-                          height: 48,
+                          height: AuthStyle.buttonHeight,
                           child: SignInButton(
                             Buttons.google,
-                            text: 'ເຂົ້າສູ່ລະບົບດ້ວຍ Google',
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                            text: AuthStyle.googleBtn,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: AuthStyle.inputRadius,
                             ),
                             onPressed: controller.signInWithGoogle,
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        AuthStyle.gap24W,
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text('ຍັງບໍ່ມີບັນຊີ? '),
+                            const Text(AuthStyle.noAccount),
                             TextButton(
                               onPressed: () {
                                 controller.clearForm();
                                 Get.to(() => const RegisterPage());
                               },
-                              child: const Text('ລົງທະບຽນ'),
+                              child: const Text(AuthStyle.registerBtn),
                             ),
                           ],
                         ),

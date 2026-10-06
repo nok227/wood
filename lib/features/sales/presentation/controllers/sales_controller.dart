@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:wood/core/utils/cloudinary_service.dart';
-import 'package:wood/features/wood_products/data/models/wood_product_model.dart';
+import 'package:wood/core/widgets/global/app_snackbar.dart';
+import 'package:wood/features/wood_products/domain/entities/wood_product.dart';
 import 'package:wood/features/notifications/domain/entities/app_notification.dart';
 import 'package:wood/features/notifications/presentation/controllers/notification_controller.dart';
 import '../../domain/entities/sale_order_entity.dart';
@@ -23,7 +24,7 @@ class SalesController extends GetxController {
 
   final salesRevision = 0.obs;
 
-  var selectedProduct = Rxn<WoodProductModel>();
+  var selectedProduct = Rxn<WoodProduct>();
   var paymentType = 'cash'.obs;
 
   var cashCounts = <int, RxInt>{
@@ -93,7 +94,7 @@ class SalesController extends GetxController {
       applyDateFilter(selectedFilter.value);
     } catch (e) {
       debugPrint('fetchSales error: $e');
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດດຶງຂໍ້ມູນໄດ້');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດດຶງຂໍ້ມູນໄດ້');
     } finally {
       isLoading.value = false;
     }
@@ -102,22 +103,24 @@ class SalesController extends GetxController {
   void applyDateFilter(DateFilter filter) {
     selectedFilter.value = filter;
     final now = DateTime.now();
-    filteredSalesList.assignAll(allSalesList.where((s) {
-      switch (filter) {
-        case DateFilter.today:
-          return s.date.year == now.year &&
-              s.date.month == now.month &&
-              s.date.day == now.day;
-        case DateFilter.week:
-          return s.date.isAfter(now.subtract(const Duration(days: 7)));
-        case DateFilter.month:
-          return s.date.year == now.year && s.date.month == now.month;
-        case DateFilter.year:
-          return s.date.year == now.year;
-        case DateFilter.all:
-          return true;
-      }
-    }).toList());
+    filteredSalesList.assignAll(
+      allSalesList.where((s) {
+        switch (filter) {
+          case DateFilter.today:
+            return s.date.year == now.year &&
+                s.date.month == now.month &&
+                s.date.day == now.day;
+          case DateFilter.week:
+            return s.date.isAfter(now.subtract(const Duration(days: 7)));
+          case DateFilter.month:
+            return s.date.year == now.year && s.date.month == now.month;
+          case DateFilter.year:
+            return s.date.year == now.year;
+          case DateFilter.all:
+            return true;
+        }
+      }).toList(),
+    );
 
     salesRevision.value++;
   }
@@ -149,7 +152,8 @@ class SalesController extends GetxController {
         await _notify(
           type: AppNotificationType.saleDebtAdd,
           title: 'ຂາຍຕິດໜີ້ · ຈ່າຍກ່ອນ',
-          message: '"$name"$itemInfo ລວມ ${fmt.format(sale.totalAmount)} ກີບ\n'
+          message:
+              '"$name"$itemInfo ລວມ ${fmt.format(sale.totalAmount)} ກີບ\n'
               'ຈ່າຍກ່ອນ ${fmt.format(paidBefore)} · ຕິດໜີ້ ${fmt.format(sale.debtAmount)} ກີບ\n'
               'ລູກຄ້າ: $customer',
           targetId: sale.id,
@@ -158,7 +162,8 @@ class SalesController extends GetxController {
         await _notify(
           type: AppNotificationType.saleDebtAdd,
           title: 'ຂາຍຕິດໜີ້',
-          message: '"$name"$itemInfo ຍອດ ${fmt.format(sale.debtAmount)} ກີບ\n'
+          message:
+              '"$name"$itemInfo ຍອດ ${fmt.format(sale.debtAmount)} ກີບ\n'
               'ລູກຄ້າ: $customer',
           targetId: sale.id,
         );
@@ -170,7 +175,8 @@ class SalesController extends GetxController {
       await _notify(
         type: AppNotificationType.saleAdd,
         title: 'ຂາຍປະສົມ',
-        message: '"$name"$itemInfo ລວມ ${fmt.format(sale.totalAmount)} ກີບ\n'
+        message:
+            '"$name"$itemInfo ລວມ ${fmt.format(sale.totalAmount)} ກີບ\n'
             'ສົດ ${fmt.format(sale.cashPaidAmount)} + ໂອນ ${fmt.format(sale.transferPaidAmount)}'
             '${sale.changeAmount > 0 ? " · ທອນ ${fmt.format(sale.changeAmount)} ກີບ" : ""}',
         targetId: sale.id,
@@ -217,8 +223,8 @@ class SalesController extends GetxController {
       final name = sale == null
           ? 'ລາຍການ'
           : (sale.shortSummary.trim().isNotEmpty
-              ? sale.shortSummary
-              : 'ລາຍການໄມ້');
+                ? sale.shortSummary
+                : 'ລາຍການໄມ້');
 
       String status = '';
       if (sale != null) {
@@ -236,7 +242,8 @@ class SalesController extends GetxController {
       await _notify(
         type: AppNotificationType.saleDelete,
         title: 'ລຶບລາຍການຂາຍ',
-        message: '"$name" '
+        message:
+            '"$name" '
             '${fmt.format(sale?.totalAmount ?? 0)} ກີບ$status',
         targetId: id,
       );
@@ -249,11 +256,10 @@ class SalesController extends GetxController {
         }
       }
 
-      Get.snackbar('ສຳເລັດ', 'ລຶບລາຍການແລ້ວ',
-          snackPosition: SnackPosition.TOP);
+      AppSnackbar.ok('ສຳເລັດ', 'ລຶບລາຍການແລ້ວ');
     } catch (e) {
       debugPrint('deleteSale error: $e');
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດລຶບໄດ້: $e');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດລຶບໄດ້: $e');
     }
   }
 
@@ -269,20 +275,24 @@ class SalesController extends GetxController {
       await _notify(
         type: AppNotificationType.saleConfirm,
         title: 'ຢືນຢັນເງິນເຂົ້າ',
-        message: '"$name" '
+        message:
+            '"$name" '
             '${fmt.format(s?.totalAmount ?? 0)} ກີບ'
             '${payment.isNotEmpty ? " · $payment" : ""}',
         targetId: id,
       );
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດປ່ຽນສະຖານະໄດ້');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດປ່ຽນສະຖານະໄດ້');
     }
   }
 
   Future<void> markAsMismatch(String id, String note) async {
     try {
-      await repository.updateMismatchStatus(id,
-          isMismatch: true, mismatchNote: note);
+      await repository.updateMismatchStatus(
+        id,
+        isMismatch: true,
+        mismatchNote: note,
+      );
       await fetchSales();
 
       final s = allSalesList.firstWhereOrNull((x) => x.id == id);
@@ -291,14 +301,15 @@ class SalesController extends GetxController {
       await _notify(
         type: AppNotificationType.saleMismatch,
         title: 'ບັນຊີບໍ່ຕົງ',
-        message: '"$name" · ${fmt.format(s?.totalAmount ?? 0)} ກີບ\n'
+        message:
+            '"$name" · ${fmt.format(s?.totalAmount ?? 0)} ກີບ\n'
             'ເຫດຜົນ: $note',
         targetId: id,
       );
 
-      Get.snackbar('ບັນທຶກ', 'ບັນຊີບໍ່ຕົງກັນແລ້ວ');
+      AppSnackbar.ok('ບັນທຶກ', 'ບັນຊີບໍ່ຕົງກັນແລ້ວ');
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດບັນທຶກໄດ້: $e');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດບັນທຶກໄດ້: $e');
     }
   }
 
@@ -317,20 +328,23 @@ class SalesController extends GetxController {
         targetId: id,
       );
 
-      Get.snackbar('ສຳເລັດ', 'ຍົກເລີກສະຖານະແລ້ວ');
+      AppSnackbar.ok('ສຳເລັດ', 'ຍົກເລີກສະຖານະແລ້ວ');
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດຍົກເລີກໄດ້: $e');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດຍົກເລີກໄດ້: $e');
     }
   }
 
   Future<void> updateMismatchNote(String id, String note) async {
     try {
-      await repository.updateMismatchStatus(id,
-          isMismatch: true, mismatchNote: note);
+      await repository.updateMismatchStatus(
+        id,
+        isMismatch: true,
+        mismatchNote: note,
+      );
       await fetchSales();
-      Get.snackbar('ສຳເລັດ', 'ອັບເດດໝາຍເຫດແລ້ວ');
+      AppSnackbar.ok('ສຳເລັດ', 'ອັບເດດໝາຍເຫດແລ້ວ');
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດອັບເດດໄດ້: $e');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດອັບເດດໄດ້: $e');
     }
   }
 
@@ -374,11 +388,9 @@ class SalesController extends GetxController {
         );
       }
 
-      Get.snackbar('ສຳເລັດ', 'ປິດໜີ້ · ຮັບເງິນແລ້ວ',
-          backgroundColor: Colors.green.shade100,
-          snackPosition: SnackPosition.TOP);
+      AppSnackbar.ok('ສຳເລັດ', 'ປິດໜີ້ · ຮັບເງິນແລ້ວ');
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດປິດໜີ້ໄດ້: $e');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດປິດໜີ້ໄດ້: $e');  
       rethrow;
     }
   }
@@ -408,7 +420,7 @@ class SalesController extends GetxController {
         targetId: id,
       );
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດແກ້ໄຂຮູບໄດ້: $e');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດແກ້ໄຂຮູບໄດ້: $e');
       rethrow;
     }
   }

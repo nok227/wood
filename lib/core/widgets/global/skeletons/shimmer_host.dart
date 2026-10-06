@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wood/core/constants/global/app_durations.dart';
 
 class ShimmerHost extends StatefulWidget {
   final Widget Function(BuildContext context, double progress) builder;
@@ -12,7 +13,7 @@ class _ShimmerHostState extends State<ShimmerHost>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1400),
+    duration: AppDurations.animSlow,
   )..repeat();
 
   @override

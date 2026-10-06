@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import 'package:wood/core/widgets/number_formatter.dart';
+import 'package:wood/core/constants/specific/account_style.dart';
+import 'package:wood/core/widgets/global/number_formatter.dart';
+
 import '../../domain/entities/account_transaction.dart';
 
 class AccountFormSheet extends StatefulWidget {
@@ -63,36 +65,42 @@ class _AccountFormSheetState extends State<AccountFormSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      constraints: BoxConstraints(maxHeight: Get.height * 0.9),
+      padding: AccountStyle.padFormSheet,
+      constraints: BoxConstraints(
+        maxHeight: Get.height * AccountStyle.formMaxHeightFactor,
+      ),
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        color: AccountStyle.surface,
+        borderRadius: AccountStyle.topR20,
       ),
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // ── Handle ──
             Center(
               child: Container(
-                width: 40,
-                height: 4,
+                width: AccountStyle.handleW,
+                height: AccountStyle.handleH,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
+                  color: AccountStyle.grey300,
+                  borderRadius: AccountStyle.r4,
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            AccountStyle.gapMd,
+
+            // ── Header ──
             Row(
               children: [
                 Container(
-                  width: 36,
-                  height: 36,
+                  width: AccountStyle.iconCircleSize,
+                  height: AccountStyle.iconCircleSize,
                   decoration: BoxDecoration(
-                    color:
-                        _isIn ? Colors.green.shade50 : Colors.red.shade50,
+                    color: _isIn
+                        ? AccountStyle.successLight
+                        : AccountStyle.errorLight,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -100,129 +108,119 @@ class _AccountFormSheetState extends State<AccountFormSheet> {
                         ? Icons.arrow_downward_rounded
                         : Icons.arrow_upward_rounded,
                     color: _isIn
-                        ? Colors.green.shade700
-                        : Colors.red.shade700,
-                    size: 20,
+                        ? AccountStyle.success
+                        : AccountStyle.error700,
+                    size: AccountStyle.iconMd,
                   ),
                 ),
-                const SizedBox(width: 10),
+                AccountStyle.gapSm,
                 Expanded(
                   child: Text(
-                    _isIn ? 'ຮັບເງິນ' : 'ຈ່າຍເງິນ',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w900,
+                    _isIn ? AccountStyle.receiveBtn : AccountStyle.payBtn,
+                    style: AccountStyle.formTitle.copyWith(
                       color: _isIn
-                          ? Colors.green.shade800
-                          : Colors.red.shade800,
-                      letterSpacing: 0.3,
+                          ? AccountStyle.green800
+                          : AccountStyle.error800,
                     ),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.close,
-                      color: Colors.grey.shade600, size: 22),
+                  icon: const Icon(Icons.close,
+                      color: AccountStyle.grey600, size: 22),
                   onPressed: () => Get.back(),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            AccountStyle.gapSm,
+
+            // ── Type toggle ──
             Row(
               children: [
                 Expanded(
-                    child: _tBtn('ຮັບເຂົ້າ', Icons.arrow_downward_rounded,
-                        Colors.green.shade700, _isIn,
-                        () => setState(() => type = 'in'))),
-                const SizedBox(width: 8),
+                  child: _tBtn(AccountStyle.typeIn,
+                      Icons.arrow_downward_rounded,
+                      AccountStyle.success, _isIn,
+                      () => setState(() => type = 'in')),
+                ),
+                AccountStyle.gapSm,
                 Expanded(
-                    child: _tBtn('ຈ່າຍອອກ', Icons.arrow_upward_rounded,
-                        Colors.red.shade700, !_isIn,
-                        () => setState(() => type = 'out'))),
+                  child: _tBtn(AccountStyle.typeOut,
+                      Icons.arrow_upward_rounded,
+                      AccountStyle.error700, !_isIn,
+                      () => setState(() => type = 'out')),
+                ),
               ],
             ),
-            const SizedBox(height: 14),
+            AccountStyle.gapLg,
+
+            // ── Content ──
             Flexible(
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (_isIn) _recvContent() else _payContent(),
-                    const SizedBox(height: 14),
-                    const Text('ປະເພດເງິນ *',
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.black54,
-                            letterSpacing: 0.5)),
-                    const SizedBox(height: 6),
+                    AccountStyle.gapLg,
+
+                    const Text(AccountStyle.paymentTypeLabel,
+                        style: AccountStyle.sectionLabel),
+                    AccountStyle.gap6,
                     Row(
                       children: [
                         Expanded(
-                            child: _tBtn('ເງິນສົດ',
-                                Icons.payments_outlined,
-                                Colors.amber.shade800,
-                                payType == 'cash',
-                                () => setState(() => payType = 'cash'))),
-                        const SizedBox(width: 8),
+                          child: _tBtn(AccountStyle.cashFull,
+                              Icons.payments_outlined,
+                              AccountStyle.amber800,
+                              payType == 'cash',
+                              () => setState(() => payType = 'cash')),
+                        ),
+                        AccountStyle.gapSm,
                         Expanded(
-                            child: _tBtn('ເງິນໂອນ',
-                                Icons.account_balance,
-                                Colors.blue.shade700,
-                                payType == 'transfer',
-                                () => setState(() => payType = 'transfer'))),
+                          child: _tBtn(AccountStyle.transferFull,
+                              Icons.account_balance,
+                              AccountStyle.blue700,
+                              payType == 'transfer',
+                              () => setState(() => payType = 'transfer')),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 14),
+                    AccountStyle.gapLg,
+
                     TextField(
                       controller: noteC,
                       maxLines: 2,
-                      decoration: InputDecoration(
-                        labelText: 'ໝາຍເຫດ (ຖ້າມີ)',
-                        labelStyle: TextStyle(
-                            fontSize: 13, color: Colors.grey.shade600),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: Colors.grey.shade300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(
-                              color: Colors.brown.shade400, width: 1.5),
-                        ),
-                        isDense: true,
-                        prefixIcon: Icon(Icons.sticky_note_2_outlined,
-                            color: Colors.brown.shade400, size: 20),
+                      decoration: _inputDeco(
+                        label: AccountStyle.noteLabel,
+                        prefix: Icons.sticky_note_2_outlined,
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    AccountStyle.gapLg,
                   ],
                 ),
               ),
             ),
+
+            // ── Save button ──
             SizedBox(
-              height: 50,
+              height: AccountStyle.saveButtonHeight,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _isIn
-                      ? Colors.green.shade700
-                      : Colors.red.shade700,
-                  foregroundColor: Colors.white,
+                      ? AccountStyle.success
+                      : AccountStyle.error700,
+                  foregroundColor: AccountStyle.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                  shape: const RoundedRectangleBorder(
+                      borderRadius: AccountStyle.r12),
                 ),
                 onPressed: _onSave,
                 icon: const Icon(Icons.save_outlined, size: 20),
                 label: Text(
-                    _isIn ? 'ບັນທຶກຮັບເງິນ' : 'ບັນທຶກຈ່າຍເງິນ',
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w900)),
+                  _isIn
+                      ? AccountStyle.saveReceiveBtn
+                      : AccountStyle.savePayBtn,
+                  style: AccountStyle.formSaveBtnText,
+                ),
               ),
             ),
           ],
@@ -231,17 +229,14 @@ class _AccountFormSheetState extends State<AccountFormSheet> {
     );
   }
 
+  // ── Receive content ──
   Widget _recvContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('ຈຳນວນເງິນທີ່ຮັບ *',
-            style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: Colors.black54,
-                letterSpacing: 0.5)),
-        const SizedBox(height: 6),
+        const Text(AccountStyle.amountLabel,
+            style: AccountStyle.sectionLabel),
+        AccountStyle.gap6,
         TextField(
           controller: recvC,
           keyboardType: TextInputType.number,
@@ -249,46 +244,47 @@ class _AccountFormSheetState extends State<AccountFormSheet> {
             FilteringTextInputFormatter.digitsOnly,
             NumberFormatter(),
           ],
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+          style: AccountStyle.amountInput,
           decoration: InputDecoration(
-            hintText: '0',
-            hintStyle: TextStyle(
-                color: Colors.grey.shade400, fontWeight: FontWeight.w600),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+            hintText: AccountStyle.zeroHint,
+            hintStyle: const TextStyle(
+              color: AccountStyle.grey400,
+              fontWeight: FontWeight.w600,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+            border: const OutlineInputBorder(
+              borderRadius: AccountStyle.inputRadius,
+              borderSide: BorderSide(color: AccountStyle.grey300),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
+            enabledBorder: const OutlineInputBorder(
+              borderRadius: AccountStyle.inputRadius,
+              borderSide: BorderSide(color: AccountStyle.grey300),
+            ),
+            focusedBorder: const OutlineInputBorder(
+              borderRadius: AccountStyle.inputRadius,
               borderSide:
-                  BorderSide(color: Colors.green.shade400, width: 2),
+                  BorderSide(color: AccountStyle.green400, width: 2),
             ),
-            prefixIcon:
-                Icon(Icons.numbers, color: Colors.green.shade600),
-            suffixText: 'ກີບ',
-            suffixStyle: TextStyle(
-                fontWeight: FontWeight.bold, color: Colors.grey.shade600),
+            prefixIcon: const Icon(Icons.numbers,
+                color: AccountStyle.green600),
+            suffixText: AccountStyle.currency,
+            suffixStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AccountStyle.grey600,
+            ),
           ),
         ),
       ],
     );
   }
 
+  // ── Pay content ──
   Widget _payContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('ລາຍການທີ່ຈ່າຍ *',
-            style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: Colors.black54,
-                letterSpacing: 0.5)),
-        const SizedBox(height: 6),
+        const Text(AccountStyle.itemsLabel,
+            style: AccountStyle.sectionLabel),
+        AccountStyle.gap6,
         ...rows.asMap().entries.map((e) {
           final idx = e.key;
           final r = e.value;
@@ -301,32 +297,15 @@ class _AccountFormSheetState extends State<AccountFormSheet> {
                   flex: 5,
                   child: TextField(
                     controller: r['name'],
-                    decoration: InputDecoration(
-                      labelText: 'ລາຍການ ${idx + 1}',
-                      labelStyle: TextStyle(
-                          fontSize: 13, color: Colors.grey.shade600),
-                      isDense: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide:
-                            BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide:
-                            BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                            color: Colors.red.shade400, width: 1.5),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
+                    decoration: _inputDeco(
+                      label: '${AccountStyle.itemPrefix} ${idx + 1}',
+                      focusColor: AccountStyle.red400,
+                      contentPad: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 12),
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
+                AccountStyle.gap6,
                 Expanded(
                   flex: 4,
                   child: TextField(
@@ -336,28 +315,11 @@ class _AccountFormSheetState extends State<AccountFormSheet> {
                       FilteringTextInputFormatter.digitsOnly,
                       NumberFormatter(),
                     ],
-                    decoration: InputDecoration(
-                      labelText: 'ລາຄາ',
-                      labelStyle: TextStyle(
-                          fontSize: 13, color: Colors.grey.shade600),
-                      suffixText: 'ກີບ',
-                      isDense: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide:
-                            BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide:
-                            BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                            color: Colors.red.shade400, width: 1.5),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
+                    decoration: _inputDeco(
+                      label: AccountStyle.priceLabel,
+                      suffix: AccountStyle.currency,
+                      focusColor: AccountStyle.red400,
+                      contentPad: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 12),
                     ),
                     onChanged: (_) => setState(() {}),
@@ -372,58 +334,61 @@ class _AccountFormSheetState extends State<AccountFormSheet> {
                         rows.removeAt(idx);
                       });
                     },
-                    icon: Icon(Icons.remove_circle_outline,
-                        color: Colors.red.shade600, size: 22),
+                    icon: const Icon(Icons.remove_circle_outline,
+                        color: AccountStyle.red600, size: 22),
                   ),
               ],
             ),
           );
         }),
-        const SizedBox(height: 4),
+        AccountStyle.gapXs,
         OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.brown.shade700,
-            side: BorderSide(color: Colors.brown.shade300),
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
+            foregroundColor: AccountStyle.brown700,
+            side: const BorderSide(color: AccountStyle.brown300),
+            padding: AccountStyle.padAddItem,
+            shape: const RoundedRectangleBorder(
+                borderRadius: AccountStyle.inputRadius),
           ),
           onPressed: () => setState(() {
             rows.add({
               'name': TextEditingController(),
-              'price': TextEditingController()
+              'price': TextEditingController(),
             });
           }),
           icon: const Icon(Icons.add, size: 16),
-          label: const Text('ເພີ່ມລາຍການ',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+          label: const Text(AccountStyle.addItemBtn,
+              style: AccountStyle.addItemBtnText),
         ),
-        const SizedBox(height: 10),
+        AccountStyle.gap10,
+
+        // ── Total ──
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: AccountStyle.padTotalBox,
           decoration: BoxDecoration(
-            color: Colors.red.shade50,
-            borderRadius: BorderRadius.circular(10),
+            color: AccountStyle.errorLight,
+            borderRadius: AccountStyle.inputRadius,
           ),
           child: Row(
             children: [
-              Icon(Icons.summarize_outlined,
-                  color: Colors.red.shade700, size: 18),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text('ລວມທັງໝົດ',
+              const Icon(Icons.summarize_outlined,
+                  color: AccountStyle.error700, size: 18),
+              AccountStyle.gap6,
+              const Expanded(
+                child: Text(AccountStyle.totalLabel,
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
-                        color: Colors.red.shade700)),
+                        color: AccountStyle.error700)),
               ),
               FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text('${fmt.format(_payTotal)} ກີບ',
-                    style: TextStyle(
+                child: Text(
+                    '${fmt.format(_payTotal)} ${AccountStyle.currency}',
+                    style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
-                        color: Colors.red.shade700,
+                        color: AccountStyle.error700,
                         letterSpacing: 0.2)),
               ),
             ],
@@ -433,37 +398,69 @@ class _AccountFormSheetState extends State<AccountFormSheet> {
     );
   }
 
+  // ── Toggle button ──
   Widget _tBtn(String l, IconData i, Color c, bool sel, VoidCallback tap) {
     return Material(
-      color: Colors.transparent,
+      color: AccountStyle.transparent,
       child: InkWell(
         onTap: tap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: AccountStyle.inputRadius,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: sel ? c : Colors.white,
-            borderRadius: BorderRadius.circular(10),
+            color: sel ? c : AccountStyle.white,
+            borderRadius: AccountStyle.inputRadius,
             border: Border.all(
-              color: sel ? c : Colors.grey.shade300,
+              color: sel ? c : AccountStyle.grey300,
               width: sel ? 0 : 1.2,
             ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(i, color: sel ? Colors.white : c, size: 16),
+              Icon(i, color: sel ? AccountStyle.white : c, size: 16),
               const SizedBox(width: 5),
-              Text(l,
-                  style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
-                      color: sel ? Colors.white : c,
-                      letterSpacing: 0.2)),
+              Text(l, style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                  color: sel ? AccountStyle.white : c,
+                  letterSpacing: 0.2)),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  // ── Input decoration helper ──
+  InputDecoration _inputDeco({
+    required String label,
+    IconData? prefix,
+    String? suffix,
+    Color focusColor = AccountStyle.brown400,
+    EdgeInsets? contentPad,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: AccountStyle.inputLabel,
+      suffixText: suffix,
+      isDense: true,
+      border: const OutlineInputBorder(
+        borderRadius: AccountStyle.inputRadius,
+        borderSide: BorderSide(color: AccountStyle.grey300),
+      ),
+      enabledBorder: const OutlineInputBorder(
+        borderRadius: AccountStyle.inputRadius,
+        borderSide: BorderSide(color: AccountStyle.grey300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: AccountStyle.inputRadius,
+        borderSide: BorderSide(color: focusColor, width: 1.5),
+      ),
+      contentPadding: contentPad,
+      prefixIcon: prefix == null
+          ? null
+          : Icon(prefix, color: AccountStyle.brown400, size: 20),
     );
   }
 
@@ -474,22 +471,27 @@ class _AccountFormSheetState extends State<AccountFormSheet> {
       final amount =
           double.tryParse(recvC.text.replaceAll(',', '')) ?? 0;
       if (amount <= 0) {
-        Get.snackbar('ເຕືອນ', 'ກະລຸນາໃສ່ຈຳນວນເງິນ');
+        Get.snackbar(
+            AccountStyle.alertTitle, AccountStyle.alertAmount);
         return;
       }
       items.add(AccountItem(
-        name: payType == 'cash' ? 'ຮັບເງິນສົດ' : 'ຮັບເງິນໂອນ',
+        name: payType == 'cash'
+            ? AccountStyle.receiveCash
+            : AccountStyle.receiveTransfer,
         price: amount,
       ));
     } else {
       for (final r in rows) {
         final n = r['name']!.text.trim();
-        final p = double.tryParse(r['price']!.text.replaceAll(',', '')) ?? 0;
+        final p =
+            double.tryParse(r['price']!.text.replaceAll(',', '')) ?? 0;
         if (n.isEmpty || p <= 0) continue;
         items.add(AccountItem(name: n, price: p));
       }
       if (items.isEmpty) {
-        Get.snackbar('ເຕືອນ', 'ກະລຸນາໃສ່ຢ່າງໜ້ອຍ 1 ລາຍການ');
+        Get.snackbar(
+            AccountStyle.alertTitle, AccountStyle.alertMinItem);
         return;
       }
     }

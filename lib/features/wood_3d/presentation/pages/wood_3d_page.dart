@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:wood/core/constants/specific/wood_3d_style.dart';
 import 'package:wood/features/wood_products/presentation/controllers/wood_product_controller.dart';
-import 'package:wood/features/wood_products/data/models/wood_product_model.dart';
+import 'package:wood/features/wood_products/domain/entities/wood_product.dart';
 import '../widgets/wood_3d_scene.dart';
 
 class Wood3DPage extends StatefulWidget {
@@ -15,36 +16,38 @@ class Wood3DPage extends StatefulWidget {
 class _Wood3DPageState extends State<Wood3DPage> {
   final controller = Get.find<WoodProductController>();
 
-  String selectedWoodType = 'ທັງໝົດ';
-  String selectedUnitFilter = 'ທັງໝົດ';
+  String selectedWoodType = Wood3DStyle.allFilter;
+  String selectedUnitFilter = Wood3DStyle.allFilter;
   String? selectedName;
-  WoodProductModel? selectedVariant;
+  WoodProduct? selectedVariant;
   String? focusedDimension;
   bool showColor = false;
 
   bool _panelExpanded = true;
 
-  // ─── Cache ───
-  List<WoodProductModel> _cachedProducts = const [];
+  List<WoodProduct> _cachedProducts = const [];
   int _cachedRevision = -1;
   String _cachedWoodType = '__none__';
   String _cachedUnitFilter = '__none__';
   String? _cachedSelectedName;
 
-  List<WoodProductModel> _cachedFiltered = const [];
-  List<String> _cachedWoodTypeOptions = const ['ທັງໝົດ'];
-  List<String> _cachedUnitOptions = const ['ທັງໝົດ'];
+  List<WoodProduct> _cachedFiltered = const [];
+  List<String> _cachedWoodTypeOptions = const [Wood3DStyle.allFilter];
+  List<String> _cachedUnitOptions = const [Wood3DStyle.allFilter];
   List<String> _cachedNames = const [];
-  List<WoodProductModel> _cachedVariants = const [];
+  List<WoodProduct> _cachedVariants = const [];
 
   bool? _lastLockValue;
+
+  // ⭐ ແປງ Model → Entity ຄັ້ງດຽວ
+  //    (ຖ້າ controller ຄືນ List<WoodProduct> ແລ້ວ → ລຶບ helper ນີ້)
+  List<WoodProduct> _productsAsEntities() => controller.products.toList();
 
   String _fmt(num v) =>
       v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
 
   String _fmtPrice(num v) {
-    String text =
-        v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
+    String text = v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
     return text.replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (m) => '${m[1]},',
@@ -52,8 +55,8 @@ class _Wood3DPageState extends State<Wood3DPage> {
   }
 
   bool get _hasAnyChoice =>
-      selectedWoodType != 'ທັງໝົດ' ||
-      selectedUnitFilter != 'ທັງໝົດ' ||
+      selectedWoodType != Wood3DStyle.allFilter ||
+      selectedUnitFilter != Wood3DStyle.allFilter ||
       selectedName != null ||
       selectedVariant != null;
 
@@ -75,8 +78,8 @@ class _Wood3DPageState extends State<Wood3DPage> {
 
   void _clearAll() {
     setState(() {
-      selectedWoodType = 'ທັງໝົດ';
-      selectedUnitFilter = 'ທັງໝົດ';
+      selectedWoodType = Wood3DStyle.allFilter;
+      selectedUnitFilter = Wood3DStyle.allFilter;
       selectedName = null;
       selectedVariant = null;
       focusedDimension = null;
@@ -86,8 +89,9 @@ class _Wood3DPageState extends State<Wood3DPage> {
     });
   }
 
-  void _recomputeIfNeeded(List<WoodProductModel> products, int revision) {
-    final changed = !identical(_cachedProducts, products) ||
+  void _recomputeIfNeeded(List<WoodProduct> products, int revision) {
+    final changed =
+        !identical(_cachedProducts, products) ||
         _cachedRevision != revision ||
         _cachedWoodType != selectedWoodType ||
         _cachedUnitFilter != selectedUnitFilter ||
@@ -101,37 +105,34 @@ class _Wood3DPageState extends State<Wood3DPage> {
     _cachedUnitFilter = selectedUnitFilter;
     _cachedSelectedName = selectedName;
 
-    final byUnitOnly = selectedUnitFilter == 'ທັງໝົດ'
+    final byUnitOnly = selectedUnitFilter == Wood3DStyle.allFilter
         ? products
-        : products
-            .where((p) => p.unit.contains(selectedUnitFilter))
-            .toList();
+        : products.where((p) => p.unit.contains(selectedUnitFilter)).toList();
 
-    final byTypeOnly = selectedWoodType == 'ທັງໝົດ'
+    final byTypeOnly = selectedWoodType == Wood3DStyle.allFilter
         ? products
-        : products
-            .where((p) => p.woodType.trim() == selectedWoodType)
-            .toList();
+        : products.where((p) => p.woodType.trim() == selectedWoodType).toList();
 
     final byBoth = products.where((p) {
-      if (selectedWoodType != 'ທັງໝົດ' &&
+      if (selectedWoodType != Wood3DStyle.allFilter &&
           p.woodType.trim() != selectedWoodType) {
         return false;
       }
-      if (selectedUnitFilter != 'ທັງໝົດ' &&
+      if (selectedUnitFilter != Wood3DStyle.allFilter &&
           !p.unit.contains(selectedUnitFilter)) {
         return false;
       }
       return true;
     }).toList();
 
-    final typeSet = byUnitOnly
-        .map((p) => p.woodType.trim())
-        .where((t) => t.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort();
-    _cachedWoodTypeOptions = ['ທັງໝົດ', ...typeSet];
+    final typeSet =
+        byUnitOnly
+            .map((p) => p.woodType.trim())
+            .where((t) => t.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+    _cachedWoodTypeOptions = [Wood3DStyle.allFilter, ...typeSet];
 
     final unitSet = byTypeOnly
         .map((p) => p.unit.trim())
@@ -142,17 +143,17 @@ class _Wood3DPageState extends State<Wood3DPage> {
       unitSet.add('ວົງ');
     }
     unitSet.sort((a, b) => a.length.compareTo(b.length));
-    _cachedUnitOptions = ['ທັງໝົດ', ...unitSet];
+    _cachedUnitOptions = [Wood3DStyle.allFilter, ...unitSet];
 
-    if (selectedWoodType != 'ທັງໝົດ' &&
+    if (selectedWoodType != Wood3DStyle.allFilter &&
         !_cachedWoodTypeOptions.contains(selectedWoodType)) {
-      selectedWoodType = 'ທັງໝົດ';
-      _cachedWoodType = 'ທັງໝົດ';
+      selectedWoodType = Wood3DStyle.allFilter;
+      _cachedWoodType = Wood3DStyle.allFilter;
     }
-    if (selectedUnitFilter != 'ທັງໝົດ' &&
+    if (selectedUnitFilter != Wood3DStyle.allFilter &&
         !_cachedUnitOptions.contains(selectedUnitFilter)) {
-      selectedUnitFilter = 'ທັງໝົດ';
-      _cachedUnitFilter = 'ທັງໝົດ';
+      selectedUnitFilter = Wood3DStyle.allFilter;
+      _cachedUnitFilter = Wood3DStyle.allFilter;
     }
 
     _cachedFiltered = byBoth;
@@ -168,16 +169,19 @@ class _Wood3DPageState extends State<Wood3DPage> {
       _cachedVariants = const [];
       selectedVariant = null;
     } else {
-      _cachedVariants =
-          _cachedFiltered.where((p) => p.name == selectedName).toList();
+      _cachedVariants = _cachedFiltered
+          .where((p) => p.name == selectedName)
+          .toList();
 
       if (_cachedVariants.isEmpty) {
         selectedVariant = null;
       } else {
-        final matched =
-            _cachedVariants.where((v) => v.id == selectedVariant?.id);
-        selectedVariant =
-            matched.isNotEmpty ? matched.first : _cachedVariants.first;
+        final matched = _cachedVariants.where(
+          (v) => v.id == selectedVariant?.id,
+        );
+        selectedVariant = matched.isNotEmpty
+            ? matched.first
+            : _cachedVariants.first;
       }
     }
   }
@@ -186,7 +190,7 @@ class _Wood3DPageState extends State<Wood3DPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Obx(() {
-        final allProducts = controller.products;
+        final allProducts = _productsAsEntities();
         final revision = controller.productsRevision.value;
         _recomputeIfNeeded(allProducts, revision);
 
@@ -214,12 +218,11 @@ class _Wood3DPageState extends State<Wood3DPage> {
                     )
                   : Container(
                       width: double.infinity,
-                      color: Colors.brown[50],
+                      color: Wood3DStyle.brown50,
                       child: const Center(
                         child: Text(
-                          'ພື້ນທີ່ສະແດງໂມເດວໄມ້ 3D',
-                          style:
-                              TextStyle(color: Colors.black45, fontSize: 15),
+                          Wood3DStyle.wood3dPlaceholder,
+                          style: Wood3DStyle.txPlaceholder,
                         ),
                       ),
                     ),
@@ -231,20 +234,19 @@ class _Wood3DPageState extends State<Wood3DPage> {
     );
   }
 
-  Widget _buildBottomPanel(
-    bool hasSelection,
-    List<WoodProductModel> allProducts,
-  ) {
+  Widget _buildBottomPanel(bool hasSelection, List<WoodProduct> allProducts) {
     return AnimatedSize(
-      duration: const Duration(milliseconds: 250),
+      duration: Wood3DStyle.normal,
       curve: Curves.easeInOutCubic,
       alignment: Alignment.topCenter,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Wood3DStyle.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Wood3DStyle.black.withOpacity(
+                Wood3DStyle.panelShadowOpacity,
+              ),
               blurRadius: 8,
               offset: const Offset(0, -2),
             ),
@@ -257,32 +259,44 @@ class _Wood3DPageState extends State<Wood3DPage> {
             if (_panelExpanded) ...[
               if (hasSelection)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+                  padding: Wood3DStyle.padPanelRow,
                   child: Row(
                     children: [
-                      Expanded(child: _dimButton('ກວ້າງ', 'width')),
-                      const SizedBox(width: 8),
-                      Expanded(child: _dimButton('ຍາວ', 'length')),
-                      const SizedBox(width: 8),
-                      Expanded(child: _dimButton('ໜາ', 'thickness')),
+                      Expanded(
+                        child: _dimButton(Wood3DStyle.dimWidth, 'width'),
+                      ),
+                      Wood3DStyle.gap8,
+                      Expanded(
+                        child: _dimButton(Wood3DStyle.dimLength, 'length'),
+                      ),
+                      Wood3DStyle.gap8,
+                      Expanded(
+                        child: _dimButton(
+                          Wood3DStyle.dimThickness,
+                          'thickness',
+                        ),
+                      ),
                     ],
                   ),
                 ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 2, 14, 14),
+                padding: Wood3DStyle.padPanelBottom,
                 child: allProducts.isEmpty
                     ? const Padding(
-                        padding: EdgeInsets.all(10),
+                        padding: Wood3DStyle.padEmpty,
                         child: Text(
-                          'ຍັງບໍ່ມີຂໍ້ມູນໃນຄັງ ກະລຸນາເພີ່ມຂໍ້ມູນກ່ອນ',
-                          style: TextStyle(color: Colors.black54),
+                          Wood3DStyle.noProductsForm,
+                          style: Wood3DStyle.txPlaceholder,
                         ),
                       )
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _sectionLabel('ຊະນິດໄມ້', Icons.local_florist),
-                          const SizedBox(height: 6),
+                          _sectionLabel(
+                            Wood3DStyle.woodTypeLabel,
+                            Icons.local_florist,
+                          ),
+                          Wood3DStyle.gap6,
                           _chipRow(
                             options: _cachedWoodTypeOptions,
                             selected: selectedWoodType,
@@ -293,9 +307,12 @@ class _Wood3DPageState extends State<Wood3DPage> {
                               focusedDimension = null;
                             }),
                           ),
-                          const SizedBox(height: 12),
-                          _sectionLabel('ໜ່ວຍນັບ', Icons.straighten),
-                          const SizedBox(height: 6),
+                          Wood3DStyle.gap12,
+                          _sectionLabel(
+                            Wood3DStyle.unitLabel,
+                            Icons.straighten,
+                          ),
+                          Wood3DStyle.gap6,
                           _chipRow(
                             options: _cachedUnitOptions,
                             selected: selectedUnitFilter,
@@ -306,50 +323,61 @@ class _Wood3DPageState extends State<Wood3DPage> {
                               focusedDimension = null;
                             }),
                           ),
-                          const SizedBox(height: 12),
-                          _sectionLabel('ຊື່ໄມ້', Icons.inventory_2_outlined),
-                          const SizedBox(height: 6),
+                          Wood3DStyle.gap12,
+                          _sectionLabel(
+                            Wood3DStyle.nameLabel,
+                            Icons.inventory_2_outlined,
+                          ),
+                          Wood3DStyle.gap6,
                           _compactDropdown<String>(
                             label: null,
                             hint: _cachedNames.isEmpty
-                                ? 'ບໍ່ມີຊື່ໃນໝວດນີ້'
-                                : 'ເລືອກຊື່ໄມ້',
+                                ? Wood3DStyle.noNameInCategory
+                                : Wood3DStyle.pickWoodName,
                             value: selectedName,
                             items: _cachedNames
-                                .map((n) => DropdownMenuItem(
-                                      value: n,
-                                      child: Text(n,
-                                          overflow:
-                                              TextOverflow.ellipsis),
-                                    ))
+                                .map(
+                                  (n) => DropdownMenuItem(
+                                    value: n,
+                                    child: Text(
+                                      n,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                )
                                 .toList(),
                             onChanged: _cachedNames.isEmpty
                                 ? null
                                 : (v) => setState(() {
-                                      selectedName = v;
-                                      focusedDimension = null;
-                                    }),
+                                    selectedName = v;
+                                    focusedDimension = null;
+                                  }),
                           ),
                           if (selectedName != null &&
                               _cachedVariants.isNotEmpty) ...[
-                            const SizedBox(height: 12),
+                            Wood3DStyle.gap12,
                             _variantInfoCard(),
                           ],
                           if (_hasAnyChoice) ...[
-                            const SizedBox(height: 6),
+                            Wood3DStyle.gap6,
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton.icon(
                                 onPressed: _clearAll,
-                                icon: const Icon(Icons.clear_all, size: 14),
+                                icon: const Icon(
+                                  Icons.clear_all,
+                                  size: Wood3DStyle.iconStar14,
+                                ),
                                 label: const Text(
-                                  'ລ້າງການເລືອກ',
-                                  style: TextStyle(fontSize: 11.5),
+                                  Wood3DStyle.clearSelection,
+                                  style: Wood3DStyle.txClearBtn,
                                 ),
                                 style: TextButton.styleFrom(
-                                  foregroundColor: Colors.red.shade700,
+                                  foregroundColor: Wood3DStyle.error700,
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
                                   minimumSize: Size.zero,
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
@@ -370,17 +398,9 @@ class _Wood3DPageState extends State<Wood3DPage> {
   Widget _sectionLabel(String text, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: Colors.brown.shade600),
-        const SizedBox(width: 5),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            color: Colors.brown.shade700,
-            letterSpacing: 0.2,
-          ),
-        ),
+        Icon(icon, size: Wood3DStyle.iconStar14, color: Wood3DStyle.brown500),
+        Wood3DStyle.gap5,
+        Text(text, style: Wood3DStyle.txSectionLabel),
       ],
     );
   }
@@ -391,48 +411,47 @@ class _Wood3DPageState extends State<Wood3DPage> {
     required ValueChanged<String> onSelected,
   }) {
     return SizedBox(
-      height: 32,
+      height: Wood3DStyle.chipRowH,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: options.map((opt) {
             final isSel = opt == selected;
-            final label = opt == 'ທັງໝົດ' ? 'ທັງໝົດ' : opt;
+            final label = opt == Wood3DStyle.allFilter
+                ? Wood3DStyle.allFilter
+                : opt;
 
             return Padding(
-              padding: const EdgeInsets.only(right: 6),
+              padding: Wood3DStyle.padChipRight,
               child: ChoiceChip(
                 showCheckmark: false,
                 avatar: isSel
-                    ? Icon(
+                    ? const Icon(
                         Icons.check_circle,
-                        size: 13,
-                        color: Colors.brown.shade700,
+                        size: Wood3DStyle.iconStar13,
+                        color: Wood3DStyle.brown700,
                       )
                     : null,
                 label: Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: isSel ? FontWeight.bold : FontWeight.w600,
-                    color: isSel
-                        ? Colors.brown.shade900
-                        : Colors.brown.shade700,
-                  ),
+                  style:
+                      (isSel ? Wood3DStyle.txChipSelected : Wood3DStyle.txChip)
+                          .copyWith(
+                            color: isSel
+                                ? Wood3DStyle.brown900
+                                : Wood3DStyle.brown700,
+                          ),
                 ),
                 selected: isSel,
-                selectedColor: Colors.brown.shade100,
-                backgroundColor: Colors.brown.shade50,
+                selectedColor: Wood3DStyle.brown100,
+                backgroundColor: Wood3DStyle.brown50,
                 side: BorderSide(
-                  color: isSel
-                      ? Colors.brown.shade400
-                      : Colors.brown.shade200,
+                  color: isSel ? Wood3DStyle.brown400 : Wood3DStyle.brown200,
                 ),
                 visualDensity: VisualDensity.compact,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+                padding: Wood3DStyle.padChipInner,
+                labelPadding: Wood3DStyle.padChipLabel,
                 onSelected: (_) => onSelected(opt),
               ),
             );
@@ -456,26 +475,24 @@ class _Wood3DPageState extends State<Wood3DPage> {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        hintStyle: TextStyle(
-          color: Colors.grey.shade500,
-          fontSize: 13,
-        ),
+        hintStyle: const TextStyle(color: Wood3DStyle.grey500, fontSize: 13),
         isDense: true,
         filled: true,
-        fillColor: Colors.brown.shade50.withOpacity(0.4),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.brown.shade200),
+        fillColor: Wood3DStyle.brown50.withOpacity(
+          Wood3DStyle.dropdownFillOpacity,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.brown.shade200),
+        contentPadding: Wood3DStyle.padDropdown,
+        border: const OutlineInputBorder(
+          borderRadius: Wood3DStyle.r10,
+          borderSide: BorderSide(color: Wood3DStyle.brown200),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.brown.shade500, width: 1.5),
+        enabledBorder: const OutlineInputBorder(
+          borderRadius: Wood3DStyle.r10,
+          borderSide: BorderSide(color: Wood3DStyle.brown200),
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderRadius: Wood3DStyle.r10,
+          borderSide: BorderSide(color: Wood3DStyle.brown500, width: 1.5),
         ),
       ),
       items: items,
@@ -488,11 +505,11 @@ class _Wood3DPageState extends State<Wood3DPage> {
     if (v == null) return const SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: Wood3DStyle.padCard,
       decoration: BoxDecoration(
-        color: Colors.brown.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.brown.shade200),
+        color: Wood3DStyle.brown50,
+        borderRadius: Wood3DStyle.r12,
+        border: Border.all(color: Wood3DStyle.brown200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -500,29 +517,27 @@ class _Wood3DPageState extends State<Wood3DPage> {
           Row(
             children: [
               const Text(
-                'ຂະໜາດ:',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.brown,
-                ),
+                Wood3DStyle.sizeLabelColon,
+                style: Wood3DStyle.txInfoLabel,
               ),
-              const SizedBox(width: 8),
+              Wood3DStyle.gap8,
               Expanded(
                 child: DropdownButtonHideUnderline(
-                  child: DropdownButton<WoodProductModel>(
+                  child: DropdownButton<WoodProduct>(
                     value: v,
                     isExpanded: true,
                     isDense: true,
                     items: _cachedVariants
-                        .map((item) => DropdownMenuItem(
-                              value: item,
-                              child: Text(
-                                '${_fmt(item.width)}×${_fmt(item.length)}×${_fmt(item.thickness)} ${item.sizeUnit}',
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ))
+                        .map(
+                          (item) => DropdownMenuItem(
+                            value: item,
+                            child: Text(
+                              '${_fmt(item.width)}×${_fmt(item.length)}×${_fmt(item.thickness)} ${item.sizeUnit}',
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        )
                         .toList(),
                     onChanged: (nv) => setState(() {
                       selectedVariant = nv;
@@ -538,81 +553,52 @@ class _Wood3DPageState extends State<Wood3DPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'ລາຄາ:',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.brown,
-                ),
+                Wood3DStyle.priceLabelColon,
+                style: Wood3DStyle.txInfoLabel,
               ),
               Text(
-                '${_fmtPrice(v.price)} ກີບ',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.green.shade700,
-                ),
+                '${_fmtPrice(v.price)} ${Wood3DStyle.currency}',
+                style: Wood3DStyle.txInfoPrice,
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          Wood3DStyle.gap4,
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'ຈຳນວນ:',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.brown,
-                ),
+                Wood3DStyle.qtyLabelColon,
+                style: Wood3DStyle.txInfoLabel,
               ),
-              Text(
-                '${v.quantity} ${v.unit}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Text('${v.quantity} ${v.unit}', style: Wood3DStyle.txInfoQty),
             ],
           ),
           if (v.zones.isNotEmpty) ...[
-            const SizedBox(height: 6),
+            Wood3DStyle.gap6,
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'ໂຊນ:',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.brown,
-                  ),
+                  Wood3DStyle.zoneLabelColon,
+                  style: Wood3DStyle.txInfoLabel,
                 ),
-                const SizedBox(width: 8),
+                Wood3DStyle.gap8,
                 Expanded(
                   child: Wrap(
-                    spacing: 4,
-                    runSpacing: 4,
+                    spacing: Wood3DStyle.wrapSpacing,
+                    runSpacing: Wood3DStyle.wrapRunSpacing,
                     children: v.zones
-                        .map((z) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                    color: Colors.brown.shade200),
-                              ),
-                              child: Text(
-                                z,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.brown.shade800,
-                                ),
-                              ),
-                            ))
+                        .map(
+                          (z) => Container(
+                            padding: Wood3DStyle.padZoneChip,
+                            decoration: BoxDecoration(
+                              color: Wood3DStyle.white,
+                              borderRadius: Wood3DStyle.r4,
+                              border: Border.all(color: Wood3DStyle.brown200),
+                            ),
+                            child: Text(z, style: Wood3DStyle.txZone),
+                          ),
+                        )
                         .toList(),
                   ),
                 ),
@@ -638,20 +624,22 @@ class _Wood3DPageState extends State<Wood3DPage> {
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        color: Colors.transparent,
+        padding: const EdgeInsets.symmetric(
+          vertical: Wood3DStyle.panelHandlePadV,
+        ),
+        color: Wood3DStyle.transparent,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40,
-              height: 4,
+              width: Wood3DStyle.sliderHandleW,
+              height: Wood3DStyle.sliderHandleH,
               decoration: BoxDecoration(
-                color: Colors.grey.shade400,
-                borderRadius: BorderRadius.circular(2),
+                color: Wood3DStyle.grey400,
+                borderRadius: Wood3DStyle.r2,
               ),
             ),
-            const SizedBox(height: 4),
+            Wood3DStyle.gap4,
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -659,19 +647,15 @@ class _Wood3DPageState extends State<Wood3DPage> {
                   _panelExpanded
                       ? Icons.keyboard_arrow_down
                       : Icons.keyboard_arrow_up,
-                  size: 14,
-                  color: Colors.grey.shade500,
+                  size: Wood3DStyle.iconStar14,
+                  color: Wood3DStyle.grey500,
                 ),
-                const SizedBox(width: 4),
+                Wood3DStyle.gap4,
                 Text(
                   _panelExpanded
-                      ? 'ປັດລົງ ຫຼື ແຕະ ເພື່ອຊ່ອນ'
-                      : 'ປັດຂຶ້ນ ຫຼື ແຕະ ເພື່ອສະແດງ',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade500,
-                  ),
+                      ? Wood3DStyle.panelHide
+                      : Wood3DStyle.panelShow,
+                  style: Wood3DStyle.txPanelHint,
                 ),
               ],
             ),
@@ -685,9 +669,9 @@ class _Wood3DPageState extends State<Wood3DPage> {
     final active = focusedDimension == value;
     return OutlinedButton(
       style: OutlinedButton.styleFrom(
-        backgroundColor: active ? Colors.brown : null,
-        foregroundColor: active ? Colors.white : Colors.brown,
-        side: const BorderSide(color: Colors.brown),
+        backgroundColor: active ? Wood3DStyle.brown700 : null,
+        foregroundColor: active ? Wood3DStyle.white : Wood3DStyle.brown700,
+        side: const BorderSide(color: Wood3DStyle.brown700),
       ),
       onPressed: () => setState(() {
         focusedDimension = active ? null : value;

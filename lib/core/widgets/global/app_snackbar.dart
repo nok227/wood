@@ -1,31 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:wood/core/constants/global/app_colors.dart';
+import 'package:wood/core/constants/global/app_layout.dart';
+import 'package:wood/core/constants/global/app_durations.dart';
 
 enum SnackType { success, error, warning, info }
 
 class AppSnackbar {
   AppSnackbar._();
 
-  static void show(String title, String message,
-      {SnackType type = SnackType.info}) {
+  static void show(
+    String title,
+    String message, {
+    SnackType type = SnackType.info,
+  }) {
     Get.closeAllSnackbars();
     late Color bg;
     late IconData icon;
     switch (type) {
       case SnackType.success:
-        bg = Colors.green.shade700;
+        bg = AppColors.success;
         icon = Icons.check_circle;
         break;
       case SnackType.error:
-        bg = Colors.red.shade700;
+        bg = AppColors.error700;
         icon = Icons.error_outline;
         break;
       case SnackType.warning:
-        bg = Colors.orange.shade800;
+        bg = AppColors.warning;
         icon = Icons.warning_amber_rounded;
         break;
       case SnackType.info:
-        bg = Colors.brown.shade700;
+        bg = AppColors.primary;
         icon = Icons.info_outline;
         break;
     }
@@ -33,13 +39,15 @@ class AppSnackbar {
       title,
       message,
       backgroundColor: bg,
-      colorText: Colors.white,
-      icon: Icon(icon, color: Colors.white, size: 26),
+      colorText: AppColors.white,
+      icon: Icon(icon, color: AppColors.white, size: 26),
       snackPosition: SnackPosition.TOP,
       margin: const EdgeInsets.all(12),
       borderRadius: 12,
-      duration: Duration(seconds: type == SnackType.error ? 3 : 2),
-      animationDuration: const Duration(milliseconds: 300),
+      duration: type == SnackType.error
+          ? AppDurations.snackbarLong
+          : AppDurations.snackbarShort,
+      animationDuration: AppDurations.normal,
       boxShadows: [
         BoxShadow(
           color: bg.withOpacity(0.35),

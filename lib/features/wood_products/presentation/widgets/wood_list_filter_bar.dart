@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wood/core/constants/specific/wood_style.dart';
 
 class WoodListFilterBar extends StatelessWidget {
   final List<String> options;
@@ -17,10 +18,10 @@ class WoodListFilterBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: WoodStyle.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.brown.withOpacity(0.08),
+            color: WoodStyle.brown700.withOpacity(0.08),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -34,20 +35,16 @@ class WoodListFilterBar extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
-                  color: Colors.brown.shade700,
-                  borderRadius: BorderRadius.circular(6),
+                  color: WoodStyle.brown700,
+                  borderRadius: WoodStyle.r6,
                 ),
                 child: const Icon(Icons.filter_list,
-                    color: Colors.white, size: 13),
+                    color: WoodStyle.white, size: 13),
               ),
               const SizedBox(width: 6),
               const Text(
-                'ກັ່ນກອງ:',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12.5,
-                  color: Colors.brown,
-                ),
+                WoodStyle.filterLabel,
+                style: WoodStyle.filterTitle,
               ),
             ],
           ),
@@ -57,14 +54,14 @@ class WoodListFilterBar extends StatelessWidget {
             child: Row(
               children: options.map((name) {
                 final sel = selected == name;
-                final label = name == 'ທັງໝົດ' ? 'ທັງໝົດ' : name;
+                final label = name == WoodStyle.all ? WoodStyle.all : name;
                 return Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: ChoiceChip(
                     showCheckmark: false,
                     avatar: sel
-                        ? Icon(Icons.check_circle,
-                            size: 14, color: Colors.brown.shade700)
+                        ? const Icon(Icons.check_circle,
+                            size: 14, color: WoodStyle.brown700)
                         : null,
                     label: Text(
                       label,
@@ -73,17 +70,17 @@ class WoodListFilterBar extends StatelessWidget {
                         fontWeight:
                             sel ? FontWeight.bold : FontWeight.w600,
                         color: sel
-                            ? Colors.brown.shade900
-                            : Colors.brown.shade700,
+                            ? WoodStyle.brown900
+                            : WoodStyle.brown700,
                       ),
                     ),
                     selected: sel,
-                    selectedColor: Colors.brown.shade100,
-                    backgroundColor: Colors.brown.shade50,
+                    selectedColor: WoodStyle.brown100,
+                    backgroundColor: WoodStyle.brown50,
                     side: BorderSide(
                       color: sel
-                          ? Colors.brown.shade400
-                          : Colors.brown.shade200,
+                          ? WoodStyle.brown400
+                          : WoodStyle.brown200,
                     ),
                     onSelected: (_) => onSelected(name),
                   ),

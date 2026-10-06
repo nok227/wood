@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:wood/core/utils/page_route_notifier.dart';
@@ -33,7 +32,9 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     _rebuildTabs();
-    auth.allowedMenus.listen((_) => _rebuildTabs());
+
+    // ⭐ เปลี่ยน: listen currentUser แทน allowedMenus
+    auth.currentUser.listen((_) => _rebuildTabs());
 
     final fallback = auth.isAdmin ? 1 : 0;
     final initial = (_lastTabIndex != null &&

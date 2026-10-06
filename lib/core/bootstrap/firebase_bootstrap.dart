@@ -1,6 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
-import 'package:wood/firebase_options.dart';
+import 'package:wood/firebase/firebase_options.dart';
 
 class FirebaseBootstrap {
   FirebaseBootstrap._();

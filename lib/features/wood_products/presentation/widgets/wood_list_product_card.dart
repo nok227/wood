@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:wood/core/widgets/blinking_badge.dart';
-import 'package:wood/core/widgets/animated_number.dart';
+import 'package:wood/core/constants/global/app_colors.dart';
+import 'package:wood/core/widgets/global/animated_number.dart';
 import 'package:wood/core/utils/dimension_utils.dart';
-import '../../data/models/wood_product_model.dart';
+import 'package:wood/features/wood_products/presentation/widgets/blinking_badge.dart';
+import '../../domain/entities/wood_product.dart';                     // ✅ ໃໝ່
 
 class WoodListProductCard extends StatelessWidget {
-  final WoodProductModel item;
+  final WoodProduct item;                                            // ✅
   final bool isAdmin;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -46,7 +47,7 @@ class WoodListProductCard extends StatelessWidget {
               child: PopupMenuButton<int>(
                 padding: EdgeInsets.zero,
                 icon: Icon(Icons.more_vert,
-                    size: 18, color: Colors.grey.shade600),
+                    size: 18, color: AppColors.grey600),
                 onSelected: (v) {
                   if (v == 1) {
                     onEdit();
@@ -54,14 +55,14 @@ class WoodListProductCard extends StatelessWidget {
                     onDelete();
                   }
                 },
-                itemBuilder: (_) => const [
+                itemBuilder: (_) => [
                   PopupMenuItem(
                     value: 1,
                     child: Row(
                       children: [
-                        Icon(Icons.edit, color: Colors.blue, size: 20),
-                        SizedBox(width: 12),
-                        Text('ແກ້ໄຂ'),
+                        Icon(Icons.edit, color: AppColors.blue, size: 20),
+                        const SizedBox(width: 12),
+                        const Text('ແກ້ໄຂ'),
                       ],
                     ),
                   ),
@@ -69,9 +70,10 @@ class WoodListProductCard extends StatelessWidget {
                     value: 2,
                     child: Row(
                       children: [
-                        Icon(Icons.delete, color: Colors.red, size: 20),
-                        SizedBox(width: 12),
-                        Text('ລຶບ', style: TextStyle(color: Colors.red)),
+                        Icon(Icons.delete, color: AppColors.errorRed, size: 20),
+                        const SizedBox(width: 12),
+                        Text('ລຶບ',
+                            style: TextStyle(color: AppColors.errorRed)),
                       ],
                     ),
                   ),
@@ -95,12 +97,12 @@ class WoodListProductCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Text(
+                Text(
                   'ຂະໜາດ',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black87,
+                    color: AppColors.black87,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -114,22 +116,22 @@ class WoodListProductCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
-                        color: Colors.amber.shade100,
+                        color: AppColors.amber100,
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.amber.shade400),
+                        border: Border.all(color: AppColors.amber400),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.sticky_note_2_outlined,
-                              size: 9, color: Colors.amber.shade900),
+                              size: 9, color: AppColors.amber900),
                           const SizedBox(width: 2),
                           Text(
                             'ໝາຍເຫດ',
                             style: TextStyle(
                               fontSize: 8,
                               fontWeight: FontWeight.w900,
-                              color: Colors.amber.shade900,
+                              color: AppColors.amber900,
                             ),
                           ),
                         ],
@@ -142,10 +144,10 @@ class WoodListProductCard extends StatelessWidget {
             const SizedBox(height: 1),
             Text(
               '${_fmt(item.width)} × ${_fmt(item.length)} × ${_fmt(item.thickness)} ${item.sizeUnit}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
-                color: Colors.green,
+                color: AppColors.success,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -155,22 +157,22 @@ class WoodListProductCard extends StatelessWidget {
             const SizedBox(height: 4),
             _zoneLine(),
             const SizedBox(height: 5),
-            const Text(
+            Text(
               'ຈຳນວນ',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: Colors.black87,
+                color: AppColors.black87,
                 letterSpacing: 0.5,
               ),
             ),
             const SizedBox(height: 1),
             Text(
               '${item.quantity} ${item.unit}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10.5,
                 fontWeight: FontWeight.w700,
-                color: Colors.black87,
+                color: AppColors.black87,
               ),
             ),
           ],
@@ -181,12 +183,12 @@ class WoodListProductCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
+              Text(
                 'ລາຄາ: ',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: Colors.black87,
+                  color: AppColors.black87,
                   letterSpacing: 0.3,
                 ),
               ),
@@ -198,7 +200,7 @@ class WoodListProductCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
-                  color: Colors.green.shade700,
+                  color: AppColors.success,
                   letterSpacing: 0.2,
                 ),
               ),
@@ -208,7 +210,7 @@ class WoodListProductCard extends StatelessWidget {
                   offset: const Offset(0, -8),
                   child: BlinkingBadge(
                     text: 'ລ່າສຸດ',
-                    color: Colors.orange.shade700,
+                    color: AppColors.warning,
                   ),
                 ),
               ],
@@ -237,7 +239,7 @@ class WoodListProductCard extends StatelessWidget {
           line,
           style: TextStyle(
             fontSize: 10,
-            color: Colors.grey.shade600,
+            color: AppColors.grey600,
             fontWeight: FontWeight.w500,
             height: 1.35,
           ),
@@ -260,7 +262,7 @@ class WoodListProductCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10.5,
                 fontWeight: FontWeight.w700,
-                color: Colors.black87,
+                color: AppColors.black87,
               ),
             ),
             TextSpan(
@@ -268,7 +270,7 @@ class WoodListProductCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10.5,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey.shade500,
+                color: AppColors.grey500,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -288,7 +290,7 @@ class WoodListProductCard extends StatelessWidget {
           style: TextStyle(
             fontSize: 10.5,
             fontWeight: FontWeight.w700,
-            color: Colors.black87,
+            color: AppColors.black87,
           ),
         ),
         Expanded(
@@ -304,16 +306,16 @@ class WoodListProductCard extends StatelessWidget {
                     vertical: 1,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.brown.shade50,
+                    color: AppColors.brown50,
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Colors.brown.shade200),
+                    border: Border.all(color: AppColors.brown200),
                   ),
                   child: Text(
                     z,
                     style: TextStyle(
                       fontSize: 9.5,
                       fontWeight: FontWeight.bold,
-                      color: Colors.brown.shade800,
+                      color: AppColors.brown800,
                     ),
                   ),
                 ),
@@ -324,7 +326,7 @@ class WoodListProductCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 9.5,
                     fontWeight: FontWeight.w800,
-                    color: Colors.brown.shade400,
+                    color: AppColors.brown400,
                   ),
                 ),
             ],
@@ -336,7 +338,7 @@ class WoodListProductCard extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════
-// 🖼️ ຮູບທີ່ປັດໄດ້ (Swipeable)
+// 🖼️ ຮູບທີ່ປັດໄດ້ (Swipeable) — ບໍ່ຕ້ອງແກ້
 // ══════════════════════════════════════════════
 class _SwipeableImage extends StatefulWidget {
   final List<String> imageUrls;
@@ -375,10 +377,10 @@ class _SwipeableImageState extends State<_SwipeableImage> {
           child: Container(
             width: widget.width,
             height: widget.height,
-            color: Colors.grey.shade100,
+            color: AppColors.grey100,
             child: Icon(
               Icons.image_not_supported,
-              color: Colors.grey.shade400,
+              color: AppColors.grey400,
               size: 22,
             ),
           ),
@@ -408,19 +410,19 @@ class _SwipeableImageState extends State<_SwipeableImage> {
                   imageUrl: widget.imageUrls[i],
                   fit: BoxFit.contain,
                   memCacheWidth: 216,
-                  placeholder: (c, u) => const Center(
+                  placeholder: (c, u) => Center(
                     child: SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.brown,
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
                   errorWidget: (c, u, e) => Icon(
                     Icons.broken_image,
-                    color: Colors.grey.shade400,
+                    color: AppColors.grey400,
                     size: 22,
                   ),
                 ),
@@ -444,11 +446,11 @@ class _SwipeableImageState extends State<_SwipeableImage> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: active
-                              ? Colors.brown.shade700
-                              : Colors.white.withOpacity(0.85),
+                              ? AppColors.primary
+                              : AppColors.white.withOpacity(0.85),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.25),
+                              color: AppColors.black.withOpacity(0.25),
                               blurRadius: 2,
                             ),
                           ],
@@ -469,13 +471,13 @@ class _SwipeableImageState extends State<_SwipeableImage> {
                       vertical: 1,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.55),
+                      color: AppColors.black.withOpacity(0.55),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '${_current + 1}/${widget.imageUrls.length}',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: AppColors.white,
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
                       ),

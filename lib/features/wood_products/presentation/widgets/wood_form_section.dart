@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:wood/core/widgets/section_wrapper.dart';
+import 'package:wood/core/constants/specific/wood_style.dart';
+import 'package:wood/features/wood_products/presentation/widgets/section_wrapper.dart';
 
 class WoodFormSection extends StatelessWidget {
   final String number;
@@ -25,7 +26,7 @@ class WoodFormSection extends StatelessWidget {
       number: number,
       title: title,
       icon: icon,
-      color: Colors.brown,
+      color: WoodStyle.brown700,
       done: done,
       warning: warning,
       child: child,

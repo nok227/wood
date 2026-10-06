@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:wood/core/constants/specific/wood_style.dart';
 
 class WoodGalleryPage extends StatefulWidget {
   final List<String> imageUrls;
@@ -53,7 +54,7 @@ class _WoodGalleryPageState extends State<WoodGalleryPage> {
     setState(() => _index = i);
     _pageController.animateToPage(
       i,
-      duration: const Duration(milliseconds: 250),
+      duration: WoodStyle.galleryAnim,
       curve: Curves.easeInOut,
     );
   }
@@ -64,13 +65,13 @@ class _WoodGalleryPageState extends State<WoodGalleryPage> {
     final hasMultiple = urls.length > 1;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: WoodStyle.black,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: WoodStyle.transparent,
         elevation: 0,
-        title: Text(widget.title, style: const TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(widget.title, style: const TextStyle(color: WoodStyle.white)),
+        iconTheme: const IconThemeData(color: WoodStyle.white),
       ),
       body: Stack(
         children: [
@@ -94,12 +95,12 @@ class _WoodGalleryPageState extends State<WoodGalleryPage> {
                       imageUrl: urls[i],
                       fit: BoxFit.contain,
                       placeholder: (c, u) => const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
+                        child: CircularProgressIndicator(color: WoodStyle.white),
                       ),
                       errorWidget: (c, u, e) => const Icon(
                         Icons.broken_image,
-                        color: Colors.white,
-                        size: 48,
+                        color: WoodStyle.white,
+                        size: WoodStyle.galleryErrorLg,
                       ),
                     ),
                   ),
@@ -130,15 +131,17 @@ class _WoodGalleryPageState extends State<WoodGalleryPage> {
             bottom: hasMultiple ? 108 : 16,
             child: IgnorePointer(
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(12),
+                padding: WoodStyle.padGalleryBadge,
+                decoration: const BoxDecoration(
+                  color: WoodStyle.black54,
+                  borderRadius: WoodStyle.galleryBadgeR,
                 ),
                 child: Text(
                   '${_index + 1} / ${urls.length}',
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  style: const TextStyle(
+                    color: WoodStyle.white,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ),
@@ -149,64 +152,67 @@ class _WoodGalleryPageState extends State<WoodGalleryPage> {
               right: 0,
               bottom: 0,
               child: Container(
-                height: 100,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                height: WoodStyle.galleryHeight,
+                padding: WoodStyle.padGallery,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.0),
-                      Colors.black.withOpacity(0.75),
+                      WoodStyle.black.withOpacity(0.0),
+                      WoodStyle.black
+                          .withOpacity(WoodStyle.opacityGradientEnd),
                     ],
                   ),
                 ),
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: urls.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: WoodStyle.galleryGap),
                   itemBuilder: (context, i) {
                     final selected = i == _index;
                     return GestureDetector(
                       onTap: () => _goTo(i),
                       child: Container(
-                        width: 62,
+                        width: WoodStyle.galleryThumbW,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: WoodStyle.galleryThumbR,
                           border: Border.all(
-                            color:
-                                selected ? Colors.tealAccent : Colors.white24,
-                            width: 2,
+                            color: selected
+                                ? WoodStyle.tealAccent
+                                : WoodStyle.white24,
+                            width: WoodStyle.borderW2_0,
                           ),
                           boxShadow: selected
                               ? [
                                   BoxShadow(
-                                    color:
-                                        Colors.tealAccent.withOpacity(0.45),
-                                    blurRadius: 8,
+                                    color: WoodStyle.tealAccent.withOpacity(
+                                        WoodStyle.opacityGlow),
+                                    blurRadius: WoodStyle.galleryGlowBlur,
                                   ),
                                 ]
                               : null,
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: WoodStyle.galleryThumbRSm,
                           child: CachedNetworkImage(
                             imageUrl: urls[i],
                             fit: BoxFit.cover,
                             placeholder: (c, u) => const Center(
                               child: SizedBox(
-                                width: 14,
-                                height: 14,
+                                width: WoodStyle.galleryPlaceholderSize,
+                                height: WoodStyle.galleryPlaceholderSize,
                                 child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                                  strokeWidth:
+                                      WoodStyle.galleryPlaceholderStroke,
                                 ),
                               ),
                             ),
                             errorWidget: (c, u, e) => const Icon(
                               Icons.broken_image,
-                              size: 20,
-                              color: Colors.white54,
+                              size: WoodStyle.galleryErrorSm,
+                              color: WoodStyle.white54,
                             ),
                           ),
                         ),

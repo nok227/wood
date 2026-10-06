@@ -7,6 +7,8 @@ import 'package:wood/features/auth/presentation/controllers/auth_controller.dart
 import 'package:wood/features/notifications/data/datasources/notification_remote_data_source.dart';
 import 'package:wood/features/notifications/data/repositories/notification_repository_impl.dart';
 import 'package:wood/features/notifications/presentation/controllers/notification_controller.dart';
+import 'package:wood/features/wood_products/data/datasources/wood_remote_data_source.dart';
+import 'package:wood/features/wood_products/data/repositories/wood_repository_impl.dart';
 
 import 'package:wood/features/wood_products/presentation/controllers/wood_product_controller.dart';
 
@@ -62,7 +64,15 @@ class ControllerBootstrap {
     );
 
     // Lazy
-    Get.lazyPut(() => WoodProductController(), fenix: true);
+        // Lazy
+    Get.lazyPut(
+      () => WoodProductController(
+        repository: WoodRepositoryImpl(
+          remoteDataSource: WoodRemoteDataSource(),
+        ),
+      ),
+      fenix: true,
+    );
 
     Get.lazyPut(
       () => SalesController(

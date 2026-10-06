@@ -1,52 +1,89 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';
 
+/// ══════════════════════════════════════════════
+/// 📦 AUTH REPOSITORY IMPL
+/// หน้าที่: แปลง Model ↔ Entity + caching
+/// ══════════════════════════════════════════════
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
 
   AuthRepositoryImpl({required this.remoteDataSource});
 
+  AppUser? _cachedUser;
+
+  // ══════════════════════════════════════════
+  // State
+  // ══════════════════════════════════════════
   @override
-  Future<UserCredential> registerWithEmail({
+  AppUser? get currentUser => _cachedUser;
+
+  @override
+  Stream<AppUser?> authStateStream() {
+    return remoteDataSource.authStateStream().map((m) {
+      _cachedUser = m?.toEntity();
+      return _cachedUser;
+    });
+  }
+
+  @override
+  Stream<AppUser?> userStream(String uid) {
+    return remoteDataSource.userStream(uid).map((m) => m?.toEntity());
+  }
+
+  // ══════════════════════════════════════════
+  // Auth
+  // ══════════════════════════════════════════
+  @override
+  Future<AppUser> registerWithEmail({
     required String name,
     required String email,
     required String password,
-  }) {
-    return remoteDataSource.registerWithEmail(
+  }) async {
+    final model = await remoteDataSource.registerWithEmail(
       name: name,
       email: email,
       password: password,
     );
+    return model.toEntity();
   }
 
   @override
-  Future<UserCredential> signInWithEmail({
+  Future<AppUser> signInWithEmail({
     required String email,
     required String password,
-  }) {
-    return remoteDataSource.signInWithEmail(
+  }) async {
+    final model = await remoteDataSource.signInWithEmail(
       email: email,
       password: password,
     );
+    return model.toEntity();
   }
 
   @override
-  Future<UserCredential?> signInWithGoogle() {
-    return remoteDataSource.signInWithGoogle();
+  Future<AppUser?> signInWithGoogle() async {
+    final model = await remoteDataSource.signInWithGoogle();
+    return model?.toEntity();
   }
 
   @override
-  Future<void> signOut() {
-    return remoteDataSource.signOut();
+  Future<void> signOut() async {
+    _cachedUser = null;
+    await remoteDataSource.signOut();
+  }
+
+  // ══════════════════════════════════════════
+  // Admin
+  // ══════════════════════════════════════════
+  @override
+  Future<List<AppUser>> getUsers() async {
+    final models = await remoteDataSource.getUsers();
+    return models.map((m) => m.toEntity()).toList();
   }
 
   @override
-  Stream<DocumentSnapshot<Map<String, dynamic>>> userDocStream(String uid) =>
-      remoteDataSource.userDocStream(uid);
-
-  @override
-  Future<void> updateAllowedMenus(String uid, List<String> menus) =>
-      remoteDataSource.updateAllowedMenus(uid, menus);
+  Future<void> updateAllowedMenus(String uid, List<String> menus) {
+    return remoteDataSource.updateAllowedMenus(uid, menus);
+  }
 }

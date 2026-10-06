@@ -1,15 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/entities/sale_entity.dart';
-import '../../domain/entities/sale_order_entity.dart';
 import '../models/sale_model.dart';
 import '../models/sale_order_model.dart';
 
+/// ══════════════════════════════════════════════
+/// 📡 SALES REMOTE DATA SOURCE
+/// หน้าที่: คุยกับ Firestore + รวม legacy + order
+/// คืน Model — ไม่แปลงเป็น Entity
+/// ══════════════════════════════════════════════
 class SalesRemoteDataSource {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static const String _collection = 'sales';
   static const String _orderCollection = 'sale_orders';
 
-  Future<List<SaleOrderEntity>> getSaleOrders() async {
+  // ── ดึงทั้งหมด (คืน Model) ──
+  Future<List<SaleOrderModel>> getSaleOrders() async {
     final results = await Future.wait([
       _firestore
           .collection(_collection)
@@ -21,14 +25,16 @@ class SalesRemoteDataSource {
           .get(),
     ]);
 
+    // legacy → SaleOrderModel
     final legacy = results[0].docs
-        .map(
-          (d) => SaleModel.fromMap(d.data(), d.id).toEntity().toOrderEntity(),
-        )
+        .map((d) => SaleOrderModel.fromLegacySaleModel(
+              SaleModel.fromMap(d.data(), d.id),
+            ))
         .toList();
 
+    // orders → SaleOrderModel
     final orders = results[1].docs
-        .map((d) => SaleOrderModel.fromMap(d.data(), d.id).toEntity())
+        .map((d) => SaleOrderModel.fromMap(d.data(), d.id))
         .toList();
 
     final all = [...legacy, ...orders];
@@ -36,6 +42,7 @@ class SalesRemoteDataSource {
     return all;
   }
 
+  // ── เพิ่ม ──
   Future<void> addSaleOrder(SaleOrderModel order) async {
     await _firestore
         .collection(_orderCollection)
@@ -43,6 +50,7 @@ class SalesRemoteDataSource {
         .set(order.toMap());
   }
 
+  // ── try update ทั้ง 2 collection ──
   Future<bool> _tryUpdate(String id, Map<String, dynamic> data) async {
     try {
       await _firestore.collection(_orderCollection).doc(id).update(data);

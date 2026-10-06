@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:wood/core/widgets/dashed_divider.dart';
+import 'package:wood/core/constants/specific/wood_style.dart';
+import 'package:wood/core/widgets/global/dashed_divider.dart';
 import '../controllers/wood_product_controller.dart';
 
 class WoodFormZoneSelector extends StatelessWidget {
@@ -13,11 +14,9 @@ class WoodFormZoneSelector extends StatelessWidget {
       () => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (
-            int i = 0;
-            i < WoodProductController.zoneLetters.length;
-            i++
-          ) ...[
+          for (int i = 0;
+              i < WoodProductController.zoneLetters.length;
+              i++) ...[
             _zoneRow(WoodProductController.zoneLetters[i]),
             if (i < WoodProductController.zoneLetters.length - 1) ...[
               const SizedBox(height: 4),
@@ -50,14 +49,14 @@ class WoodFormZoneSelector extends StatelessWidget {
           height: 24,
           margin: const EdgeInsets.only(top: 3),
           decoration: BoxDecoration(
-            color: Colors.brown.shade700,
-            borderRadius: BorderRadius.circular(6),
+            color: WoodStyle.brown700,
+            borderRadius: WoodStyle.r6,
           ),
           child: Center(
             child: Text(
               letter.toUpperCase(),
               style: const TextStyle(
-                color: Colors.white,
+                color: WoodStyle.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
               ),
@@ -70,11 +69,9 @@ class WoodFormZoneSelector extends StatelessWidget {
             spacing: 5,
             runSpacing: 5,
             children: [
-              for (
-                int i = 1;
-                i <= WoodProductController.zoneNumbersPerLetter;
-                i++
-              )
+              for (int i = 1;
+                  i <= WoodProductController.zoneNumbersPerLetter;
+                  i++)
                 _chip(
                   label: '$letter$i',
                   selected: selected.contains('$letter$i'),
@@ -95,13 +92,13 @@ class WoodFormZoneSelector extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
+        duration: WoodStyle.sh,
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
         decoration: BoxDecoration(
-          color: selected ? Colors.brown.shade700 : Colors.brown.shade50,
-          borderRadius: BorderRadius.circular(8),
+          color: selected ? WoodStyle.brown700 : WoodStyle.brown50,
+          borderRadius: WoodStyle.r8,
           border: Border.all(
-            color: selected ? Colors.brown.shade700 : Colors.brown.shade200,
+            color: selected ? WoodStyle.brown700 : WoodStyle.brown200,
           ),
         ),
         child: Text(
@@ -109,7 +106,7 @@ class WoodFormZoneSelector extends StatelessWidget {
           style: TextStyle(
             fontSize: 11.5,
             fontWeight: FontWeight.bold,
-            color: selected ? Colors.white : Colors.brown.shade700,
+            color: selected ? WoodStyle.white : WoodStyle.brown700,
           ),
         ),
       ),
@@ -118,25 +115,26 @@ class WoodFormZoneSelector extends StatelessWidget {
 
   Widget _selectedPanel() {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: WoodStyle.padCard,
       decoration: BoxDecoration(
-        color: Colors.green.shade50,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.green.shade300, width: 1.2),
+        color: WoodStyle.green50,
+        borderRadius: WoodStyle.r10,
+        border: Border.all(color: WoodStyle.green300, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.check_circle, size: 14, color: Colors.green.shade800),
+              const Icon(Icons.check_circle,
+                  size: 14, color: WoodStyle.green800),
               const SizedBox(width: 5),
               Text(
-                'ເລືອກແລ້ວ ${controller.allZones.length} ໂຊນ',
-                style: TextStyle(
+                '${WoodStyle.zoneSelected} ${controller.allZones.length} ${WoodStyle.zoneUnit}',
+                style: const TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w900,
-                  color: Colors.green.shade800,
+                  color: WoodStyle.green800,
                 ),
               ),
             ],
@@ -155,27 +153,24 @@ class WoodFormZoneSelector extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.green.shade400),
+                        color: WoodStyle.white,
+                        borderRadius: WoodStyle.r6,
+                        border: Border.all(color: WoodStyle.green400),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             z,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: Colors.green.shade800,
+                              color: WoodStyle.green800,
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Icon(
-                            Icons.close,
-                            size: 11,
-                            color: Colors.green.shade700,
-                          ),
+                          const Icon(Icons.close,
+                              size: 11, color: WoodStyle.success),
                         ],
                       ),
                     ),

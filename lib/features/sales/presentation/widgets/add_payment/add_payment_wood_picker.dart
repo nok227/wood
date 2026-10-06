@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:wood/core/widgets/animated_number.dart';
-import 'package:wood/features/wood_products/data/models/wood_product_model.dart';
+import 'package:wood/core/constants/specific/sale_style.dart';
+import 'package:wood/core/widgets/global/animated_number.dart';
+import 'package:wood/features/wood_products/domain/entities/wood_product.dart';
 import 'package:wood/features/wood_products/presentation/controllers/wood_product_controller.dart';
 import '../../controllers/sales_controller.dart';
 
@@ -52,15 +53,13 @@ class AddPaymentWoodPicker extends StatelessWidget {
         return const Padding(
           padding: EdgeInsets.symmetric(vertical: 16),
           child: Center(
-            child: CircularProgressIndicator(color: Colors.brown),
+            child: CircularProgressIndicator(color: SaleStyle.brown700),
           ),
         );
       }
 
       final allProducts = pc.products;
-      if (allProducts.isEmpty) {
-        return _emptyBox('ຍັງບໍ່ມີລາຍການໄມ້ໃນຄັງ');
-      }
+      if (allProducts.isEmpty) return _emptyBox(SaleStyle.woodEmpty);
 
       final unitSet = <String>{};
       for (final p in allProducts) {
@@ -72,50 +71,56 @@ class AddPaymentWoodPicker extends StatelessWidget {
       }
       final unitOptions = unitSet.toList()
         ..sort((a, b) => a.length.compareTo(b.length));
-      final unitList = <String>['ທັງໝົດ', ...unitOptions];
+      final unitList = <String>[SaleStyle.woodStatusAll, ...unitOptions];
 
-      final currentUnit = unitList.contains(unitFilter) ? unitFilter : 'ທັງໝົດ';
+      final currentUnit = unitList.contains(unitFilter)
+          ? unitFilter
+          : SaleStyle.woodStatusAll;
 
-      final filteredProducts = currentUnit == 'ທັງໝົດ'
+      final filteredProducts = currentUnit == SaleStyle.woodStatusAll
           ? allProducts.toList()
           : allProducts.where((p) => p.unit.contains(currentUnit)).toList();
 
       final names = filteredProducts.map((p) => p.name).toSet().toList();
-      if (names.isEmpty) return _emptyBox('ຍັງບໍ່ມີລາຍການໄມ້ໃນຄັງ');
-
+      if (names.isEmpty) return _emptyBox(SaleStyle.woodEmpty);
       final woodVariants = wood == null
-          ? <WoodProductModel>[]
+          ? <WoodProduct>[] // ✅ ແກ້
           : filteredProducts.where((p) => p.name == wood).toList();
 
-      final types = wood == null
-          ? <String>[]
-          : woodVariants
-              .map(
-                (p) => p.woodType.trim().isEmpty ? 'ບໍ່ລະບຸ' : p.woodType,
-              )
-              .toSet()
-              .toList()
-        ..sort();
+      final types =
+          wood == null
+                ? <String>[]
+                : woodVariants
+                      .map(
+                        (p) => p.woodType.trim().isEmpty
+                            ? SaleStyle.woodUnnamedType
+                            : p.woodType,
+                      )
+                      .toSet()
+                      .toList()
+            ..sort();
 
-      final list = (wood == null || type == null)
-          ? <WoodProductModel>[]
-          : (woodVariants.where((p) {
-              final t =
-                  p.woodType.trim().isEmpty ? 'ບໍ່ລະບຸ' : p.woodType;
-              return t == type;
-            }).toList())
+      final list =
+          (wood == null || type == null)
+                ? <WoodProduct>[] // ✅ ແກ້
+                : (woodVariants.where((p) {
+                    final t = p.woodType.trim().isEmpty
+                        ? SaleStyle.woodUnnamedType
+                        : p.woodType;
+                    return t == type;
+                  }).toList())
             ..sort((a, b) => b.price.compareTo(a.price));
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DropdownButtonFormField<String>(
-            value: currentUnit,
+            initialValue: currentUnit,
             isExpanded: true,
             decoration: const InputDecoration(
-              labelText: 'ໜ່ວຍນັບ',
+              labelText: SaleStyle.woodUnit,
               border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.straighten, color: Colors.brown),
+              prefixIcon: Icon(Icons.straighten, color: SaleStyle.brown700),
               isDense: true,
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 12,
@@ -127,32 +132,30 @@ class AddPaymentWoodPicker extends StatelessWidget {
                   (u) => DropdownMenuItem<String>(
                     value: u,
                     child: Text(
-                      u == 'ທັງໝົດ' ? 'ທັງໝົດ (ໜ່ວຍ)' : u,
+                      u == SaleStyle.woodStatusAll ? SaleStyle.woodUnitAll : u,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 )
                 .toList(),
-            onChanged: (v) {
-              onUnitFilterChanged(v ?? 'ທັງໝົດ');
-            },
+            onChanged: (v) => onUnitFilterChanged(v ?? SaleStyle.woodStatusAll),
           ),
-          const SizedBox(height: 12),
+          SaleStyle.gapMd,
           DropdownButtonFormField<String>(
             value: wood,
             isExpanded: true,
             decoration: const InputDecoration(
-              labelText: 'ຊື່ໄມ້ *',
+              labelText: SaleStyle.woodName,
               border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.category, color: Colors.brown),
+              prefixIcon: Icon(Icons.category, color: SaleStyle.brown700),
               isDense: true,
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 14,
               ),
             ),
-            hint: const Text('ເລືອກຊື່ໄມ້'),
+            hint: const Text(SaleStyle.woodNameHint),
             items: names
                 .map(
                   (n) => DropdownMenuItem<String>(
@@ -167,21 +170,24 @@ class AddPaymentWoodPicker extends StatelessWidget {
             onChanged: onWoodChanged,
           ),
           if (wood != null) ...[
-            const SizedBox(height: 12),
+            SaleStyle.gapMd,
             DropdownButtonFormField<String>(
               value: type,
               isExpanded: true,
               decoration: const InputDecoration(
-                labelText: 'ຊະນິດໄມ້ *',
+                labelText: SaleStyle.woodType,
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.local_florist, color: Colors.brown),
+                prefixIcon: Icon(
+                  Icons.local_florist,
+                  color: SaleStyle.brown700,
+                ),
                 isDense: true,
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 14,
                 ),
               ),
-              hint: const Text('ເລືອກຊະນິດ'),
+              hint: const Text(SaleStyle.woodTypeHint),
               items: types
                   .map(
                     (t) => DropdownMenuItem<String>(
@@ -198,27 +204,27 @@ class AddPaymentWoodPicker extends StatelessWidget {
             ),
           ],
           if (type != null && list.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            SaleStyle.gapMd,
             DropdownButtonFormField<String>(
               value: c.selectedProduct.value?.id,
               isExpanded: true,
               decoration: const InputDecoration(
-                labelText: 'ຂະໜາດ / ລາຄາ *',
+                labelText: SaleStyle.woodSize,
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.straighten, color: Colors.brown),
+                prefixIcon: Icon(Icons.straighten, color: SaleStyle.brown700),
                 isDense: true,
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 14,
                 ),
               ),
-              hint: const Text('ເລືອກຂະໜາດ'),
+              hint: const Text(SaleStyle.woodSizeHint),
               items: list
                   .map(
                     (p) => DropdownMenuItem<String>(
                       value: p.id,
                       child: Text(
-                        '${p.width}x${p.length}x${p.thickness} ${p.sizeUnit} · ${fmt.format(p.price)} ກີບ',
+                        '${p.width}x${p.length}x${p.thickness} ${p.sizeUnit} · ${fmt.format(p.price)} ${SaleStyle.currency}',
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -226,33 +232,32 @@ class AddPaymentWoodPicker extends StatelessWidget {
                   .toList(),
               onChanged: (id) {
                 if (id == null) return;
-                c.selectedProduct.value =
-                    list.firstWhere((p) => p.id == id);
+                c.selectedProduct.value = list.firstWhere((p) => p.id == id);
               },
             ),
           ],
           if (c.selectedProduct.value != null) ...[
-            const SizedBox(height: 12),
+            SaleStyle.gapMd,
             _selectedPreview(c.selectedProduct.value!, fmt),
-            const SizedBox(height: 12),
+            SaleStyle.gapMd,
             _qtyRow(),
-            if (disc > 0) ...[const SizedBox(height: 12), _discView()],
-            const SizedBox(height: 12),
+            if (disc > 0) ...[SaleStyle.gapMd, _discView()],
+            SaleStyle.gapMd,
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
-                  foregroundColor: Colors.white,
+                  backgroundColor: SaleStyle.green700,
+                  foregroundColor: SaleStyle.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: SaleStyle.r10,
                   ),
                 ),
                 onPressed: onAddItem,
                 icon: const Icon(Icons.add_shopping_cart),
                 label: Text(
-                  'ເພີ່ມລາຍການນີ້ · $qty ${c.selectedProduct.value?.unit ?? ""}',
+                  '${SaleStyle.woodAddItem} · $qty ${c.selectedProduct.value?.unit ?? ""}',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -268,24 +273,24 @@ class AddPaymentWoodPicker extends StatelessWidget {
 
   Widget _emptyBox(String text) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: SaleStyle.padAll16,
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade300),
+        color: SaleStyle.grey50,
+        borderRadius: SaleStyle.r10,
+        border: Border.all(color: SaleStyle.grey300),
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.inventory_2_outlined,
-            color: Colors.grey.shade500,
+            color: SaleStyle.grey500,
             size: 24,
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+              style: const TextStyle(color: SaleStyle.grey700, fontSize: 13),
             ),
           ),
         ],
@@ -293,28 +298,28 @@ class AddPaymentWoodPicker extends StatelessWidget {
     );
   }
 
-  Widget _selectedPreview(WoodProductModel p, NumberFormat fmt) {
+  Widget _selectedPreview(WoodProduct p, NumberFormat fmt) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: SaleStyle.padCardLg,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.brown.shade50, Colors.brown.shade100],
+        gradient: const LinearGradient(
+          colors: [SaleStyle.brown50, SaleStyle.brown100],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.brown.shade300, width: 1.5),
+        borderRadius: SaleStyle.r10,
+        border: Border.all(color: SaleStyle.brown300, width: 1.5),
       ),
       child: Row(
         children: [
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
-              color: Colors.brown.shade700,
+            decoration: const BoxDecoration(
+              color: SaleStyle.brown700,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check, color: Colors.white, size: 22),
+            child: const Icon(Icons.check, color: SaleStyle.white, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -323,20 +328,20 @@ class AddPaymentWoodPicker extends StatelessWidget {
               children: [
                 Text(
                   p.name,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Colors.brown.shade900,
+                    color: SaleStyle.brown900,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${p.width}x${p.length}x${p.thickness} ${p.sizeUnit} · ຄົງເຫຼືອ ${p.quantity} ${p.unit}',
-                  style: TextStyle(
+                  '${p.width}x${p.length}x${p.thickness} ${p.sizeUnit} · ${SaleStyle.woodInStock} ${p.quantity} ${p.unit}',
+                  style: const TextStyle(
                     fontSize: 11.5,
-                    color: Colors.brown.shade700,
+                    color: SaleStyle.brown700,
                   ),
                 ),
               ],
@@ -345,12 +350,12 @@ class AddPaymentWoodPicker extends StatelessWidget {
           const SizedBox(width: 8),
           AnimatedNumber(
             value: p.price,
-            suffix: ' ກີບ',
-            duration: 900,
-            style: TextStyle(
+            suffix: ' ${SaleStyle.currency}',
+            duration: SaleStyle.animFast.inMilliseconds,
+            style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w900,
-              color: Colors.brown.shade800,
+              color: SaleStyle.brown800,
             ),
           ),
         ],
@@ -371,37 +376,42 @@ class AddPaymentWoodPicker extends StatelessWidget {
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: InputDecoration(
-                labelText: 'ຈຳນວນ *',
+                labelText: '${SaleStyle.qtyLabel} *',
                 border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.numbers, color: Colors.brown),
+                prefixIcon: const Icon(
+                  Icons.numbers,
+                  color: SaleStyle.brown700,
+                ),
                 suffixText: p.unit,
                 isDense: true,
               ),
-              onChanged: (v) => onQtyChanged(
-                (int.tryParse(v) ?? 1).clamp(1, 99999),
-              ),
+              onChanged: (v) =>
+                  onQtyChanged((int.tryParse(v) ?? 1).clamp(1, 99999)),
             ),
           ),
-          const SizedBox(width: 10),
+          SaleStyle.gapSm,
           Expanded(
             flex: 2,
             child: TextField(
               controller: discC,
               keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-              ],
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: const InputDecoration(
-                labelText: 'ລົດ/ຕົວ',
+                labelText: SaleStyle.pricePerUnit,
                 border: OutlineInputBorder(),
-                prefixIcon:
-                    Icon(Icons.discount, color: Colors.brown, size: 18),
-                suffixText: 'ກີບ',
+                prefixIcon: Icon(
+                  Icons.discount,
+                  color: SaleStyle.brown700,
+                  size: 18,
+                ),
+                suffixText: SaleStyle.currency,
                 isDense: true,
               ),
               onChanged: (v) => onDiscChanged(
-                (double.tryParse(v.replaceAll(',', '')) ?? 0)
-                    .clamp(0, double.infinity),
+                (double.tryParse(v.replaceAll(',', '')) ?? 0).clamp(
+                  0,
+                  double.infinity,
+                ),
               ),
             ),
           ),
@@ -415,41 +425,42 @@ class AddPaymentWoodPicker extends StatelessWidget {
     final gross = p.price * qty;
     final discTot = disc * qty;
     final net = (gross - discTot).clamp(0, double.infinity);
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: SaleStyle.padCardLg,
       decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.red.shade300, width: 1.5),
+        color: SaleStyle.red50,
+        borderRadius: SaleStyle.r10,
+        border: Border.all(color: SaleStyle.red300, width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.discount, color: Colors.red.shade700, size: 18),
+              const Icon(Icons.discount, color: SaleStyle.red700, size: 18),
               const SizedBox(width: 6),
-              Text(
-                'ສ່ວນລົດຂອງລາຍການນີ້',
+              const Text(
+                SaleStyle.discountLabel,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Colors.red.shade700,
+                  color: SaleStyle.red700,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SaleStyle.gapSm,
           _discRow(
             '${fmt.format(p.price)} × $qty',
-            '${fmt.format(gross)} ກີບ',
-            Colors.black87,
+            '${fmt.format(gross)} ${SaleStyle.currency}',
+            SaleStyle.black87,
           ),
           const SizedBox(height: 4),
           _discRow(
-            'ລົດ ${fmt.format(disc)} × $qty',
-            '-${fmt.format(discTot)} ກີບ',
-            Colors.red.shade700,
+            '${SaleStyle.itemDiscountPrefix} ${fmt.format(disc)} × $qty',
+            '-${fmt.format(discTot)} ${SaleStyle.currency}',
+            SaleStyle.red700,
             bold: true,
           ),
           const Padding(
@@ -460,22 +471,22 @@ class AddPaymentWoodPicker extends StatelessWidget {
             children: [
               const Expanded(
                 child: Text(
-                  'ຍອດສຸດທິ',
+                  SaleStyle.netLabel,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                    color: SaleStyle.green700,
                   ),
                 ),
               ),
               AnimatedNumber(
                 value: net,
-                suffix: ' ກີບ',
-                duration: 900,
+                suffix: ' ${SaleStyle.currency}',
+                duration: SaleStyle.animFast.inMilliseconds,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
-                  color: Colors.green,
+                  color: SaleStyle.green700,
                 ),
               ),
             ],
@@ -485,8 +496,12 @@ class AddPaymentWoodPicker extends StatelessWidget {
     );
   }
 
-  Widget _discRow(String label, String value, Color color,
-      {bool bold = false}) {
+  Widget _discRow(
+    String label,
+    String value,
+    Color color, {
+    bool bold = false,
+  }) {
     return Row(
       children: [
         Expanded(

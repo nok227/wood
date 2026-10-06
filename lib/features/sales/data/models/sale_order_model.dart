@@ -1,5 +1,6 @@
 import '../../domain/entities/sale_item_entity.dart';
 import '../../domain/entities/sale_order_entity.dart';
+import 'sale_model.dart';
 
 class SaleOrderModel {
   final String id;
@@ -274,4 +275,49 @@ class SaleOrderModel {
         mismatchNote: e.mismatchNote,
         cashDenominations: e.cashDenominations,
       );
+      factory SaleOrderModel.fromLegacySaleModel(SaleModel m) {
+    final q = m.quantity <= 0 ? 1 : m.quantity;
+    final unitPrice = (m.totalAmount + m.discountPerUnit * q) / q;
+
+    return SaleOrderModel(
+      id: m.id,
+      items: [
+        SaleItemEntity(
+          itemId: 'legacy_${m.id}',
+          productId: m.productId,
+          productName: m.productName,
+          woodType: '',
+          productWidth: m.productWidth,
+          productLength: m.productLength,
+          productThickness: m.productThickness,
+          productSizeUnit: m.productSizeUnit,
+          unitPrice: unitPrice,
+          quantity: q,
+          unit: 'ຊິ້ນ',
+          discountPerUnit: m.discountPerUnit,
+        ),
+      ],
+      paymentType: m.paymentType,
+      cashPaidAmount: m.cashPaidAmount,
+      transferPaidAmount: m.transferPaidAmount,
+      debtAmount: m.debtAmount,
+      receivedAmount: m.receivedAmount,
+      paymentImageUrls: m.paymentImageUrls,
+      billImageUrls: m.billImageUrls,
+      topUpImageUrls: m.topUpImageUrls,
+      debtPaymentImageUrls: m.debtPaymentImageUrls,
+      customerName: m.customerName,
+      customerPhone: m.customerPhone,
+      customerAddress: m.customerAddress,
+      debtDate: m.debtDate,
+      debtNote: m.debtNote,
+      appointmentDate: m.appointmentDate,
+      note: m.note,
+      date: m.date,
+      isConfirmed: m.isConfirmed,
+      isMismatch: m.isMismatch,
+      mismatchNote: m.mismatchNote,
+      cashDenominations: m.cashDenominations,
+    );
+  }
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:wood/core/constants/specific/auth_style.dart';
+import 'package:wood/core/widgets/global/app_snackbar.dart';
+import 'package:wood/features/auth/domain/entities/app_user.dart';
 import 'package:wood/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wood/features/auth/presentation/pages/register_page.dart';
 import 'package:wood/features/auth/presentation/pages/user_permission_page.dart';
@@ -16,155 +17,120 @@ class ProfileViewPage extends StatefulWidget {
 }
 
 class _ProfileViewPageState extends State<ProfileViewPage> {
-  List<_UserInfo> _users = [];
-  bool _loading = false;
+  late final AuthController _auth;
 
   @override
   void initState() {
     super.initState();
-    if (Get.find<AuthController>().isAdmin) _loadUsers();
-  }
-
-  Future<void> _loadUsers() async {
-    setState(() => _loading = true);
-    try {
-      final snap = await FirebaseFirestore.instance
-          .collection('users')
-          .orderBy('email')
-          .get();
-      final me = FirebaseAuth.instance.currentUser?.uid;
-
-      final list = snap.docs.map((d) {
-        final m = d.data();
-        final allowed = (m['allowedMenus'] as List?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            const <String>[];
-        return _UserInfo(
-          uid: d.id,
-          name: (m['name'] ?? m['displayName'] ?? m['username'] ?? '-')
-              .toString(),
-          email: (m['email'] ?? '-').toString(),
-          role: (m['role'] ?? 'user').toString(),
-          isMe: d.id == me,
-          allowedMenus: allowed,
-        );
-      }).toList()
-        ..sort((a, b) {
-          final aA = a.role.toLowerCase() == 'admin' ? 0 : 1;
-          final bA = b.role.toLowerCase() == 'admin' ? 0 : 1;
-          return aA != bA ? aA - bA : a.email.compareTo(b.email);
-        });
-
-      if (mounted) setState(() => _users = list);
-    } catch (e) {
-      debugPrint('Load users: $e');
-      if (mounted) Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດໂຫຼດຜູ້ໃຊ້ໄດ້');
-    } finally {
-      if (mounted) setState(() => _loading = false);
+    _auth = Get.find<AuthController>();
+    if (_auth.isAdmin) {
+      _auth.loadUsers();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = Get.find<AuthController>();
-    final user = auth.currentUser.value;
-    final isAdmin = auth.isAdmin;
+    return Obx(() {
+      final user = _auth.currentUser.value;
+      final isAdmin = _auth.isAdmin;
+      final users = _auth.usersList;
+      final loading = _auth.usersLoading.value;
 
-    return Scaffold(
-      backgroundColor: Colors.brown[50],
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: Get.back,
-        ),
-        title: const Text('ໂປຣຟາຍ'),
-        backgroundColor: Colors.brown,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'ອອກຈາກລະບົບ',
-            onPressed: () => _logout(auth),
+      return Scaffold(
+        backgroundColor: AuthStyle.bg,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: Get.back,
           ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _myCard(user, isAdmin),
-          if (isAdmin) ...[
-            const SizedBox(height: 20),
-            _usersHeader(),
-            const SizedBox(height: 8),
-            if (_loading && _users.isEmpty)
-              const SizedBox(height: 400, child: ProfileSkeleton())
-            else if (_users.isEmpty)
-              _emptyCard()
-            else
-              ..._users.map(_userTile),
+          title: const Text(AuthStyle.profileTitle),
+          backgroundColor: AuthStyle.primary,
+          foregroundColor: AuthStyle.white,
+          actions: [
+            IconButton(
+              icon: const Icon(
+                Icons.logout,
+                size: AuthStyle.iconToolbar,
+              ),
+              tooltip: AuthStyle.logoutTooltip,
+              onPressed: () => _logout(_auth),
+            ),
           ],
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
+        ),
+        body: ListView(
+          padding: AuthStyle.padPageList,
+          children: [
+            _myCard(user, isAdmin),
+            if (isAdmin) ...[
+              AuthStyle.gap20W,
+              _usersHeader(users.length),
+              AuthStyle.gapSm,
+              if (loading && users.isEmpty)
+                const SizedBox(
+                  height: AuthStyle.skeletonMinHeight,
+                  child: ProfileSkeleton(),
+                )
+              else if (users.isEmpty)
+                _emptyCard()
+              else
+                ...users.map(_userTile),
+            ],
+            AuthStyle.gap24W,
+          ],
+        ),
+      );
+    });
   }
 
-  Widget _myCard(User? user, bool isAdmin) {
+  // ══════════════════════════════════════════
+  // My card
+  // ══════════════════════════════════════════
+  Widget _myCard(AppUser? user, bool isAdmin) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: AuthStyle.padProfileCard,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.brown.shade800, Colors.brown.shade600],
+        gradient: const LinearGradient(
+          colors: [AuthStyle.profileGradStart, AuthStyle.profileGradEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.brown.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        borderRadius: AuthStyle.profileRadius,
+        boxShadow: AuthStyle.profile,
       ),
       child: Row(
         children: [
           CircleAvatar(
-            radius: 32,
-            backgroundColor: Colors.white.withOpacity(0.2),
+            radius: AuthStyle.avatarLg,
+            backgroundColor: AuthStyle.avatarBg,
             child: Icon(
               isAdmin ? Icons.admin_panel_settings : Icons.person,
-              size: 34,
-              color: Colors.white,
+              size: AuthStyle.iconAvatarBig,
+              color: AuthStyle.white,
             ),
           ),
-          const SizedBox(width: 14),
+          AuthStyle.gap14,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user?.displayName ??
-                      user?.email?.split('@').first ??
-                      'ຜູ້ໃຊ້',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  user?.displayName ?? AuthStyle.defaultUserName,
+                  style: AuthStyle.profileName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 3),
+                AuthStyle.gap3,
                 Text(
-                  user?.email ?? '-',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  user?.email ?? AuthStyle.dash,
+                  style: AuthStyle.profileEmail,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
-                _roleBadge(isAdmin ? 'Admin' : 'User', isAdmin),
+                AuthStyle.gapSm,
+                _roleBadge(
+                  isAdmin ? AuthStyle.adminLabel : AuthStyle.userLabel,
+                  isAdmin,
+                ),
               ],
             ),
           ),
@@ -175,26 +141,24 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
 
   Widget _roleBadge(String text, bool isAdmin) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: AuthStyle.padChipBadge,
       decoration: BoxDecoration(
-        color: isAdmin ? Colors.amber.shade300 : Colors.white24,
-        borderRadius: BorderRadius.circular(20),
+        color: isAdmin ? AuthStyle.amber300 : AuthStyle.white24,
+        borderRadius: AuthStyle.chipRadius,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             isAdmin ? Icons.verified : Icons.person_outline,
-            size: 12,
-            color: isAdmin ? Colors.brown.shade900 : Colors.white,
+            size: AuthStyle.iconBadgeSmall,
+            color: isAdmin ? AuthStyle.brown900 : AuthStyle.white,
           ),
-          const SizedBox(width: 4),
+          AuthStyle.gap4,
           Text(
             text,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: isAdmin ? Colors.brown.shade900 : Colors.white,
+            style: AuthStyle.roleBadge.copyWith(
+              color: isAdmin ? AuthStyle.brown900 : AuthStyle.white,
             ),
           ),
         ],
@@ -202,77 +166,83 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
     );
   }
 
-  Widget _usersHeader() {
+  // ══════════════════════════════════════════
+  // Users header
+  // ══════════════════════════════════════════
+  Widget _usersHeader(int count) {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: Colors.brown.shade700,
+          padding: AuthStyle.padHeaderIcon,
+          decoration: const BoxDecoration(
+            color: AuthStyle.primary,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.people, color: Colors.white, size: 15),
+          child: const Icon(
+            Icons.people,
+            color: AuthStyle.white,
+            size: AuthStyle.iconBadgeSize,
+          ),
         ),
-        const SizedBox(width: 8),
+        AuthStyle.gapSm,
         Expanded(
           child: Text(
-            'ລາຍຊື່ຜູ້ໃຊ້ (${_users.length})',
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: Colors.brown,
-            ),
+            '${AuthStyle.usersTitle} ($count)',
+            style: AuthStyle.usersHeader.copyWith(color: AuthStyle.primary),
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.refresh, size: 20),
-          color: Colors.brown,
-          onPressed: _loading ? null : _loadUsers,
-          tooltip: 'ໂຫຼດໃໝ່',
+          icon: const Icon(Icons.refresh, size: AuthStyle.iconTile),
+          color: AuthStyle.primary,
+          onPressed: _auth.usersLoading.value ? null : _auth.loadUsers,
+          tooltip: AuthStyle.refreshTooltip,
         ),
       ],
     );
   }
 
-  Widget _userTile(_UserInfo u) {
-    final isAdmin = u.role.toLowerCase() == 'admin';
-    final color = isAdmin ? Colors.amber.shade800 : Colors.brown;
-    final bgColor = isAdmin ? Colors.amber.shade50 : Colors.brown.shade50;
+  // ══════════════════════════════════════════
+  // User tile
+  // ══════════════════════════════════════════
+  Widget _userTile(AppUser u) {
+    final isAdmin = u.isAdmin;
+    final color = isAdmin ? AuthStyle.amber800 : AuthStyle.primary;
+    final bgColor = isAdmin ? AuthStyle.amber50 : AuthStyle.brown50;
+    final isMe = u.uid == _auth.currentUser.value?.uid;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: AuthStyle.marginTileBottom,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.25), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AuthStyle.white,
+        borderRadius: AuthStyle.cardRadius,
+        border: Border.all(
+          color: color.withOpacity(AuthStyle.borderOpacity),
+          width: AuthStyle.borderWidth,
+        ),
+        boxShadow: AuthStyle.cardLocal,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: AuthStyle.padChipBadge,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: 42,
-              height: 42,
+              width: AuthStyle.userAvatarSize,
+              height: AuthStyle.userAvatarSize,
               decoration: BoxDecoration(
                 color: bgColor,
                 shape: BoxShape.circle,
-                border: Border.all(color: color.withOpacity(0.5)),
+                border: Border.all(
+                  color: color.withOpacity(AuthStyle.circleBorderOpacity),
+                ),
               ),
               child: Icon(
                 isAdmin ? Icons.admin_panel_settings : Icons.person,
                 color: color,
-                size: 20,
+                size: AuthStyle.iconTile,
               ),
             ),
-            const SizedBox(width: 12),
+            AuthStyle.gap12,
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,92 +252,75 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
                     children: [
                       Flexible(
                         child: Text(
-                          u.name,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          u.displayName,
+                          style: AuthStyle.userName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (u.isMe) ...[
-                        const SizedBox(width: 5),
+                      if (isMe) ...[
+                        AuthStyle.gap5,
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 1,
-                          ),
+                          padding: AuthStyle.padBadgeTiny,
                           decoration: BoxDecoration(
-                            color: Colors.green.shade100,
-                            borderRadius: BorderRadius.circular(6),
+                            color: AuthStyle.successMid,
+                            borderRadius: AuthStyle.badgeRadius,
                           ),
                           child: Text(
-                            'ຂ້ອຍ',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green.shade800,
+                            AuthStyle.youBadge,
+                            style: AuthStyle.youBadgeStyle.copyWith(
+                              color: AuthStyle.successDark,
                             ),
                           ),
                         ),
                       ],
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  AuthStyle.gap2,
                   Text(
-                    u.email,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: Colors.grey.shade600,
-                    ),
+                    u.email ?? AuthStyle.dash,
+                    style: AuthStyle.userEmail,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            AuthStyle.gapSm,
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: AuthStyle.padChipBadge,
               decoration: BoxDecoration(
-                color: isAdmin ? Colors.amber.shade200 : Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(20),
+                color: isAdmin ? AuthStyle.amber200 : AuthStyle.grey200,
+                borderRadius: AuthStyle.chipRadius,
               ),
               child: Text(
-                isAdmin ? 'Admin' : 'User',
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.bold,
-                  color:
-                      isAdmin ? Colors.amber.shade900 : Colors.grey.shade700,
+                isAdmin ? AuthStyle.adminLabel : AuthStyle.userLabel,
+                style: AuthStyle.roleChip.copyWith(
+                  color: isAdmin ? AuthStyle.amber900 : AuthStyle.grey700,
                 ),
               ),
             ),
-            if (!isAdmin && !u.isMe) ...[
-              const SizedBox(width: 4),
+            if (!isAdmin && !isMe) ...[
+              AuthStyle.gap4,
               IconButton(
-                icon: Icon(
+                icon: const Icon(
                   Icons.tune,
-                  size: 20,
-                  color: Colors.brown.shade700,
+                  size: AuthStyle.iconTile,
+                  color: AuthStyle.primary,
                 ),
-                tooltip: 'ກຳນົດສິດ',
+                tooltip: AuthStyle.permissionTooltip,
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: 36,
-                  minHeight: 36,
-                ),
+                constraints: AuthStyle.iconBtnConstraints,
                 onPressed: () async {
                   await Get.to(
                     () => UserPermissionPage(
                       uid: u.uid,
-                      name: u.name,
-                      email: u.email,
+                      name: u.displayName,
+                      email: u.email ?? AuthStyle.dash,
                       initialAllowed: u.allowedMenus,
                     ),
                   );
-                  if (mounted) _loadUsers();
+                  if (mounted) _auth.loadUsers();
                 },
               ),
             ],
@@ -377,59 +330,51 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
     );
   }
 
+  // ══════════════════════════════════════════
+  // Empty
+  // ══════════════════════════════════════════
   Widget _emptyCard() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: AuthStyle.padEmptyCard,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        color: AuthStyle.white,
+        borderRadius: AuthStyle.cardRadius,
+        border: Border.all(color: AuthStyle.grey300),
       ),
       child: Column(
         children: [
-          Icon(Icons.people_outline, size: 40, color: Colors.grey.shade400),
-          const SizedBox(height: 8),
-          Text('ບໍ່ມີຜູ້ໃຊ້', style: TextStyle(color: Colors.grey.shade600)),
+          const Icon(
+            Icons.people_outline,
+            size: AuthStyle.emptyIconSize,
+            color: AuthStyle.grey400,
+          ),
+          AuthStyle.gapSm,
+          const Text(AuthStyle.noUsers, style: AuthStyle.emptyText),
         ],
       ),
     );
   }
 
+  // ══════════════════════════════════════════
+  // Logout
+  // ══════════════════════════════════════════
   void _logout(AuthController auth) {
     Get.defaultDialog(
-      title: 'ຍືນຍັນການອອກຈາກລະບົບ',
-      middleText: 'ຕ້ອງການອອກຈາກລະບົບແມ່ນບໍ່?',
-      textConfirm: 'ອອກຈາກລະບົບ',
-      textCancel: 'ຍົກເລີກ',
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.red,
+      title: AuthStyle.logoutTitle,
+      middleText: AuthStyle.logoutConfirm,
+      textConfirm: AuthStyle.logoutBtn,
+      textCancel: AuthStyle.cancel,
+      confirmTextColor: AuthStyle.white,
+      buttonColor: AuthStyle.errorRed,
       onConfirm: () async {
         Get.back();
         try {
           await auth.logout();
           Get.offAll(() => const RegisterPage());
         } catch (e) {
-          Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດອອກໄດ້: $e');
+          AppSnackbar.err(AuthStyle.errorMsg, '${AuthStyle.logoutError}: $e');
         }
       },
     );
   }
-}
-
-class _UserInfo {
-  final String uid;
-  final String name;
-  final String email;
-  final String role;
-  final bool isMe;
-  final List<String> allowedMenus;
-
-  _UserInfo({
-    required this.uid,
-    required this.name,
-    required this.email,
-    required this.role,
-    required this.isMe,
-    required this.allowedMenus,
-  });
 }

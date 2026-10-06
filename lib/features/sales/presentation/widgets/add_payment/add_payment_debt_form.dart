@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:wood/core/widgets/number_formatter.dart';
-import 'package:wood/core/widgets/animated_number.dart';
+import 'package:intl/intl.dart';
+import 'package:wood/core/constants/specific/sale_style.dart';
+import 'package:wood/core/widgets/global/number_formatter.dart';
+import 'package:wood/core/widgets/global/animated_number.dart';
 
 class AddPaymentDebtForm extends StatelessWidget {
   final TextEditingController nameC;
@@ -52,30 +54,27 @@ class AddPaymentDebtForm extends StatelessWidget {
     required this.onClearAppt,
   });
 
-  static final _fmt = _FmtHelper();
-
   @override
   Widget build(BuildContext context) {
     final canPay = debtType == 'cash' || debtType == 'transfer';
+    final fmt = NumberFormat('#,###');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _RowLabel(Icons.payments_outlined, 'ລູກຄ້າຈ່າຍກ່ອນຫຼືບໍ່?'),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: _dChip('ສົດ', Icons.payments_outlined, 'cash')),
-            const SizedBox(width: 8),
-            Expanded(child: _dChip('ໂອນ', Icons.account_balance, 'transfer')),
-            const SizedBox(width: 8),
-            Expanded(child: _dChip('ຍັງບໍ່ຈ່າຍ', Icons.schedule, 'none')),
-          ],
-        ),
+        const _RowLabel(Icons.payments_outlined, SaleStyle.debtFormTitle),
+        SaleStyle.gapSm,
+        Row(children: [
+          Expanded(child: _dChip(SaleStyle.cashLabel, Icons.payments_outlined, 'cash')),
+          SaleStyle.gapSm,
+          Expanded(child: _dChip(SaleStyle.transferLabel, Icons.account_balance, 'transfer')),
+          SaleStyle.gapSm,
+          Expanded(child: _dChip('ຍັງບໍ່ຈ່າຍ', Icons.schedule, 'none')),
+        ]),
         if (canPay) ...[
-          const SizedBox(height: 16),
-          const _RowLabel(Icons.numbers, 'ຈຳນວນທີ່ຈ່າຍກ່ອນ *'),
-          const SizedBox(height: 8),
+          SaleStyle.gapLg,
+          const _RowLabel(Icons.numbers, SaleStyle.debtPaidLabel),
+          SaleStyle.gapSm,
           TextField(
             controller: debtPaidC,
             keyboardType: TextInputType.number,
@@ -87,12 +86,12 @@ class AddPaymentDebtForm extends StatelessWidget {
             decoration: InputDecoration(
               hintText: '0',
               border: const OutlineInputBorder(),
-              prefixIcon: const Icon(Icons.payments, color: Colors.brown),
-              suffixText: 'ກີບ',
+              prefixIcon: const Icon(Icons.payments, color: SaleStyle.brown700),
+              suffixText: SaleStyle.currency,
               helperText:
-                  'ຍອດ ${_fmt.money(net)} · ເຫຼືອ ${_fmt.money(debtReal)}',
+                  'ຍອດ ${fmt.format(net)} · ເຫຼືອ ${fmt.format(debtReal)}',
               helperStyle: const TextStyle(
-                color: Colors.orange,
+                color: SaleStyle.orange800,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -101,14 +100,16 @@ class AddPaymentDebtForm extends StatelessWidget {
               onDebtPaidChanged(n.clamp(0, net).toDouble());
             },
           ),
-          const SizedBox(height: 16),
+          SaleStyle.gapLg,
           const _RowLabel(
             Icons.photo_camera_outlined,
-            'ຮູບເງິນທີ່ຈ່າຍກ່ອນ (ຖ້າມີ)',
+            SaleStyle.debtImgLabel,
           ),
-          const SizedBox(height: 8),
+          SaleStyle.gapSm,
           _subImg(
-            debtType == 'cash' ? 'ແນບຮູບເງິນສົດ' : 'ແນບຮູບສະລິບ',
+            debtType == 'cash'
+                ? SaleStyle.debtImgAddCash
+                : SaleStyle.debtImgAddTransfer,
             debtImg,
             debtType == 'cash'
                 ? Icons.payments_outlined
@@ -117,168 +118,153 @@ class AddPaymentDebtForm extends StatelessWidget {
             onClearDebtImg,
           ),
         ],
-        const SizedBox(height: 16),
+        SaleStyle.gapLg,
         _RowLabel(
           Icons.event_available,
-          canPay ? 'ນັດວັນຈ່າຍທີ່ເຫຼືອ' : 'ນັດວັນຈ່າຍ',
+          canPay ? SaleStyle.debtApptLabelPending : SaleStyle.debtApptLabel,
         ),
-        const SizedBox(height: 8),
+        SaleStyle.gapSm,
         InkWell(
           onTap: onPickAppt,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: SaleStyle.r10,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
+              color: SaleStyle.white,
+              borderRadius: SaleStyle.r10,
               border: Border.all(
                 color: apptDate == null
-                    ? Colors.grey.shade300
-                    : Colors.orange.shade400,
+                    ? SaleStyle.grey300
+                    : SaleStyle.orange400,
                 width: apptDate == null ? 1.2 : 2,
               ),
             ),
-            child: Row(
-              children: [
-                Icon(
-                  apptDate == null
-                      ? Icons.calendar_today_outlined
-                      : Icons.calendar_today,
-                  color: apptDate == null
-                      ? Colors.grey.shade600
-                      : Colors.orange.shade700,
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    _apptTxt,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: apptDate == null
-                          ? Colors.grey.shade600
-                          : Colors.orange.shade900,
-                    ),
+            child: Row(children: [
+              Icon(
+                apptDate == null
+                    ? Icons.calendar_today_outlined
+                    : Icons.calendar_today,
+                color: apptDate == null
+                    ? SaleStyle.grey600
+                    : SaleStyle.orange700,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _apptTxt,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: apptDate == null
+                        ? SaleStyle.grey600
+                        : SaleStyle.orange900,
                   ),
                 ),
-                if (apptDate != null)
-                  GestureDetector(
-                    onTap: onClearAppt,
-                    child: Icon(
-                      Icons.close,
-                      color: Colors.grey.shade600,
-                      size: 18,
-                    ),
-                  )
-                else
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    color: Colors.grey.shade400,
-                    size: 14,
-                  ),
-              ],
-            ),
+              ),
+              if (apptDate != null)
+                GestureDetector(
+                  onTap: onClearAppt,
+                  child: const Icon(Icons.close, color: SaleStyle.grey600, size: 18),
+                )
+              else
+                const Icon(Icons.arrow_forward_ios,
+                    color: SaleStyle.grey400, size: 14),
+            ]),
           ),
         ),
-        const SizedBox(height: 16),
-        const _RowLabel(Icons.person_outline, 'ຂໍ້ມູນລູກຄ້າ'),
-        const SizedBox(height: 8),
-        _tf(nameC, 'ຊື່ລູກຄ້າ *', Icons.person_outline),
-        const SizedBox(height: 8),
-        _tf(phoneC, 'ເບີໂທ *', Icons.phone_outlined, type: TextInputType.phone),
-        const SizedBox(height: 8),
-        _tf(addrC, 'ທີ່ຢູ່ *', Icons.home_outlined, lines: 2),
-        const SizedBox(height: 8),
-        _tf(
-          debtNoteC,
-          'ໝາຍເຫດໜີ້ (ຖ້າມີ)',
-          Icons.sticky_note_2_outlined,
-          lines: 2,
-        ),
-        const SizedBox(height: 16),
-        const _RowLabel(Icons.receipt_long_outlined, 'ຮູບໃບບິນໜີ້ *'),
+        SaleStyle.gapLg,
+        const _RowLabel(Icons.person_outline, SaleStyle.debtCustLabel),
+        SaleStyle.gapSm,
+        _tf(nameC, SaleStyle.debtNameLabel, Icons.person_outline),
+        SaleStyle.gapSm,
+        _tf(phoneC, SaleStyle.debtPhoneLabel, Icons.phone_outlined,
+            type: TextInputType.phone),
+        SaleStyle.gapSm,
+        _tf(addrC, SaleStyle.debtAddrLabel, Icons.home_outlined, lines: 2),
+        SaleStyle.gapSm,
+        _tf(debtNoteC, SaleStyle.debtNoteLabel, Icons.sticky_note_2_outlined,
+            lines: 2),
+        SaleStyle.gapLg,
+        const _RowLabel(Icons.receipt_long_outlined, SaleStyle.debtBillLabel),
         const SizedBox(height: 4),
-        Text(
-          'ຖ່າຍຮູບໃບບິນທີ່ລູກຄ້າຢືນຢັນການຕິດໜີ້',
+        const Text(
+          SaleStyle.debtBillHint,
           style: TextStyle(
             fontSize: 11,
-            color: Colors.grey.shade600,
+            color: SaleStyle.grey600,
             fontStyle: FontStyle.italic,
           ),
         ),
-        const SizedBox(height: 8),
+        SaleStyle.gapSm,
         _subImg(
-          'ແນບຮູບໃບບິນໜີ້',
+          SaleStyle.debtBillAdd,
           debtBillImg,
           Icons.receipt_long_outlined,
           onPickDebtBill,
           onClearDebtBill,
           big: true,
         ),
-        const SizedBox(height: 16),
+        SaleStyle.gapLg,
         Container(
-          padding: const EdgeInsets.all(14),
+          padding: SaleStyle.padSection,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.orange.shade100, Colors.orange.shade50],
+            gradient: const LinearGradient(
+              colors: [SaleStyle.orange100, SaleStyle.orange50],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.orange.shade400, width: 1.5),
+            borderRadius: SaleStyle.r10,
+            border: Border.all(color: SaleStyle.orange400, width: 1.5),
           ),
-          child: Column(
-            children: [
-              _sumRow('ຍອດຂາຍທັງໝົດ', '${_fmt.money(net)} ກີບ'),
-              if (debtPaid > 0) ...[
-                const SizedBox(height: 4),
-                _sumRow(
-                  'ຈ່າຍກ່ອນ',
-                  '-${_fmt.money(debtPaid)} ກີບ',
-                  color: Colors.green.shade700,
-                ),
-              ],
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Divider(height: 1, color: Colors.orange),
-              ),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'ຍອດຕິດໜີ້ຕົວຈິງ',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orange,
-                      ),
-                    ),
-                  ),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: AnimatedNumber(
-                      value: debtReal,
-                      suffix: ' ກີບ',
-                      duration: 1000,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.orange,
-                      ),
-                    ),
-                  ),
-                ],
+          child: Column(children: [
+            _sumRow(SaleStyle.debtTotalSales,
+                '${fmt.format(net)} ${SaleStyle.currency}'),
+            if (debtPaid > 0) ...[
+              const SizedBox(height: 4),
+              _sumRow(
+                SaleStyle.debtPaidLabel2,
+                '-${fmt.format(debtPaid)} ${SaleStyle.currency}',
+                color: SaleStyle.green700,
               ),
             ],
-          ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Divider(height: 1, color: SaleStyle.orange),
+            ),
+            Row(children: [
+              const Expanded(
+                child: Text(
+                  SaleStyle.debtRealLabel,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: SaleStyle.orange800,
+                  ),
+                ),
+              ),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: AnimatedNumber(
+                  value: debtReal,
+                  suffix: ' ${SaleStyle.currency}',
+                  duration: SaleStyle.animFast.inMilliseconds,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: SaleStyle.orange800,
+                  ),
+                ),
+              ),
+            ]),
+          ]),
         ),
       ],
     );
   }
 
   String get _apptTxt {
-    if (apptDate == null) return 'ເລືອກວັນ/ເວລານັດ';
+    if (apptDate == null) return SaleStyle.debtApptPick;
     final d = apptDate!;
     final t = apptTime ?? const TimeOfDay(hour: 9, minute: 0);
     return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year} · '
@@ -289,32 +275,29 @@ class AddPaymentDebtForm extends StatelessWidget {
     final sel = debtType == value;
     return InkWell(
       onTap: () => onDebtTypeChanged(value),
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: SaleStyle.r10,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
         decoration: BoxDecoration(
-          color: sel ? Colors.orange.shade700 : Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          color: sel ? SaleStyle.orange700 : SaleStyle.white,
+          borderRadius: SaleStyle.r10,
           border: Border.all(
-            color: sel ? Colors.orange.shade800 : Colors.grey.shade300,
+            color: sel ? SaleStyle.orange800 : SaleStyle.grey300,
             width: sel ? 2 : 1.2,
           ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: sel ? Colors.white : Colors.brown.shade700,
-              size: 20,
-            ),
+            Icon(icon,
+                color: sel ? SaleStyle.white : SaleStyle.brown700, size: 20),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.bold,
-                color: sel ? Colors.white : Colors.brown.shade800,
+                color: sel ? SaleStyle.white : SaleStyle.brown800,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -339,7 +322,7 @@ class AddPaymentDebtForm extends StatelessWidget {
         labelText: label,
         isDense: true,
         border: const OutlineInputBorder(),
-        prefixIcon: Icon(icon, color: Colors.brown),
+        prefixIcon: Icon(icon, color: SaleStyle.brown700),
       ),
     );
   }
@@ -360,16 +343,16 @@ class AddPaymentDebtForm extends StatelessWidget {
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Colors.brown,
+            color: SaleStyle.brown700,
           ),
         ),
-        const SizedBox(height: 8),
+        SaleStyle.gapSm,
         _imgTile(
           '',
           f,
           onPick,
           onRm,
-          h: (big && f != null) ? 320 : 120,
+          h: (big && f != null) ? SaleStyle.imgTileHeightXLg : 120,
           fit: big ? BoxFit.contain : BoxFit.cover,
         ),
       ],
@@ -381,58 +364,53 @@ class AddPaymentDebtForm extends StatelessWidget {
     File? f,
     VoidCallback onTap,
     VoidCallback onRm, {
-    double h = 110,
+    double h = SaleStyle.imgTileHeight,
     BoxFit fit = BoxFit.cover,
   }) {
     return InkWell(
       onTap: f == null ? onTap : null,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: SaleStyle.r10,
       child: Container(
         height: h,
         decoration: BoxDecoration(
           color: fit == BoxFit.contain && f != null
-              ? Colors.grey.shade100
-              : Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(10),
+              ? SaleStyle.grey100
+              : SaleStyle.grey50,
+          borderRadius: SaleStyle.r10,
           border: Border.all(
-            color: f == null ? Colors.grey.shade300 : Colors.green,
+            color: f == null ? SaleStyle.grey300 : SaleStyle.green700,
             width: f == null ? 1.2 : 2,
           ),
         ),
         child: f != null
-            ? Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.file(
-                      f,
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: fit,
-                      alignment: Alignment.center,
-                    ),
+            ? Stack(children: [
+                ClipRRect(
+                  borderRadius: SaleStyle.r10,
+                  child: Image.file(
+                    f,
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: fit,
+                    alignment: Alignment.center,
                   ),
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: GestureDetector(
-                      onTap: onRm,
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: const BoxDecoration(
-                          color: Colors.black54,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 16,
-                        ),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: GestureDetector(
+                    onTap: onRm,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        color: SaleStyle.black54,
+                        shape: BoxShape.circle,
                       ),
+                      child: const Icon(Icons.close,
+                          color: SaleStyle.white, size: 16),
                     ),
                   ),
-                ],
-              )
+                ),
+              ])
             : Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -440,16 +418,16 @@ class AddPaymentDebtForm extends StatelessWidget {
                     Icon(
                       Icons.add_a_photo_outlined,
                       size: title.isEmpty ? 56 : 38,
-                      color: Colors.brown.shade400,
+                      color: SaleStyle.brown400,
                     ),
                     if (title.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Text(
                         title,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.brown.shade700,
+                          color: SaleStyle.brown700,
                         ),
                       ),
                     ],
@@ -460,24 +438,22 @@ class AddPaymentDebtForm extends StatelessWidget {
     );
   }
 
-  Widget _sumRow(String label, String value, {Color? color}) => Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 12.5, color: Colors.black54),
-            ),
+  Widget _sumRow(String label, String value, {Color? color}) => Row(children: [
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 12.5, color: SaleStyle.textSecondary),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: color ?? Colors.black87,
-            ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: color ?? SaleStyle.textPrimary,
           ),
-        ],
-      );
+        ),
+      ]);
 }
 
 class _RowLabel extends StatelessWidget {
@@ -486,35 +462,16 @@ class _RowLabel extends StatelessWidget {
   const _RowLabel(this.icon, this.text);
 
   @override
-  Widget build(BuildContext context) => Row(
-        children: [
-          Icon(icon, color: Colors.brown, size: 16),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.bold,
-              color: Colors.brown,
-            ),
+  Widget build(BuildContext context) => Row(children: [
+        Icon(icon, color: SaleStyle.brown700, size: 16),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.bold,
+            color: SaleStyle.brown700,
           ),
-        ],
-      );
-}
-
-class _FmtHelper {
-  String money(num v) => _nf.format(v);
-  static final _nf = _numFmt();
-}
-
-class _numFmt {
-  String format(num v) {
-    final s = v.round().toString();
-    final buf = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
-      buf.write(s[i]);
-    }
-    return buf.toString();
-  }
+        ),
+      ]);
 }

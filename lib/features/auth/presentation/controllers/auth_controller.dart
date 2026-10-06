@@ -2,55 +2,68 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
-import '../../domain/repositories/auth_repository.dart';
-import '../../domain/entities/menu_permission.dart';
+import 'package:wood/core/widgets/global/app_snackbar.dart';
 import 'package:wood/features/home/presentation/pages/home_shell.dart';
+
+import '../../domain/entities/app_user.dart';
+import '../../domain/entities/menu_permission.dart';
+import '../../domain/repositories/auth_repository.dart';
 
 class AuthController extends GetxController {
   final AuthRepository authRepository;
-
   AuthController({required this.authRepository});
 
-  static const String adminEmail = 'wood1002@gmail.com';
-
+  // ── Form controllers ──
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
+  // ── State ──
   var isLoading = false.obs;
-  var currentUser = Rxn<User>();
-
-  var allowedMenus = <String>{}.obs;
+  var currentUser = Rxn<AppUser>();
   var permissionLoaded = false.obs;
 
+  // ── Admin: users list ──
+  var usersList = <AppUser>[].obs;
+  var usersLoading = false.obs;
+
+  StreamSubscription? _authSub;
   StreamSubscription? _userDocSub;
   String? _lastBoundUid;
 
-  bool get isAdmin =>
-      currentUser.value?.email?.toLowerCase().trim() == adminEmail;
-
-  bool canAccess(MenuKey k) {
-    if (isAdmin) return true;
-    if (allowedMenus.isEmpty) return false;
-    return allowedMenus.contains(k.key);
-  }
+  // ══════════════════════════════════════════
+  // Getters
+  // ══════════════════════════════════════════
+  bool get isAdmin => currentUser.value?.isAdmin ?? false;
 
   bool get hasAnyPermission {
     if (isAdmin) return true;
-    return allowedMenus.isNotEmpty;
+    return (currentUser.value?.allowedMenus.isNotEmpty) ?? false;
   }
 
+  bool canAccess(MenuKey k) {
+    if (isAdmin) return true;
+    final menus = currentUser.value?.allowedMenus ?? const [];
+    return menus.contains(k.key);
+  }
+
+  // ══════════════════════════════════════════
+  // Init
+  // ══════════════════════════════════════════
   @override
   void onInit() {
     super.onInit();
-    currentUser.bindStream(
-      FirebaseAuth.instance.authStateChanges().map((u) {
-        _bindUserDoc(u?.uid);
-        return u;
-      }),
-    );
+    _authSub = authRepository.authStateStream().listen(_onAuthChanged);
+  }
+
+  void _onAuthChanged(AppUser? user) {
+    currentUser.value = user;
+    _bindUserDoc(user?.uid);
+
+    if (user != null) {
+      _linkOneSignalUser(user.uid);
+    }
   }
 
   void _bindUserDoc(String? uid) {
@@ -61,33 +74,128 @@ class AuthController extends GetxController {
     _userDocSub = null;
 
     if (uid == null) {
-      debugPrint('🚪 [Auth] logout — clear allowedMenus');
-      allowedMenus.clear();
       permissionLoaded.value = false;
       return;
     }
 
     permissionLoaded.value = false;
 
-    debugPrint('🔗 [Auth] bind stream uid=$uid');
-    _userDocSub = authRepository.userDocStream(uid).listen(
-      (snap) {
-        final data = snap.data();
-        final list = (data?['allowedMenus'] as List?)
-            ?.map((e) => e.toString())
-            .toList();
-        debugPrint('📥 [Auth] allowedMenus: $list');
-        allowedMenus.assignAll(list ?? const []);
+    _userDocSub = authRepository.userStream(uid).listen(
+      (u) {
+        if (u != null) {
+          currentUser.value = u;
+        }
         permissionLoaded.value = true;
       },
-      onError: (e) {
-        debugPrint('❌ [Auth] stream error: $e');
-        allowedMenus.clear();
+      onError: (_) {
         permissionLoaded.value = true;
       },
     );
   }
 
+  // ══════════════════════════════════════════
+  // Form
+  // ══════════════════════════════════════════
+  void clearForm() {
+    nameController.clear();
+    emailController.clear();
+    passwordController.clear();
+  }
+
+  // ══════════════════════════════════════════
+  // OneSignal
+  // ══════════════════════════════════════════
+  void _linkOneSignalUser(String uid) {
+    try {
+      OneSignal.login(uid);
+    } catch (_) {}
+  }
+
+  // ══════════════════════════════════════════
+  // 🔐 Register
+  // ══════════════════════════════════════════
+  Future<void> registerWithEmail() async {
+    try {
+      isLoading.value = true;
+      await authRepository.registerWithEmail(
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+      clearForm();
+      Get.offAll(() => const HomeShell());
+    } catch (e) {
+      AppSnackbar.err('ຜິດພາດ', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // 🔑 Login
+  // ══════════════════════════════════════════
+  Future<void> signInWithEmail() async {
+    try {
+      isLoading.value = true;
+      await authRepository.signInWithEmail(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+      clearForm();
+      Get.offAll(() => const HomeShell());
+    } catch (e) {
+      AppSnackbar.err('ຜິດພາດ', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    try {
+      isLoading.value = true;
+      final user = await authRepository.signInWithGoogle();
+      if (user != null) {
+        clearForm();
+        Get.offAll(() => const HomeShell());
+      }
+    } catch (e) {
+      AppSnackbar.err('ຜິດພາດ', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // 🚪 Logout
+  // ══════════════════════════════════════════
+  Future<void> logout() async {
+    try {
+      OneSignal.logout();
+    } catch (_) {}
+    await authRepository.signOut();
+    clearForm();
+  }
+
+  // ══════════════════════════════════════════
+  // 👥 Admin — users list
+  // ══════════════════════════════════════════
+  Future<void> loadUsers() async {
+    if (!isAdmin) return;
+
+    usersLoading.value = true;
+    try {
+      final list = await authRepository.getUsers();
+      usersList.assignAll(list);
+    } catch (e) {
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດໂຫຼດຜູ້ໃຊ້ໄດ້');
+    } finally {
+      usersLoading.value = false;
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // 👤 Admin — update permissions
+  // ══════════════════════════════════════════
   Future<bool> updateUserMenuPermissions(
     String uid,
     List<String> menus,
@@ -97,86 +205,17 @@ class AuthController extends GetxController {
       await authRepository.updateAllowedMenus(uid, menus);
       return true;
     } catch (e) {
-      Get.snackbar('ຜິດພາດ', 'ບໍ່ສາມາດບັນທຶກສິດໄດ້: $e');
+      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດບັນທຶກສິດໄດ້: $e');
       return false;
     }
   }
 
-  void clearForm() {
-    nameController.clear();
-    emailController.clear();
-    passwordController.clear();
-  }
-
-  void _linkOneSignalUser() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      OneSignal.login(user.uid);
-      debugPrint('OneSignal logged in with UID: ${user.uid}');
-    }
-  }
-
-  Future<void> registerWithEmail() async {
-    try {
-      isLoading.value = true;
-      await authRepository.registerWithEmail(
-        name: nameController.text.trim(),
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-      _linkOneSignalUser();
-      clearForm();
-      Get.offAll(() => const HomeShell());
-    } catch (e) {
-      Get.snackbar('ຜິດພາດ', e.toString());
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<void> signInWithEmail() async {
-    try {
-      isLoading.value = true;
-      await authRepository.signInWithEmail(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-      _linkOneSignalUser();
-      clearForm();
-      Get.offAll(() => const HomeShell());
-    } catch (e) {
-      Get.snackbar('ຜິດພາດ', e.toString());
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<void> signInWithGoogle() async {
-    try {
-      isLoading.value = true;
-      final result = await authRepository.signInWithGoogle();
-      if (result != null) {
-        _linkOneSignalUser();
-        clearForm();
-        Get.offAll(() => const HomeShell());
-      }
-    } catch (e) {
-      Get.snackbar('ຜິດພາດ', e.toString());
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<void> logout() async {
-    try {
-      OneSignal.logout();
-    } catch (_) {}
-    await authRepository.signOut();
-    clearForm();
-  }
-
+  // ══════════════════════════════════════════
+  // Dispose
+  // ══════════════════════════════════════════
   @override
   void onClose() {
+    _authSub?.cancel();
     _userDocSub?.cancel();
     nameController.dispose();
     emailController.dispose();

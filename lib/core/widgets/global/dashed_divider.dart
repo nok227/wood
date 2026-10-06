@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wood/core/constants/global/app_colors.dart';
 
 class DashedDivider extends StatelessWidget {
   final double dashWidth;
@@ -18,7 +19,7 @@ class DashedDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? Colors.grey.shade200;
+    final c = color ?? AppColors.grey200;
     return Padding(
       padding: padding,
       child: LayoutBuilder(

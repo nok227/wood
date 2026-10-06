@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:wood/core/widgets/dashed_divider.dart';
+import 'package:wood/core/constants/global/app_colors.dart';
+import 'package:wood/core/widgets/global/dashed_divider.dart';
 import '../pages/gallery/wood_gallery_page.dart';
-import '../../data/models/wood_product_model.dart';
+import '../../domain/entities/wood_product.dart';                     // ✅ ໃໝ່
 import '../controllers/wood_product_controller.dart';
 import 'wood_list_product_card.dart';
 
 class WoodListGroup extends StatelessWidget {
   final String nameKey;
-  final Map<String, List<WoodProductModel>> typeMap;
+  final Map<String, List<WoodProduct>> typeMap;                       // ✅
   final bool isAdmin;
   final WoodProductController controller;
-  final void Function(WoodProductModel) onEdit;
-  final void Function(WoodProductModel) onDelete;
+  final void Function(WoodProduct) onEdit;                            // ✅
+  final void Function(WoodProduct) onDelete;                          // ✅
 
   const WoodListGroup({
     super.key,
@@ -39,12 +40,12 @@ class WoodListGroup extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.brown.shade300, width: 1.2),
+        border: Border.all(color: AppColors.brown300, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.black.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -91,7 +92,7 @@ class WoodListGroup extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.brown.shade700, Colors.brown.shade600],
+          colors: [AppColors.primary, AppColors.brown600],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
@@ -99,7 +100,7 @@ class WoodListGroup extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.inventory_2, color: Colors.white, size: 16),
+          Icon(Icons.inventory_2, color: AppColors.white, size: 16),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -107,10 +108,10 @@ class WoodListGroup extends StatelessWidget {
               children: [
                 Text(
                   nameKey,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14.5,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    color: AppColors.white,
                     letterSpacing: 0.3,
                   ),
                   maxLines: 1,
@@ -120,7 +121,7 @@ class WoodListGroup extends StatelessWidget {
                   '$totalTypes ຊະນິດ · $totalItems ລາຍການ',
                   style: TextStyle(
                     fontSize: 10.5,
-                    color: Colors.white.withOpacity(0.85),
+                    color: AppColors.white.withOpacity(0.85),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -130,13 +131,13 @@ class WoodListGroup extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.25),
+              color: AppColors.white.withOpacity(0.25),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
               '$totalItems',
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: AppColors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
               ),
@@ -149,8 +150,8 @@ class WoodListGroup extends StatelessWidget {
 
   Widget _subHeader(String typeKey, int count) {
     final isUnknown = typeKey == 'ບໍ່ລະບຸຊະນິດ';
-    final color = isUnknown ? Colors.grey.shade600 : Colors.brown.shade700;
-    final bgColor = isUnknown ? Colors.grey.shade100 : Colors.brown.shade50;
+    final color = isUnknown ? AppColors.grey600 : AppColors.primary;
+    final bgColor = isUnknown ? AppColors.grey100 : AppColors.brown50;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -200,7 +201,8 @@ class WoodListGroup extends StatelessWidget {
     );
   }
 
-  Widget _card(WoodProductModel item) {
+  // ✅ ປ່ຽນ param ເປັນ WoodProduct
+  Widget _card(WoodProduct item) {
     return WoodListProductCard(
       item: item,
       isAdmin: isAdmin,

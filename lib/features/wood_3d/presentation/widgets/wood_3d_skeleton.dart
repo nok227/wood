@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wood/core/widgets/skeletons/shimmer_box.dart';
-import 'package:wood/core/widgets/skeletons/shimmer_host.dart';
+import 'package:wood/core/constants/specific/wood_3d_style.dart';
+import 'package:wood/core/widgets/global/skeletons/shimmer_box.dart';
+import 'package:wood/core/widgets/global/skeletons/shimmer_host.dart';
 
 class Wood3DSkeleton extends StatelessWidget {
   const Wood3DSkeleton({super.key});
@@ -9,59 +10,66 @@ class Wood3DSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ShimmerHost(
       builder: (context, p) => Container(
-        color: const Color(0xFFEFEBE9),
+        color: Wood3DStyle.wood3dBg,
         child: Column(
           children: [
             Expanded(
               child: Container(
                 width: double.infinity,
-                color: Colors.brown[50],
+                color: Wood3DStyle.brown50,
                 child: Center(
                   child: ShimmerBox(
-                    width: 200,
-                    height: 160,
+                    width: Wood3DStyle.skelCardW,
+                    height: Wood3DStyle.skelCardH,
                     progress: p,
-                    radius: 14,
+                    radius: Wood3DStyle.skelCardRadius,
                   ),
                 ),
               ),
             ),
             const Divider(height: 1),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              padding: Wood3DStyle.padSkeleton,
               child: Column(
                 children: [
                   Row(
                     children: [
                       Expanded(
                         child: ShimmerBox(
-                            width: double.infinity,
-                            height: 46,
-                            progress: p,
-                            radius: 6),
+                          width: double.infinity,
+                          height: Wood3DStyle.skelBoxH,
+                          progress: p,
+                          radius: Wood3DStyle.skelBoxRadius,
+                        ),
                       ),
-                      const SizedBox(width: 8),
+                      Wood3DStyle.gap8,
                       ShimmerBox(
-                          width: 90, height: 46, progress: p, radius: 6),
+                        width: Wood3DStyle.skelBoxW,
+                        height: Wood3DStyle.skelBoxH,
+                        progress: p,
+                        radius: Wood3DStyle.skelBoxRadius,
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  Wood3DStyle.gap10,
                   Row(
                     children: [
                       Expanded(
                         child: ShimmerBox(
-                            width: double.infinity,
-                            height: 46,
-                            progress: p,
-                            radius: 6),
+                          width: double.infinity,
+                          height: Wood3DStyle.skelBoxH,
+                          progress: p,
+                          radius: Wood3DStyle.skelBoxRadius,
+                        ),
                       ),
-                      const SizedBox(width: 8),
+                      Wood3DStyle.gap8,
                       Expanded(
                         child: ShimmerBox(
-                            width: double.infinity,
-                            height: 46,
-                            progress: p,
-                            radius: 6),
+                          width: double.infinity,
+                          height: Wood3DStyle.skelBoxH,
+                          progress: p,
+                          radius: Wood3DStyle.skelBoxRadius,
+                        ),
                       ),
                     ],
                   ),

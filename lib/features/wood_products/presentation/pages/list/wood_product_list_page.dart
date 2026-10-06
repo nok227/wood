@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:wood/core/constants/specific/wood_style.dart';
 import 'package:wood/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:wood/features/wood_products/data/models/wood_product_model.dart';
+import 'package:wood/features/wood_products/domain/entities/wood_product.dart';
 import '../../controllers/wood_product_controller.dart';
 import '../../widgets/wood_list_filter_bar.dart';
 import '../../widgets/wood_list_group.dart';
@@ -17,10 +18,10 @@ class WoodProductListPage extends StatefulWidget {
 
 class _WoodProductListPageState extends State<WoodProductListPage>
     with AutomaticKeepAliveClientMixin {
-  String selectedNameFilter = 'ທັງໝົດ';
+  String selectedNameFilter = WoodStyle.all;
 
   final ScrollController _scrollController = ScrollController();
-  int _displayLimit = 10;
+  int _displayLimit = WoodStyle.perPage;
   bool _isLoadingMore = false;
 
   @override
@@ -40,7 +41,8 @@ class _WoodProductListPageState extends State<WoodProductListPage>
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent - 50 &&
+            _scrollController.position.maxScrollExtent -
+                WoodStyle.listThreshold &&
         !_isLoadingMore) {
       _loadMore();
     }
@@ -48,10 +50,10 @@ class _WoodProductListPageState extends State<WoodProductListPage>
 
   Future<void> _loadMore() async {
     setState(() => _isLoadingMore = true);
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(WoodStyle.debounce);
     if (mounted) {
       setState(() {
-        _displayLimit += 10;
+        _displayLimit += WoodStyle.perPage;
         _isLoadingMore = false;
       });
     }
@@ -65,13 +67,18 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     final isAdmin = Get.find<AuthController>().isAdmin;
 
     return Scaffold(
-      backgroundColor: Colors.brown[50],
+      backgroundColor: WoodStyle.brown50,
       body: Obx(() {
         if (controller.isLoading.value && controller.products.isEmpty) {
           return const WoodListSkeleton();
         }
         if (controller.products.isEmpty) {
-          return const Center(child: Text('ຍັງບໍ່ມີຂໍ້ມູນສິນຄ້າໄມ້'));
+          return const Center(
+            child: Text(
+              WoodStyle.noProductsList,
+              style: WoodStyle.txEmptyState,
+            ),
+          );
         }
 
         final allNames = controller.products
@@ -79,21 +86,23 @@ class _WoodProductListPageState extends State<WoodProductListPage>
             .where((n) => n.isNotEmpty)
             .toSet()
             .toList();
-        final nameOptions = ['ທັງໝົດ', ...allNames];
+        final nameOptions = [WoodStyle.all, ...allNames];
 
-        final filteredList = selectedNameFilter == 'ທັງໝົດ'
+        final filteredList = selectedNameFilter == WoodStyle.all
             ? controller.products.toList()
             : controller.products
-                .where((p) => p.name.trim() == selectedNameFilter)
-                .toList();
+                  .where((p) => p.name.trim() == selectedNameFilter)
+                  .toList();
 
-        final Map<String, Map<String, List<WoodProductModel>>> nested = {};
+        // ✅ ປ່ຽນ WoodProductModel → WoodProduct
+        final Map<String, Map<String, List<WoodProduct>>> nested = {};
 
         for (final item in filteredList) {
-          final nameKey =
-              item.name.trim().isEmpty ? 'ບໍ່ລະບຸຊື່' : item.name.trim();
+          final nameKey = item.name.trim().isEmpty
+              ? WoodStyle.noName
+              : item.name.trim();
           final typeKey = item.woodType.trim().isEmpty
-              ? 'ບໍ່ລະບຸຊະນິດ'
+              ? WoodStyle.noType
               : item.woodType.trim();
 
           nested.putIfAbsent(nameKey, () => {});
@@ -101,9 +110,9 @@ class _WoodProductListPageState extends State<WoodProductListPage>
           nested[nameKey]![typeKey]!.add(item);
         }
 
-        nested.forEach((_, typeMap) {
-          typeMap.forEach((_, list) {
-            list.sort((a, b) => b.price.compareTo(a.price));
+        nested.forEach((_, Map<String, List<WoodProduct>> typeMap) {
+          typeMap.forEach((_, List<WoodProduct> productList) {
+            productList.sort((a, b) => b.price.compareTo(a.price));
           });
         });
 
@@ -119,9 +128,9 @@ class _WoodProductListPageState extends State<WoodProductListPage>
         final displayKeys = nameKeys.take(_displayLimit).toList();
 
         return RefreshIndicator(
-          color: Colors.brown,
+          color: WoodStyle.primary,
           onRefresh: () async {
-            setState(() => _displayLimit = 10);
+            setState(() => _displayLimit = WoodStyle.perPage);
             await controller.fetchProducts();
           },
           child: Column(
@@ -131,16 +140,22 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                 selected: selectedNameFilter,
                 onSelected: (v) => setState(() {
                   selectedNameFilter = v;
-                  _displayLimit = 10;
+                  _displayLimit = WoodStyle.perPage;
                 }),
               ),
               Expanded(
                 child: nameKeys.isEmpty
-                    ? const Center(child: Text('ບໍ່ພົບຂໍ້ມູນໄມ້ທີ່ເລືອກ'))
+                    ? const Center(
+                        child: Text(
+                          WoodStyle.noFilteredList,
+                          style: WoodStyle.txEmptyState,
+                        ),
+                      )
                     : ListView.builder(
                         controller: _scrollController,
-                        padding: const EdgeInsets.all(8),
-                        itemCount: displayKeys.length +
+                        padding: WoodStyle.padListPage,
+                        itemCount:
+                            displayKeys.length +
                             (_isLoadingMore &&
                                     displayKeys.length < nameKeys.length
                                 ? 1
@@ -148,10 +163,12 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                         itemBuilder: (context, idx) {
                           if (idx == displayKeys.length) {
                             return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 24),
+                              padding: EdgeInsets.symmetric(
+                                vertical: WoodStyle.pageLoadPadV,
+                              ),
                               child: Center(
                                 child: CircularProgressIndicator(
-                                  color: Colors.brown,
+                                  color: WoodStyle.primary,
                                 ),
                               ),
                             );
@@ -165,8 +182,9 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                             controller: controller,
                             onEdit: (p) {
                               controller.startEdit(p);
-                              Get.to(() =>
-                                  const WoodProductFormPage(isPage: true));
+                              Get.to(
+                                () => const WoodProductFormPage(isPage: true),
+                              );
                             },
                             onDelete: (p) => _confirmDelete(controller, p),
                           );
@@ -180,17 +198,16 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     );
   }
 
-  void _confirmDelete(
-    WoodProductController controller,
-    WoodProductModel item,
-  ) {
+  // ✅ ປ່ຽນ WoodProductModel → WoodProduct
+  void _confirmDelete(WoodProductController controller, WoodProduct item) {
     Get.defaultDialog(
-      title: 'ຢືນຢັນການລຶບ',
-      middleText: 'ຕ້ອງການລຶບ "${item.name}" ແມ່ນຫຼືບໍ່?',
-      textConfirm: 'ລຶບ',
-      textCancel: 'ຍົກເລີກ',
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.red.shade700,
+      title: WoodStyle.deleteTitle,
+      middleText:
+          '${WoodStyle.deleteMsgPrefix}${item.name}${WoodStyle.deleteMsgSuffix}',
+      textConfirm: WoodStyle.delete,
+      textCancel: WoodStyle.cancel,
+      confirmTextColor: WoodStyle.white,
+      buttonColor: WoodStyle.error700,
       onConfirm: () {
         Get.back();
         controller.deleteProduct(item.id);

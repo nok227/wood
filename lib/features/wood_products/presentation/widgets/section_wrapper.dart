@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:wood/core/constants/global/app_colors.dart';
+import 'package:wood/core/constants/global/app_layout.dart';
+import 'package:wood/core/constants/global/app_strings.dart';
 
 class SectionWrapper extends StatelessWidget {
   final String number;
@@ -23,13 +26,13 @@ class SectionWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveColor = done
-        ? Colors.green.shade700
-        : (warning ? Colors.amber.shade600 : color);
+        ? AppColors.success
+        : (warning ? AppColors.amber600 : color);
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.white,
+        borderRadius: AppLayout.r14,
         border: Border.all(
           color: effectiveColor.withOpacity(done ? 0.5 : 0.25),
           width: done ? 1.8 : 1.2,
@@ -55,24 +58,7 @@ class SectionWrapper extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: effectiveColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      number,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ),
+                _numberBadge(effectiveColor),
                 const SizedBox(width: 10),
                 Icon(icon, color: effectiveColor, size: 18),
                 const SizedBox(width: 6),
@@ -90,9 +76,13 @@ class SectionWrapper extends StatelessWidget {
                   ),
                 ),
                 if (done)
-                  _badge('ສຳເລັດ', Icons.check, Colors.green.shade700)
+                  _badge(AppStrings.done, Icons.check, AppColors.success)
                 else if (warning)
-                  _badge('ບໍ່ບັງຄັບ', Icons.edit_note, Colors.amber.shade600),
+                  _badge(
+                    AppStrings.optional,
+                    Icons.edit_note,
+                    AppColors.amber600,
+                  ),
               ],
             ),
           ),
@@ -101,6 +91,22 @@ class SectionWrapper extends StatelessWidget {
       ),
     );
   }
+
+  Widget _numberBadge(Color c) => Container(
+        width: 26,
+        height: 26,
+        decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+        child: Center(
+          child: Text(
+            number,
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      );
 
   Widget _badge(String text, IconData icon, Color color) {
     return Container(
@@ -112,12 +118,12 @@ class SectionWrapper extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 11),
+          Icon(icon, color: AppColors.white, size: 11),
           const SizedBox(width: 3),
           Text(
             text,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.white,
               fontSize: 10,
               fontWeight: FontWeight.bold,
             ),

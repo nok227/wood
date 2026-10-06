@@ -1,3 +1,5 @@
+import '../../domain/entities/wood_product.dart';
+
 class WoodProductModel {
   final String id;
   final String name;
@@ -146,6 +148,41 @@ class WoodProductModel {
       note: (map['note'] ?? '').toString(),
     );
   }
+
+    WoodProduct toEntity() => WoodProduct(
+        id: id,
+        name: name,
+        woodType: woodType,
+        imageUrls: imageUrls,
+        width: width,
+        length: length,
+        thickness: thickness,
+        sizeUnit: sizeUnit,
+        quantity: quantity,
+        unit: unit,
+        price: price,
+        zones: zones,
+        priceUpdatedAt: priceUpdatedAt,
+        note: note,
+      );
+
+  factory WoodProductModel.fromEntity(WoodProduct p) => WoodProductModel(
+        id: p.id,
+        name: p.name,
+        woodType: p.woodType,
+        imageUrls: p.imageUrls,
+        width: p.width,
+        length: p.length,
+        thickness: p.thickness,
+        sizeUnit: p.sizeUnit,
+        quantity: p.quantity,
+        unit: p.unit,
+        price: p.price,
+        zones: p.zones,
+        priceUpdatedAt: p.priceUpdatedAt,
+        note: p.note,
+      );
+
 
   @override
   bool operator ==(Object other) =>

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wood/core/constants/global/app_colors.dart';
 
 class ShimmerBox extends StatelessWidget {
   final double width;
@@ -22,9 +23,9 @@ class ShimmerBox extends StatelessWidget {
     return ShaderMask(
       shaderCallback: (rect) => LinearGradient(
         colors: const [
-          Color(0xFFE0E0E0),
-          Color(0xFFF5F5F5),
-          Color(0xFFE0E0E0),
+          AppColors.grey300,
+          AppColors.grey100,
+          AppColors.grey300,
         ],
         stops: const [0.35, 0.5, 0.65],
         begin: Alignment(-1 + dx, 0),
@@ -34,10 +35,11 @@ class ShimmerBox extends StatelessWidget {
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: Colors.grey.shade300,
+          color: AppColors.grey300,
           shape: shape,
-          borderRadius:
-              shape == BoxShape.circle ? null : BorderRadius.circular(radius),
+          borderRadius: shape == BoxShape.circle
+              ? null
+              : BorderRadius.circular(radius),
         ),
       ),
     );

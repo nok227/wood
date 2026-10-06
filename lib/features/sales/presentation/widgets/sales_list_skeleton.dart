@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wood/core/constants/specific/sale_style.dart';
 
 class SalesListSkeleton extends StatefulWidget {
   const SalesListSkeleton({super.key, this.count = 5});
@@ -13,7 +14,7 @@ class _SalesListSkeletonState extends State<SalesListSkeleton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1200),
+    duration: SaleStyle.skelPulse,
   )..repeat(reverse: true);
 
   @override
@@ -25,13 +26,14 @@ class _SalesListSkeletonState extends State<SalesListSkeleton>
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+      padding: SaleStyle.padListFAB,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: widget.count,
       itemBuilder: (_, i) => AnimatedBuilder(
         animation: _ctrl,
         builder: (_, child) {
-          final t = 0.5 + _ctrl.value * 0.5;
+          final t = SaleStyle.skelPulseMin +
+              _ctrl.value * (SaleStyle.skelPulseMax - SaleStyle.skelPulseMin);
           return Opacity(opacity: t, child: child);
         },
         child: const _ShimmerCard(),
@@ -48,52 +50,52 @@ class _ShimmerCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: SaleStyle.white,
+        borderRadius: BorderRadius.circular(SaleStyle.skelCardRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: SaleStyle.black.withOpacity(SaleStyle.skelShadowOpacity),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(SaleStyle.skelCardPad),
         child: IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Column(
+               Column(
                 children: [
-                  _Box(w: 76, h: 76),
-                  SizedBox(height: 4),
-                  _Box(w: 76, h: 76),
-                  SizedBox(height: 4),
-                  _Box(w: 76, h: 76),
+                  _Box(w: SaleStyle.thumbMiniW, h: SaleStyle.thumbMiniH),
+                  SizedBox(height: SaleStyle.skelGap4),
+                  _Box(w: SaleStyle.thumbMiniW, h: SaleStyle.thumbMiniH),
+                  SizedBox(height: SaleStyle.skelGap4),
+                  _Box(w: SaleStyle.thumbMiniW, h: SaleStyle.thumbMiniH),
                 ],
               ),
-              const SizedBox(width: 10),
+              SaleStyle.gap10,
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _Box(w: double.infinity, h: 14),
-                    const SizedBox(height: 4),
-                    const _Box(w: 160, h: 11),
-                    const SizedBox(height: 4),
-                    const _Box(w: 140, h: 11),
-                    const SizedBox(height: 6),
-                    const _Box(w: 110, h: 11),
-                    const SizedBox(height: 6),
-                    const _Box(w: 130, h: 15),
-                    const SizedBox(height: 4),
-                    const _Box(w: 80, h: 11),
-                    const SizedBox(height: 4),
-                    const _Box(w: 130, h: 10),
-                    const SizedBox(height: 6),
-                    const _Box(w: 120, h: 13),
-                    const SizedBox(height: 6),
+                    const _Box(w: double.infinity, h: SaleStyle.skelBarH14),
+                    SaleStyle.gap4,
+                    const _Box(w: SaleStyle.skelBarW160, h: SaleStyle.skelBarH11),
+                    SaleStyle.gap4,
+                    const _Box(w: SaleStyle.skelBarW140, h: SaleStyle.skelBarH11),
+                    SaleStyle.gap6,
+                    const _Box(w: SaleStyle.skelBarW110, h: SaleStyle.skelBarH11),
+                    SaleStyle.gap6,
+                    const _Box(w: SaleStyle.skelBarW130, h: SaleStyle.skelBarH15),
+                    SaleStyle.gap4,
+                    const _Box(w: SaleStyle.skelBarW80, h: SaleStyle.skelBarH11),
+                    SaleStyle.gap4,
+                    const _Box(w: SaleStyle.skelBarW130, h: SaleStyle.skelBarH10),
+                    SaleStyle.gap6,
+                    const _Box(w: SaleStyle.skelBarW120, h: SaleStyle.skelBarH13),
+                    SaleStyle.gap6,
                     const Spacer(),
                     Container(
                       width: double.infinity,
@@ -102,22 +104,22 @@ class _ShimmerCard extends StatelessWidget {
                         horizontal: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(8),
+                        color: SaleStyle.grey50,
+                        borderRadius: BorderRadius.circular(SaleStyle.skelBtnRadius),
                         border: Border.all(
-                          color: Colors.grey.shade300,
-                          width: 1.0,
+                          color: SaleStyle.grey300,
+                          width: SaleStyle.borderW1_0,
                         ),
                       ),
                       child: const Center(
-                        child: _Box(w: 140, h: 12),
+                        child: _Box(w: SaleStyle.skelBarW140, h: SaleStyle.skelBarH13),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 4),
-              const _Box(w: 28, h: 28, radius: 4),
+              SaleStyle.gap4,
+              const _Box(w: 28, h: 28, radius: SaleStyle.skelBoxRadius),
             ],
           ),
         ),
@@ -135,7 +137,7 @@ class _Box extends StatelessWidget {
   const _Box({
     required this.w,
     required this.h,
-    this.radius = 4,
+    this.radius = 4, 
     this.color,
   });
 
@@ -145,7 +147,7 @@ class _Box extends StatelessWidget {
       width: w,
       height: h,
       decoration: BoxDecoration(
-        color: color ?? Colors.grey.shade200,
+        color: color ?? SaleStyle.grey200,
         borderRadius: BorderRadius.circular(radius),
       ),
     );
