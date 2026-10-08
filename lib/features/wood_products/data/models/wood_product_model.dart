@@ -85,19 +85,19 @@ class WoodProductModel {
   }
 
   factory WoodProductModel.fromMap(Map<String, dynamic> map, String docId) {
-    double _toDouble(dynamic v) {
+    double toDouble(dynamic v) {
       if (v == null) return 0;
       if (v is num) return v.toDouble();
       return double.tryParse(v.toString()) ?? 0;
     }
 
-    int _toInt(dynamic v) {
+    int toInt(dynamic v) {
       if (v == null) return 0;
       if (v is num) return v.toInt();
       return int.tryParse(v.toString()) ?? 0;
     }
 
-    DateTime? _toDate(dynamic v) {
+    DateTime? toDate(dynamic v) {
       if (v == null) return null;
       if (v is DateTime) return v;
       if (v is String) return DateTime.tryParse(v);
@@ -136,15 +136,15 @@ class WoodProductModel {
       name: map['name'] ?? '',
       woodType: map['woodType'] ?? '',
       imageUrls: images,
-      width: _toDouble(map['width']),
-      length: _toDouble(map['length']),
-      thickness: _toDouble(map['thickness']),
+      width: toDouble(map['width']),
+      length: toDouble(map['length']),
+      thickness: toDouble(map['thickness']),
       sizeUnit: map['sizeUnit'] ?? 'cm',
-      quantity: _toInt(map['quantity']),
+      quantity: toInt(map['quantity']),
       unit: map['unit'] ?? 'ແຜ່ນ',
-      price: _toDouble(map['price']),
+      price: toDouble(map['price']),
       zones: zones,
-      priceUpdatedAt: _toDate(map['priceUpdatedAt']),
+      priceUpdatedAt: toDate(map['priceUpdatedAt']),
       note: (map['note'] ?? '').toString(),
     );
   }

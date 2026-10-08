@@ -4,10 +4,28 @@ import 'package:wood/core/utils/cloudinary_service.dart';
 import 'package:wood/core/widgets/global/app_snackbar.dart';
 import '../../domain/entities/recipe.dart';
 import '../../domain/repositories/recipe_repository.dart';
+import 'package:flutter/material.dart';
 
 enum RecipeSortBy { leastRecentlyEaten, newest, highestRating }
 
 class RecipeController extends GetxController {
+  final searchCtrl = TextEditingController();
+  final fabOpen = false.obs;
+
+  void toggleFab() => fabOpen.toggle();
+  void closeFab() => fabOpen.value = false;
+
+  void clearSearch() {
+    searchCtrl.clear();
+    searchQuery.value = '';
+  }
+
+  @override
+  void onClose() {
+    searchCtrl.dispose();
+    super.onClose();
+  }
+
   final RecipeRepository repository;
   RecipeController({required this.repository});
 
@@ -50,8 +68,7 @@ class RecipeController extends GetxController {
       if (st != 'all' && r.status.name != st) return false;
       if (q.isNotEmpty) {
         final matchName = r.name.toLowerCase().contains(q);
-        final matchIng =
-            r.ingredients.any((i) => i.toLowerCase().contains(q));
+        final matchIng = r.ingredients.any((i) => i.toLowerCase().contains(q));
         final matchSteps = (r.steps ?? '').toLowerCase().contains(q);
         if (!matchName && !matchIng && !matchSteps) return false;
       }
@@ -156,8 +173,8 @@ class RecipeController extends GetxController {
         imageUrls: imageUrls,
         note: note,
         updatedAt: DateTime.now(),
-        lastEatenAt: (old.status != RecipeStatus.tried &&
-                status == RecipeStatus.tried)
+        lastEatenAt:
+            (old.status != RecipeStatus.tried && status == RecipeStatus.tried)
             ? DateTime.now()
             : old.lastEatenAt,
       );

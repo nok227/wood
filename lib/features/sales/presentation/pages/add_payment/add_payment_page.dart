@@ -25,7 +25,7 @@ import '../../controllers/sales_controller.dart';
 enum _A { success, error, warning }
 
 class AddPaymentPage extends StatefulWidget {
-  const AddPaymentPage({Key? key}) : super(key: key);
+  const AddPaymentPage({super.key});
 
   @override
   State<AddPaymentPage> createState() => _AddPaymentPageState();

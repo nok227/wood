@@ -1,74 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 
-import 'package:wood/core/widgets/global/skeletons/skeletons.dart';
-import 'package:wood/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wood/core/constants/specific/account_style.dart';
+import 'package:wood/features/auth/presentation/controllers/auth_controller.dart';
 
-import '../../domain/entities/account_transaction.dart';
 import '../controllers/account_controller.dart';
+import '../controllers/account_form_controller.dart';
+import '../controllers/account_header_controller.dart';
+import '../widgets/account_action_buttons.dart';
+import '../widgets/account_balance_banner.dart';
+import '../widgets/account_delete_dialog.dart';
 import '../widgets/account_form_sheet.dart';
+import '../widgets/account_session_list.dart';
 import '../widgets/account_skeleton.dart';
-import '../widgets/action_buttons.dart';
-import '../widgets/balance_banner.dart';
-import '../widgets/session_section.dart';
 
-class AccountPage extends StatefulWidget {
-  const AccountPage({Key? key}) : super(key: key);
-
-  static final ValueNotifier<bool> headerVisible = ValueNotifier<bool>(true);
-
-  @override
-  State<AccountPage> createState() => _AccountPageState();
-}
-
-class _AccountPageState extends State<AccountPage> {
-  late final AccountController controller;
-  final ScrollController _scrollController = ScrollController();
-  final _fmt = NumberFormat('#,###');
-  double _lastOffset = 0;
-  final ValueNotifier<bool> _bannerVisible = ValueNotifier<bool>(true);
-
-  @override
-  void initState() {
-    super.initState();
-    controller = Get.find<AccountController>();
-    _scrollController.addListener(_onScroll);
-  }
-
-  @override
-  void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    _bannerVisible.dispose();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AccountPage.headerVisible.value = true;
-    });
-    super.dispose();
-  }
-
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-    final offset = _scrollController.offset;
-    final delta = offset - _lastOffset;
-    _lastOffset = offset;
-
-    if (offset < AccountStyle.scrollThreshold) {
-      if (!_bannerVisible.value) _bannerVisible.value = true;
-      return;
-    }
-
-    if (delta > AccountStyle.scrollDelta && _bannerVisible.value) {
-      _bannerVisible.value = false;
-    } else if (delta < -AccountStyle.scrollDelta && !_bannerVisible.value) {
-      _bannerVisible.value = true;
-    }
-  }
+class AccountPage extends StatelessWidget {
+  const AccountPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<AccountController>();
+    final header = Get.find<AccountHeaderController>();
     final isAdmin = Get.find<AuthController>().isAdmin;
 
     return Scaffold(
@@ -76,29 +28,29 @@ class _AccountPageState extends State<AccountPage> {
       body: Column(
         children: [
           // ── Banner + Buttons (hide/show) ──
-          ValueListenableBuilder<bool>(
-            valueListenable: _bannerVisible,
-            builder: (context, visible, child) {
-              return AnimatedSize(
+          Obx(() => AnimatedSize(
                 duration: AccountStyle.normal,
                 curve: Curves.easeOutCubic,
                 child: AnimatedOpacity(
                   duration: AccountStyle.fast,
-                  opacity: visible ? 1 : 0,
-                  child: visible
-                      ? child
+                  opacity: header.bannerVisible.value ? 1 : 0,
+                  child: header.bannerVisible.value
+                      ? Obx(() => Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AccountBalanceBanner(
+                                balance: controller.balance,
+                                cashBalance: controller.cashBalance,
+                                transferBalance: controller.transferBalance,
+                              ),
+                              AccountActionButtons(
+                                onTap: (t) => _openForm(t),
+                              ),
+                            ],
+                          ))
                       : const SizedBox(width: double.infinity),
                 ),
-              );
-            },
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                BalanceBanner(controller: controller),
-                ActionButtons(onTap: _openForm),
-              ],
-            ),
-          ),
+              )),
 
           // ── List ──
           Expanded(
@@ -116,15 +68,14 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 );
               }
-              return ListView.builder(
-                controller: _scrollController,
-                padding: AccountStyle.padList,
-                itemCount: groups.length,
-                itemBuilder: (_, i) => SessionSection(
-                  group: groups[i],
-                  isAdmin: isAdmin,
-                  controller: controller,
-                  onDelete: _deleteDialog,
+              return AccountSessionList(
+                groups: groups,
+                isAdmin: isAdmin,
+                scrollCtrl: header.scrollCtrl,
+                formatTime: controller.formatTime,
+                onDelete: (t) => showAccountDeleteDialog(
+                  transaction: t,
+                  onConfirm: () => controller.deleteTransaction(t.id),
                 ),
               );
             }),
@@ -135,29 +86,13 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   void _openForm(String type) {
+    // ล้าง form controller เก่า ป้องกัน state ค้าง
+    Get.delete<AccountFormController>(tag: 'account_form', force: true);
+
     Get.bottomSheet(
-      AccountFormSheet(initialType: type, onSubmit: controller.addTransaction),
+      AccountFormSheet(initialType: type),
       isScrollControlled: true,
       backgroundColor: AccountStyle.transparent,
-    );
-  }
-
-  void _deleteDialog(AccountTransaction t) {
-    if (Get.isDialogOpen ?? false) return;
-    final names = t.items.map((i) => i.name).join(', ');
-    Get.defaultDialog(
-      title: AccountStyle.confirmDelete,
-      middleText:
-          '${AccountStyle.deletePrefix}${names.isNotEmpty ? names : AccountStyle.fallbackItemName}${AccountStyle.deleteMid}${_fmt.format(t.totalAmount)}${AccountStyle.deleteSuffix}',
-      textConfirm: AccountStyle.delete,
-      textCancel: AccountStyle.cancel,
-      confirmTextColor: AccountStyle.white,
-      buttonColor: AccountStyle.error800,
-      onConfirm: () async {
-        Get.back();
-        await Future.delayed(AccountStyle.fast);
-        await controller.deleteTransaction(t.id);
-      },
     );
   }
 }

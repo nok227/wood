@@ -8,31 +8,27 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
-    <!-- ✅ Foreground Service (สำหรับให้แอปทำงานเบื้องหลังแม้ปัดออก) -->
+    <!-- ✅ Foreground Service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 
-    <!-- ✅ ສຳລັບ Speech to Text -->
+    <!-- ✅ Speech to Text -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- 📸 ສຳລັບການຖ່າຍຮູບດ້ວຍກ້ອງ (Image Picker) -->
-    <!-- ═══════════════════════════════════════════ -->
+    <!-- 📸 Image Picker -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
-    <!-- ✅ ສຳລັບການບັນທຶກຮູບລົງຄັງຮູບ (Gal package) -->
-    <!-- Android ≤ 9 (API ≤ 28) ຕ້ອງການ WRITE_EXTERNAL_STORAGE -->
+    <!-- ✅ Gal -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
-    <!-- Android 13+ (API 33+) ໃຊ້ READ_MEDIA_IMAGES ແທນ -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
@@ -40,12 +36,17 @@
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
 
+        <!-- ⭐ ปิด Impeller → Lottie render คมขึ้น -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
+
         <!-- ✅ OneSignal App ID -->
         <meta-data
             android:name="com.onesignal.APP_ID"
             android:value="17cd2a07-4e26-4f74-b202-2ff7c0e3d474" />
 
-        <!-- ✅ ตั้งค่า Channel และ Icon สำหรับแจ้งเตือน -->
+        <!-- ✅ Notification Channel + Icon -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="high_importance_channel" />
@@ -72,7 +73,7 @@
             </intent-filter>
         </activity>
 
-        <!-- ✅ Foreground Service ของ flutter_foreground_task -->
+        <!-- ✅ Foreground Service -->
         <service
             android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
             android:foregroundServiceType="dataSync"
@@ -83,13 +84,12 @@
             android:value="2" />
     </application>
 
-    <!-- ✅ Queries ສຳລັບ Text Processing -->
+    <!-- ✅ Queries -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
-        <!-- ✅ ສຳລັບ Speech Recognition -->
         <intent>
             <action android:name="android.speech.RecognitionService" />
         </intent>

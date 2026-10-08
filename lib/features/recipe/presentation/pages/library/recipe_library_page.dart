@@ -2,41 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:wood/core/constants/specific/recipe_style.dart';
+
 import '../../../domain/entities/recipe.dart';
 import '../../controllers/recipe_controller.dart';
+import '../../controllers/recipe_form_controller.dart';
+import '../../widgets/library/recipe_empty_state.dart';
+import '../../widgets/library/recipe_fab.dart';
+import '../../widgets/library/recipe_filter_tabs.dart';
+import '../../widgets/library/recipe_search_bar.dart';
+import '../../widgets/library/recipe_stats_row.dart';
 import '../../widgets/recipe_card.dart';
+import '../../widgets/recipe_list_skeleton.dart';
 import '../form/recipe_form_page.dart';
 
-class RecipeLibraryPage extends StatefulWidget {
+class RecipeLibraryPage extends StatelessWidget {
   const RecipeLibraryPage({super.key});
 
   @override
-  State<RecipeLibraryPage> createState() => _RecipeLibraryPageState();
-}
-
-class _RecipeLibraryPageState extends State<RecipeLibraryPage> {
-  final c = Get.find<RecipeController>();
-  final _searchCtrl = TextEditingController();
-  bool _fabOpen = false;
-
-  @override
-  void initState() {
-    super.initState();
-    c.fetchRecipes();
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  void _openForm({RecipeEntity? existing}) async {
-    await Get.to<bool>(() => RecipeFormPage(existing: existing));
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final c = Get.find<RecipeController>();
+
     return Scaffold(
       backgroundColor: RecipeStyle.bg,
       appBar: AppBar(
@@ -66,220 +51,53 @@ class _RecipeLibraryPageState extends State<RecipeLibraryPage> {
       ),
       body: Column(
         children: [
-          _buildSearchBar(),
-          _buildFilterTabs(),
-          _buildStatsRow(),
-          Expanded(child: _buildBody()),
+          RecipeSearchBar(controller: c),
+          RecipeFilterTabs(controller: c),
+          RecipeStatsRow(controller: c),
+          Expanded(child: _Body(controller: c)),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: _buildFab(),
-    );
-  }
-
-  // ── Search bar ──
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: RecipeStyle.padSearchBar,
-      child: TextField(
-        controller: _searchCtrl,
-        onChanged: (v) => c.searchQuery.value = v,
-        decoration: InputDecoration(
-          hintText: RecipeStyle.searchHint,
-          prefixIcon:
-              const Icon(Icons.search, color: RecipeStyle.primary),
-          suffixIcon: Obx(() => c.searchQuery.value.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(
-                    Icons.close,
-                    size: RecipeStyle.iconSm,
-                  ),
-                  onPressed: () {
-                    _searchCtrl.clear();
-                    c.searchQuery.value = '';
-                  },
-                )
-              : const SizedBox.shrink()),
-          isDense: true,
-          filled: true,
-          fillColor: RecipeStyle.white,
-          border: const OutlineInputBorder(
-            borderRadius: RecipeStyle.r12,
-            borderSide: BorderSide(color: RecipeStyle.brown200),
-          ),
-          enabledBorder: const OutlineInputBorder(
-            borderRadius: RecipeStyle.r12,
-            borderSide: BorderSide(color: RecipeStyle.brown200),
-          ),
-        ),
+      floatingActionButton: RecipeFab(
+        controller: c,
+        onOpenForm: () => _openForm(),
       ),
     );
   }
 
-  // ── Filter tabs ──
-  Widget _buildFilterTabs() {
-    return Obx(() {
-      final items = [
-        ('all', RecipeStyle.filterAll),
-        ('want', RecipeStyle.filterWant),
-        ('tried', RecipeStyle.filterTried),
-        ('never', RecipeStyle.filterNever),
-      ];
-      return Padding(
-        padding: RecipeStyle.padFilterTabs,
-        child: Row(
-          children: items.map((e) {
-            final selected = c.selectedStatus.value == e.$1;
-            return Expanded(
-              child: Padding(
-                padding: RecipeStyle.padFilterChip,
-                child: InkWell(
-                  onTap: () => c.selectedStatus.value = e.$1,
-                  borderRadius: RecipeStyle.r8,
-                  child: Container(
-                    padding: RecipeStyle.padVertical6,
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? RecipeStyle.primary
-                          : RecipeStyle.white,
-                      borderRadius: RecipeStyle.r8,
-                      border: Border.all(
-                        color: selected
-                            ? RecipeStyle.brown800
-                            : RecipeStyle.brown200,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        e.$2,
-                        style: RecipeStyle.statusTab.copyWith(
-                          fontSize: 11,
-                          color: selected
-                              ? RecipeStyle.white
-                              : RecipeStyle.brown800,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      );
-    });
+  void _openForm({RecipeEntity? existing}) {
+    Get.delete<RecipeFormController>(force: true);
+    Get.to(() => RecipeFormPage(existing: existing));
   }
+}
 
-  // ── Stats row ──
-  Widget _buildStatsRow() {
+class _Body extends StatelessWidget {
+  final RecipeController controller;
+  const _Body({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
     return Obx(() {
-      if (c.allRecipes.isEmpty) return const SizedBox.shrink();
-      return Padding(
-        padding: RecipeStyle.padStatsRow,
-        child: Row(
-          children: [
-            _statBubble('${c.totalCount}', RecipeStyle.statAll,
-                RecipeStyle.brown600),
-            RecipeStyle.gap6,
-            _statBubble('${c.wantCount}', RecipeStyle.statWant,
-                RecipeStyle.amber800),
-            RecipeStyle.gap6,
-            _statBubble('${c.neverCount}', RecipeStyle.statNever,
-                RecipeStyle.grey600),
-          ],
-        ),
-      );
-    });
-  }
-
-  Widget _statBubble(String value, String label, Color color) {
-    return Container(
-      padding: RecipeStyle.padStatBubble,
-      decoration: BoxDecoration(
-        color: color.withOpacity(RecipeStyle.bubbleOpacity),
-        borderRadius: RecipeStyle.r20,
-        border: Border.all(
-          color: color.withOpacity(RecipeStyle.bubbleBorderOpacity),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            value,
-            style: RecipeStyle.statBubbleValue.copyWith(color: color),
-          ),
-          RecipeStyle.gap4,
-          Text(
-            label,
-            style: RecipeStyle.statBubbleLabel.copyWith(color: color),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Body ──
-  Widget _buildBody() {
-    return Obx(() {
-      if (c.isLoading.value && c.allRecipes.isEmpty) {
-        return const Center(
-          child: CircularProgressIndicator(color: RecipeStyle.primary),
-        );
+      if (controller.isLoading.value && controller.allRecipes.isEmpty) {
+        return const RecipeListSkeleton();
       }
 
-      final list = c.filteredRecipes;
+      final list = controller.filteredRecipes;
 
       if (list.isEmpty) {
         return RefreshIndicator(
           color: RecipeStyle.primary,
-          onRefresh: c.fetchRecipes,
-          child: ListView(
-            children: [
-              RecipeStyle.gap80,
-              const Icon(
-                Icons.restaurant_menu,
-                size: RecipeStyle.emptyIconLg,
-                color: RecipeStyle.brown200,
-              ),
-              RecipeStyle.gap12,
-              Center(
-                child: Text(
-                  c.hasFilter
-                      ? RecipeStyle.notFound
-                      : RecipeStyle.emptyLibrary,
-                  style: RecipeStyle.emptyTitle,
-                ),
-              ),
-              if (c.hasFilter) ...[
-                RecipeStyle.gap12,
-                Center(
-                  child: TextButton.icon(
-                    onPressed: c.clearFilters,
-                    icon: const Icon(
-                      Icons.clear_all,
-                      size: RecipeStyle.iconSm,
-                    ),
-                    label: const Text(RecipeStyle.clearFilter),
-                  ),
-                ),
-              ] else ...[
-                RecipeStyle.gap12,
-                const Center(
-                  child: Text(
-                    RecipeStyle.addFirstHint,
-                    style: RecipeStyle.emptyHint,
-                  ),
-                ),
-              ],
-            ],
+          onRefresh: controller.fetchRecipes,
+          child: RecipeEmptyState(
+            hasFilter: controller.hasFilter,
+            onClearFilter: controller.clearFilters,
           ),
         );
       }
 
       return RefreshIndicator(
         color: RecipeStyle.primary,
-        onRefresh: c.fetchRecipes,
+        onRefresh: controller.fetchRecipes,
         child: ListView.builder(
           padding: RecipeStyle.padListFAB,
           itemCount: list.length,
@@ -288,9 +106,12 @@ class _RecipeLibraryPageState extends State<RecipeLibraryPage> {
             return RecipeCard(
               key: ValueKey('recipe-${r.id}'),
               recipe: r,
-              onTap: () => _openForm(existing: r),
-              onMarkEaten: () => c.markAsEaten(r.id),
-              onDelete: () => _confirmDelete(r),
+              onTap: () {
+                Get.delete<RecipeFormController>(force: true);
+                Get.to(() => RecipeFormPage(existing: r));
+              },
+              onMarkEaten: () => controller.markAsEaten(r.id),
+              onDelete: () => _confirmDelete(controller, r),
             );
           },
         ),
@@ -298,45 +119,7 @@ class _RecipeLibraryPageState extends State<RecipeLibraryPage> {
     });
   }
 
-  // ── FAB ──
-  Widget _buildFab() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        if (_fabOpen) ...[
-          FloatingActionButton.extended(
-            heroTag: 'btnAddRecipe',
-            onPressed: () {
-              setState(() => _fabOpen = false);
-              _openForm();
-            },
-            backgroundColor: RecipeStyle.brown800,
-            icon: const Icon(Icons.add, color: RecipeStyle.white),
-            label: const Text(
-              RecipeStyle.addRecipe,
-              style: TextStyle(
-                color: RecipeStyle.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          RecipeStyle.gap10,
-        ],
-        FloatingActionButton(
-          heroTag: 'btnMainFab',
-          backgroundColor: RecipeStyle.brown800,
-          onPressed: () => setState(() => _fabOpen = !_fabOpen),
-          child: Icon(
-            _fabOpen ? Icons.close : Icons.add,
-            color: RecipeStyle.white,
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _confirmDelete(RecipeEntity r) {
+  void _confirmDelete(RecipeController c, RecipeEntity r) {
     if (Get.isDialogOpen ?? false) return;
     Get.defaultDialog(
       title: RecipeStyle.confirmDelete,

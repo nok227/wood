@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:wood/core/constants/specific/sale_style.dart';
 import 'package:wood/core/widgets/global/animated_number.dart';
+import 'package:wood/core/widgets/global/number_formatter.dart'; // ← ใหม่
 import 'package:wood/features/wood_products/domain/entities/wood_product.dart';
 import 'package:wood/features/wood_products/presentation/controllers/wood_product_controller.dart';
 import '../../controllers/sales_controller.dart';
@@ -84,7 +85,7 @@ class AddPaymentWoodPicker extends StatelessWidget {
       final names = filteredProducts.map((p) => p.name).toSet().toList();
       if (names.isEmpty) return _emptyBox(SaleStyle.woodEmpty);
       final woodVariants = wood == null
-          ? <WoodProduct>[] // ✅ ແກ້
+          ? <WoodProduct>[]
           : filteredProducts.where((p) => p.name == wood).toList();
 
       final types =
@@ -102,7 +103,7 @@ class AddPaymentWoodPicker extends StatelessWidget {
 
       final list =
           (wood == null || type == null)
-                ? <WoodProduct>[] // ✅ ແກ້
+                ? <WoodProduct>[]
                 : (woodVariants.where((p) {
                     final t = p.woodType.trim().isEmpty
                         ? SaleStyle.woodUnnamedType
@@ -143,7 +144,7 @@ class AddPaymentWoodPicker extends StatelessWidget {
           ),
           SaleStyle.gapMd,
           DropdownButtonFormField<String>(
-            value: wood,
+            initialValue: wood,
             isExpanded: true,
             decoration: const InputDecoration(
               labelText: SaleStyle.woodName,
@@ -172,7 +173,7 @@ class AddPaymentWoodPicker extends StatelessWidget {
           if (wood != null) ...[
             SaleStyle.gapMd,
             DropdownButtonFormField<String>(
-              value: type,
+              initialValue: type,
               isExpanded: true,
               decoration: const InputDecoration(
                 labelText: SaleStyle.woodType,
@@ -206,7 +207,7 @@ class AddPaymentWoodPicker extends StatelessWidget {
           if (type != null && list.isNotEmpty) ...[
             SaleStyle.gapMd,
             DropdownButtonFormField<String>(
-              value: c.selectedProduct.value?.id,
+              initialValue: c.selectedProduct.value?.id,
               isExpanded: true,
               decoration: const InputDecoration(
                 labelText: SaleStyle.woodSize,
@@ -374,7 +375,11 @@ class AddPaymentWoodPicker extends StatelessWidget {
             child: TextField(
               controller: qtyC,
               keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                const DigitLimitFormatter(4),
+                DotNumberFormatter(),
+              ],
               decoration: InputDecoration(
                 labelText: '${SaleStyle.qtyLabel} *',
                 border: const OutlineInputBorder(),
@@ -385,8 +390,11 @@ class AddPaymentWoodPicker extends StatelessWidget {
                 suffixText: p.unit,
                 isDense: true,
               ),
-              onChanged: (v) =>
-                  onQtyChanged((int.tryParse(v) ?? 1).clamp(1, 99999)),
+              // ✅ แก้: ลบจุดก่อน parse
+              onChanged: (v) {
+                final n = int.tryParse(v.replaceAll('.', '')) ?? 1;
+                onQtyChanged(n.clamp(1, 9999));
+              },
             ),
           ),
           SaleStyle.gapSm,
@@ -395,7 +403,11 @@ class AddPaymentWoodPicker extends StatelessWidget {
             child: TextField(
               controller: discC,
               keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                const DigitLimitFormatter(5),
+                DotNumberFormatter(),
+              ],
               decoration: const InputDecoration(
                 labelText: SaleStyle.pricePerUnit,
                 border: OutlineInputBorder(),

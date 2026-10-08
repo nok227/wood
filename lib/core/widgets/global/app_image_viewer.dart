@@ -118,7 +118,7 @@ class _AppImageViewerState extends State<AppImageViewer> {
                 placeholder: (c, u) => const Center(
                   child: CircularProgressIndicator(color: AppColors.white),
                 ),
-                errorWidget: (_, __, ___) => const Icon(
+                errorWidget: (_, _, _) => const Icon(
                   Icons.broken_image,
                   size: 64,
                   color: AppColors.white54,

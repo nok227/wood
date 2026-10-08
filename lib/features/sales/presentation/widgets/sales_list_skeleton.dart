@@ -32,7 +32,8 @@ class _SalesListSkeletonState extends State<SalesListSkeleton>
       itemBuilder: (_, i) => AnimatedBuilder(
         animation: _ctrl,
         builder: (_, child) {
-          final t = SaleStyle.skelPulseMin +
+          final t =
+              SaleStyle.skelPulseMin +
               _ctrl.value * (SaleStyle.skelPulseMax - SaleStyle.skelPulseMin);
           return Opacity(opacity: t, child: child);
         },
@@ -66,7 +67,7 @@ class _ShimmerCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               Column(
+              Column(
                 children: [
                   _Box(w: SaleStyle.thumbMiniW, h: SaleStyle.thumbMiniH),
                   SizedBox(height: SaleStyle.skelGap4),
@@ -82,19 +83,40 @@ class _ShimmerCard extends StatelessWidget {
                   children: [
                     const _Box(w: double.infinity, h: SaleStyle.skelBarH14),
                     SaleStyle.gap4,
-                    const _Box(w: SaleStyle.skelBarW160, h: SaleStyle.skelBarH11),
+                    const _Box(
+                      w: SaleStyle.skelBarW160,
+                      h: SaleStyle.skelBarH11,
+                    ),
                     SaleStyle.gap4,
-                    const _Box(w: SaleStyle.skelBarW140, h: SaleStyle.skelBarH11),
+                    const _Box(
+                      w: SaleStyle.skelBarW140,
+                      h: SaleStyle.skelBarH11,
+                    ),
                     SaleStyle.gap6,
-                    const _Box(w: SaleStyle.skelBarW110, h: SaleStyle.skelBarH11),
+                    const _Box(
+                      w: SaleStyle.skelBarW110,
+                      h: SaleStyle.skelBarH11,
+                    ),
                     SaleStyle.gap6,
-                    const _Box(w: SaleStyle.skelBarW130, h: SaleStyle.skelBarH15),
+                    const _Box(
+                      w: SaleStyle.skelBarW130,
+                      h: SaleStyle.skelBarH15,
+                    ),
                     SaleStyle.gap4,
-                    const _Box(w: SaleStyle.skelBarW80, h: SaleStyle.skelBarH11),
+                    const _Box(
+                      w: SaleStyle.skelBarW80,
+                      h: SaleStyle.skelBarH11,
+                    ),
                     SaleStyle.gap4,
-                    const _Box(w: SaleStyle.skelBarW130, h: SaleStyle.skelBarH10),
+                    const _Box(
+                      w: SaleStyle.skelBarW130,
+                      h: SaleStyle.skelBarH10,
+                    ),
                     SaleStyle.gap6,
-                    const _Box(w: SaleStyle.skelBarW120, h: SaleStyle.skelBarH13),
+                    const _Box(
+                      w: SaleStyle.skelBarW120,
+                      h: SaleStyle.skelBarH13,
+                    ),
                     SaleStyle.gap6,
                     const Spacer(),
                     Container(
@@ -105,14 +127,19 @@ class _ShimmerCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: SaleStyle.grey50,
-                        borderRadius: BorderRadius.circular(SaleStyle.skelBtnRadius),
+                        borderRadius: BorderRadius.circular(
+                          SaleStyle.skelBtnRadius,
+                        ),
                         border: Border.all(
                           color: SaleStyle.grey300,
                           width: SaleStyle.borderW1_0,
                         ),
                       ),
                       child: const Center(
-                        child: _Box(w: SaleStyle.skelBarW140, h: SaleStyle.skelBarH13),
+                        child: _Box(
+                          w: SaleStyle.skelBarW140,
+                          h: SaleStyle.skelBarH13,
+                        ),
                       ),
                     ),
                   ],
@@ -132,14 +159,8 @@ class _Box extends StatelessWidget {
   final double w;
   final double h;
   final double radius;
-  final Color? color;
 
-  const _Box({
-    required this.w,
-    required this.h,
-    this.radius = 4, 
-    this.color,
-  });
+  const _Box({required this.w, required this.h, this.radius = 4});
 
   @override
   Widget build(BuildContext context) {
@@ -147,7 +168,7 @@ class _Box extends StatelessWidget {
       width: w,
       height: h,
       decoration: BoxDecoration(
-        color: color ?? SaleStyle.grey200,
+        color: SaleStyle.grey200,
         borderRadius: BorderRadius.circular(radius),
       ),
     );

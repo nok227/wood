@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class TabTickerGate extends StatelessWidget {
   final int index;
-  final ValueListenable<int> currentIndex;
+  final RxInt currentIndex;
   final Widget child;
 
   const TabTickerGate({
@@ -15,16 +15,12 @@ class TabTickerGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<int>(
-      valueListenable: currentIndex,
-      builder: (context, current, child) {
-        final active = current == index;
-        return TickerMode(
-          enabled: active,
-          child: ExcludeFocus(excluding: !active, child: child!),
-        );
-      },
-      child: child,
-    );
+    return Obx(() {
+      final active = currentIndex.value == index;
+      return TickerMode(
+        enabled: active,
+        child: ExcludeFocus(excluding: !active, child: child),
+      );
+    });
   }
 }

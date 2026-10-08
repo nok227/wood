@@ -19,8 +19,7 @@ class SaleCard extends StatelessWidget {
   final SaleOrderEntity sale;
   final bool isAdmin;
 
-  const SaleCard({Key? key, required this.sale, required this.isAdmin})
-      : super(key: key);
+  const SaleCard({super.key, required this.sale, required this.isAdmin});
 
   static String _wPrefix(String? raw, String prefix) {
     final v = (raw ?? '').trim();
@@ -67,9 +66,18 @@ class SaleCard extends StatelessWidget {
           .where((u) => u.isNotEmpty)
           .map((u) => AppImageItem(u, label: SaleStyle.previewImgDebt)),
     ];
-    final openViewer = images.isEmpty
-        ? null
-        : () => Get.to(() => AppImageViewer(images: images));
+
+    // helper — หา index ของ url ใน images
+    int idxOf(String? url) {
+      if (url == null) return 0;
+      final i = images.indexWhere((e) => e.url == url);
+      return i < 0 ? 0 : i;
+    }
+
+    void openAt(String? url) {
+      if (images.isEmpty) return;
+      Get.to(() => AppImageViewer(images: images, initialIndex: idxOf(url)));
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -92,11 +100,20 @@ class SaleCard extends StatelessWidget {
                   // ── 3 ຮູບ ──
                   Column(
                     children: [
-                      _thumb(payUrl, openViewer),
+                      _thumb(
+                        payUrl,
+                        payUrl == null ? null : () => openAt(payUrl),
+                      ),
                       SaleStyle.gap4,
-                      _thumb(billUrl, openViewer),
+                      _thumb(
+                        billUrl,
+                        billUrl == null ? null : () => openAt(billUrl),
+                      ),
                       SaleStyle.gap4,
-                      _thumb(thirdUrl, openViewer),
+                      _thumb(
+                        thirdUrl,
+                        thirdUrl == null ? null : () => openAt(thirdUrl),
+                      ),
                     ],
                   ),
                   const SizedBox(width: 10),
@@ -128,7 +145,9 @@ class SaleCard extends StatelessWidget {
         ),
         if (sale.hasMultiItems) ...[
           SaleStyle.gap4,
-          ...sale.items.take(2).map(
+          ...sale.items
+              .take(2)
+              .map(
                 (it) => Padding(
                   padding: const EdgeInsets.only(bottom: 2),
                   child: Row(
@@ -206,10 +225,10 @@ class SaleCard extends StatelessWidget {
               sale.paymentType == 'cash'
                   ? SaleStyle.cashFull
                   : sale.paymentType == 'transfer'
-                      ? SaleStyle.transferFull
-                      : sale.paymentType == 'mixed'
-                          ? SaleStyle.mixedLabel
-                          : SaleStyle.debtLabel,
+                  ? SaleStyle.transferFull
+                  : sale.paymentType == 'mixed'
+                  ? SaleStyle.mixedLabel
+                  : SaleStyle.debtLabel,
               style: const TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w800,
@@ -384,7 +403,7 @@ class SaleCard extends StatelessWidget {
       onTap: url != null ? onTap : null,
       child: ClipRRect(
         borderRadius: SaleStyle.thumbRadius,
-        child: Container(
+        child: SizedBox(
           width: SaleStyle.thumbSale,
           height: SaleStyle.thumbSaleH,
           child: url != null
@@ -393,7 +412,7 @@ class SaleCard extends StatelessWidget {
                   fit: BoxFit.contain,
                   memCacheWidth: 152,
                   placeholder: (c, u) => const SizedBox.shrink(),
-                  errorWidget: (_, __, ___) => _noImagePlaceholder(),
+                  errorWidget: (_, _, _) => _noImagePlaceholder(),
                 )
               : _noImagePlaceholder(),
         ),
@@ -570,8 +589,7 @@ class SaleCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Column(
           children: [
-            const Icon(Icons.receipt_long,
-                size: 48, color: SaleStyle.green600),
+            const Icon(Icons.receipt_long, size: 48, color: SaleStyle.green600),
             const SizedBox(height: 8),
             if (name.isNotEmpty)
               Text(
@@ -585,16 +603,14 @@ class SaleCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 '${SaleStyle.detailPhonePrefix}: ${sale.customerPhone}',
-                style: const TextStyle(
-                    fontSize: 12, color: SaleStyle.grey700),
+                style: const TextStyle(fontSize: 12, color: SaleStyle.grey700),
               ),
             ],
             if (addr.isNotEmpty) ...[
               const SizedBox(height: 2),
               Text(
                 '${SaleStyle.detailAddrPrefix}: $addr',
-                style: const TextStyle(
-                    fontSize: 12, color: SaleStyle.grey700),
+                style: const TextStyle(fontSize: 12, color: SaleStyle.grey700),
               ),
             ],
             const SizedBox(height: 10),
@@ -608,8 +624,7 @@ class SaleCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: SaleStyle.amber50,
                 borderRadius: SaleStyle.r10,
@@ -617,11 +632,7 @@ class SaleCard extends StatelessWidget {
               ),
               child: const Row(
                 children: [
-                  Icon(
-                    Icons.help_outline,
-                    color: SaleStyle.amber900,
-                    size: 20,
-                  ),
+                  Icon(Icons.help_outline, color: SaleStyle.amber900, size: 20),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -756,7 +767,9 @@ class SaleCard extends StatelessWidget {
     );
 
     Get.defaultDialog(
-      title: isEdit ? SaleStyle.detailEditReason : SaleStyle.detailMismatchTitle,
+      title: isEdit
+          ? SaleStyle.detailEditReason
+          : SaleStyle.detailMismatchTitle,
       content: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Column(
@@ -797,7 +810,9 @@ class SaleCard extends StatelessWidget {
                         final t = noteCtrl.text.trim();
                         if (t.isEmpty) {
                           Get.snackbar(
-                              SaleStyle.errorMsg, SaleStyle.alertFillReason);
+                            SaleStyle.errorMsg,
+                            SaleStyle.alertFillReason,
+                          );
                           return;
                         }
                         _safeCloseDialog();
@@ -824,7 +839,9 @@ class SaleCard extends StatelessWidget {
                     final t = noteCtrl.text.trim();
                     if (t.isEmpty) {
                       Get.snackbar(
-                          SaleStyle.errorMsg, SaleStyle.alertFillReason);
+                        SaleStyle.errorMsg,
+                        SaleStyle.alertFillReason,
+                      );
                       return;
                     }
                     _safeCloseDialog();
@@ -862,8 +879,7 @@ class SaleCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               sale.shortSummary,
-              style: const TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -881,8 +897,7 @@ class SaleCard extends StatelessWidget {
               SaleStyle.gap4,
               Text(
                 '${SaleStyle.batchDelete} ${sale.itemCount} ${SaleStyle.previewFooterItems}',
-                style: const TextStyle(
-                    fontSize: 12, color: SaleStyle.grey700),
+                style: const TextStyle(fontSize: 12, color: SaleStyle.grey700),
               ),
             ],
             const SizedBox(height: 12),
@@ -895,11 +910,7 @@ class SaleCard extends StatelessWidget {
               ),
               child: const Row(
                 children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: SaleStyle.red700,
-                    size: 18,
-                  ),
+                  Icon(Icons.info_outline, color: SaleStyle.red700, size: 18),
                   SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -917,8 +928,7 @@ class SaleCard extends StatelessWidget {
             const SizedBox(height: 10),
             const Text(
               SaleStyle.deleteConfirmMsg,
-              style:
-                  TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -947,11 +957,11 @@ class _FloatingActionsButton extends StatefulWidget {
   final VoidCallback onDelete;
 
   const _FloatingActionsButton({
-    Key? key,
+    super.key,
     required this.saleId,
     required this.isAdmin,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   State<_FloatingActionsButton> createState() => _FloatingActionsButtonState();
@@ -1126,10 +1136,10 @@ class _Waiting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Icon(
-        Icons.hourglass_bottom,
-        size: size * 0.85,
-        color: SaleStyle.amber800,
-      );
+    Icons.hourglass_bottom,
+    size: size * 0.85,
+    color: SaleStyle.amber800,
+  );
 }
 
 class _Checkmark extends StatelessWidget {
@@ -1138,18 +1148,18 @@ class _Checkmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0, end: 1),
-        duration: SaleStyle.animPulse,
-        curve: Curves.elasticOut,
-        builder: (_, v, child) => Transform.scale(scale: v, child: child),
-        child: Container(
-          width: size,
-          height: size,
-          decoration: const BoxDecoration(
-            color: SaleStyle.confirmed,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(Icons.check, color: SaleStyle.white, size: size * 0.7),
-        ),
-      );
+    tween: Tween(begin: 0, end: 1),
+    duration: SaleStyle.animPulse,
+    curve: Curves.elasticOut,
+    builder: (_, v, child) => Transform.scale(scale: v, child: child),
+    child: Container(
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(
+        color: SaleStyle.confirmed,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(Icons.check, color: SaleStyle.white, size: size * 0.7),
+    ),
+  );
 }

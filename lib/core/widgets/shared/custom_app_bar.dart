@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:wood/core/constants/global/app_colors.dart';
+
 import 'package:wood/core/constants/global/app_durations.dart';
+import 'package:wood/core/widgets/global/notification_bell.dart';
 import 'package:wood/core/widgets/global/wave_text.dart';
-import 'package:wood/features/notifications/presentation/controllers/notification_controller.dart';
-import 'package:wood/features/notifications/presentation/pages/notification_page.dart';
 import 'package:wood/features/recipe/presentation/pages/library/recipe_library_page.dart';
 import 'package:wood/features/auth/presentation/pages/profile_view_page.dart';
 
@@ -34,6 +33,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             replayOnRouteChange: false,
           ),
       actions: [
+        // 🍴 Recipe
         IconButton(
           icon: const Icon(Icons.restaurant_menu, size: 24),
           tooltip: 'ຄັງເມນູອາຫານ',
@@ -43,34 +43,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             duration: AppDurations.normal,
           ),
         ),
-        Obx(() {
-          if (!Get.isRegistered<NotificationController>()) {
-            return const SizedBox.shrink();
-          }
-          final ctrl = Get.find<NotificationController>();
-          final unread = ctrl.unreadCount;
-          return IconButton(
-            icon: Badge(
-              isLabelVisible: unread > 0,
-              backgroundColor: AppColors.error700,
-              label: Text(
-                unread > 99 ? '99+' : '$unread',
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: AppColors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              child: const Icon(Icons.notifications_outlined, size: 26),
-            ),
-            tooltip: 'ແຈ້ງເຕືອນ',
-            onPressed: () => Get.to(
-              () => const NotificationPage(),
-              transition: Transition.downToUp,
-              duration: AppDurations.normal,
-            ),
-          );
-        }),
+
+        // 🔔 Notification bell (ย้ายมาเป็น widget)
+        const NotificationBell(),
+
+        // 👤 Profile
         IconButton(
           icon: const Icon(Icons.account_circle, size: 28),
           tooltip: 'ໂປຣຟາຍ',

@@ -74,7 +74,7 @@ class AccountPageSkeleton extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10),
               physics: const NeverScrollableScrollPhysics(),
               itemCount: 3,
-              itemBuilder: (_, __) => _sessionCard(p),
+              itemBuilder: (_, _) => _sessionCard(p),
             ),
           ),
         ],

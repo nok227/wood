@@ -25,6 +25,11 @@ class WoodRepositoryImpl implements WoodRepository {
   Future<void> deleteWoodProduct(String id) =>
       remoteDataSource.deleteWoodProduct(id);
 
+  // ⭐ เพิ่ม
+  @override
+  Future<void> deleteImageFromCloudinary(String imageUrl) =>
+      remoteDataSource.deleteImageFromCloudinary(imageUrl);
+
   @override
   Future<List<WoodProduct>> getWoodProducts() async {
     final models = await remoteDataSource.getWoodProducts();

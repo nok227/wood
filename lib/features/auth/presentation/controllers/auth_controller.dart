@@ -1,40 +1,30 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+
 import 'package:wood/core/widgets/global/app_snackbar.dart';
 import 'package:wood/features/home/presentation/pages/home_shell.dart';
 
 import '../../domain/entities/app_user.dart';
 import '../../domain/entities/menu_permission.dart';
 import '../../domain/repositories/auth_repository.dart';
+import 'auth_form_controller.dart';
 
 class AuthController extends GetxController {
   final AuthRepository authRepository;
   AuthController({required this.authRepository});
-
-  // ── Form controllers ──
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
 
   // ── State ──
   var isLoading = false.obs;
   var currentUser = Rxn<AppUser>();
   var permissionLoaded = false.obs;
 
-  // ── Admin: users list ──
-  var usersList = <AppUser>[].obs;
-  var usersLoading = false.obs;
-
   StreamSubscription? _authSub;
   StreamSubscription? _userDocSub;
   String? _lastBoundUid;
 
-  // ══════════════════════════════════════════
-  // Getters
-  // ══════════════════════════════════════════
+  // ── Getters ──
   bool get isAdmin => currentUser.value?.isAdmin ?? false;
 
   bool get hasAnyPermission {
@@ -48,9 +38,7 @@ class AuthController extends GetxController {
     return menus.contains(k.key);
   }
 
-  // ══════════════════════════════════════════
-  // Init
-  // ══════════════════════════════════════════
+  // ── Init ──
   @override
   void onInit() {
     super.onInit();
@@ -61,9 +49,7 @@ class AuthController extends GetxController {
     currentUser.value = user;
     _bindUserDoc(user?.uid);
 
-    if (user != null) {
-      _linkOneSignalUser(user.uid);
-    }
+    if (user != null) _linkOneSignalUser(user.uid);
   }
 
   void _bindUserDoc(String? uid) {
@@ -79,50 +65,32 @@ class AuthController extends GetxController {
     }
 
     permissionLoaded.value = false;
-
     _userDocSub = authRepository.userStream(uid).listen(
       (u) {
-        if (u != null) {
-          currentUser.value = u;
-        }
+        if (u != null) currentUser.value = u;
         permissionLoaded.value = true;
       },
-      onError: (_) {
-        permissionLoaded.value = true;
-      },
+      onError: (_) => permissionLoaded.value = true,
     );
   }
 
-  // ══════════════════════════════════════════
-  // Form
-  // ══════════════════════════════════════════
-  void clearForm() {
-    nameController.clear();
-    emailController.clear();
-    passwordController.clear();
-  }
-
-  // ══════════════════════════════════════════
-  // OneSignal
-  // ══════════════════════════════════════════
   void _linkOneSignalUser(String uid) {
     try {
       OneSignal.login(uid);
     } catch (_) {}
   }
 
-  // ══════════════════════════════════════════
-  // 🔐 Register
-  // ══════════════════════════════════════════
+  // ── Register ──
   Future<void> registerWithEmail() async {
+    final form = Get.find<AuthFormController>();
     try {
       isLoading.value = true;
       await authRepository.registerWithEmail(
-        name: nameController.text.trim(),
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+        name: form.nameController.text.trim(),
+        email: form.emailController.text.trim(),
+        password: form.passwordController.text.trim(),
       );
-      clearForm();
+      form.clear();
       Get.offAll(() => const HomeShell());
     } catch (e) {
       AppSnackbar.err('ຜິດພາດ', e.toString());
@@ -131,17 +99,16 @@ class AuthController extends GetxController {
     }
   }
 
-  // ══════════════════════════════════════════
-  // 🔑 Login
-  // ══════════════════════════════════════════
+  // ── Login ──
   Future<void> signInWithEmail() async {
+    final form = Get.find<AuthFormController>();
     try {
       isLoading.value = true;
       await authRepository.signInWithEmail(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+        email: form.emailController.text.trim(),
+        password: form.passwordController.text.trim(),
       );
-      clearForm();
+      form.clear();
       Get.offAll(() => const HomeShell());
     } catch (e) {
       AppSnackbar.err('ຜິດພາດ', e.toString());
@@ -151,11 +118,12 @@ class AuthController extends GetxController {
   }
 
   Future<void> signInWithGoogle() async {
+    final form = Get.find<AuthFormController>();
     try {
       isLoading.value = true;
       final user = await authRepository.signInWithGoogle();
       if (user != null) {
-        clearForm();
+        form.clear();
         Get.offAll(() => const HomeShell());
       }
     } catch (e) {
@@ -165,61 +133,19 @@ class AuthController extends GetxController {
     }
   }
 
-  // ══════════════════════════════════════════
-  // 🚪 Logout
-  // ══════════════════════════════════════════
+  // ── Logout ──
   Future<void> logout() async {
     try {
       OneSignal.logout();
     } catch (_) {}
     await authRepository.signOut();
-    clearForm();
+    Get.find<AuthFormController>().clear();
   }
 
-  // ══════════════════════════════════════════
-  // 👥 Admin — users list
-  // ══════════════════════════════════════════
-  Future<void> loadUsers() async {
-    if (!isAdmin) return;
-
-    usersLoading.value = true;
-    try {
-      final list = await authRepository.getUsers();
-      usersList.assignAll(list);
-    } catch (e) {
-      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດໂຫຼດຜູ້ໃຊ້ໄດ້');
-    } finally {
-      usersLoading.value = false;
-    }
-  }
-
-  // ══════════════════════════════════════════
-  // 👤 Admin — update permissions
-  // ══════════════════════════════════════════
-  Future<bool> updateUserMenuPermissions(
-    String uid,
-    List<String> menus,
-  ) async {
-    if (!isAdmin) return false;
-    try {
-      await authRepository.updateAllowedMenus(uid, menus);
-      return true;
-    } catch (e) {
-      AppSnackbar.err('ຜິດພາດ', 'ບໍ່ສາມາດບັນທຶກສິດໄດ້: $e');
-      return false;
-    }
-  }
-
-  // ══════════════════════════════════════════
-  // Dispose
-  // ══════════════════════════════════════════
   @override
   void onClose() {
     _authSub?.cancel();
     _userDocSub?.cancel();
-    nameController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
     super.onClose();
   }
 }

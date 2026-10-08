@@ -14,7 +14,6 @@ class NotificationController extends GetxController {
 
   static const int ttlDays = 7;
 
-  // ⭐ เปลี่ยน: ใช้ AuthController แทน FirebaseAuth ตรง
   String? get _uid {
     if (!Get.isRegistered<AuthController>()) return null;
     return Get.find<AuthController>().currentUser.value?.uid;

@@ -14,7 +14,7 @@ class NotificationSkeleton extends StatelessWidget {
         padding: NotificationStyle.padList,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: count,
-        itemBuilder: (_, __) => Container(
+        itemBuilder: (_, _) => Container(
           margin: NotificationStyle.padTileMargin,
           padding: NotificationStyle.padCard,
           decoration: BoxDecoration(

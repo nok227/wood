@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:wood/core/utils/cloudinary_service.dart';   // ⭐ import
 import '../models/wood_product_model.dart';
 
 class WoodRemoteDataSource {
@@ -10,37 +12,31 @@ class WoodRemoteDataSource {
   final String cloudName = 'onvap9ey';
   final String uploadPreset = 'wood_preset';
 
+  // ══════════════════════════════════════════
+  // ⬆️ Upload (ของเดิม)
+  // ══════════════════════════════════════════
   Future<String> uploadImageToCloudinary(File imageFile) async {
-    try {
-      final url = Uri.parse(
-        'https://api.cloudinary.com/v1_1/$cloudName/image/upload',
-      );
-      final request = http.MultipartRequest('POST', url)
-        ..fields['upload_preset'] = uploadPreset
-        ..files.add(
-          await http.MultipartFile.fromPath('file', imageFile.path),
-        );
-
-      final streamedResponse =
-          await request.send().timeout(const Duration(seconds: 45));
-
-      final responseData = await streamedResponse.stream.toBytes();
-      final responseString = String.fromCharCodes(responseData);
-      final jsonMap = jsonDecode(responseString);
-
-      if (streamedResponse.statusCode == 200 &&
-          jsonMap['secure_url'] != null) {
-        return jsonMap['secure_url'] as String;
-      } else {
-        throw Exception(
-          'Upload failed: ${jsonMap['error']?['message'] ?? 'Unknown'}',
-        );
-      }
-    } on Exception catch (e) {
-      throw Exception('Upload image error: $e');
+    final url = await CloudinaryService.uploadImage(imageFile, folder: 'wood');
+    if (url == null) {
+      throw Exception('Upload image failed');
     }
+    return url;
   }
 
+  // ══════════════════════════════════════════
+  // 🗑️ Delete — delegate ไป CloudinaryService
+  // ══════════════════════════════════════════
+  Future<void> deleteImageFromCloudinary(String imageUrl) async {
+    final ok = await CloudinaryService.deleteImage(imageUrl);
+    if (!ok) {
+      debugPrint('⚠️ Delete returned false for: $imageUrl');
+    }
+    // ไม่ throw — ไม่ให้ save/delete fail เพราะลบรูปไม่ได้
+  }
+
+  // ══════════════════════════════════════════
+  // 📦 Firestore (ของเดิม)
+  // ══════════════════════════════════════════
   Future<void> saveWoodProduct(WoodProductModel product) async {
     await firestore
         .collection('wood_products')

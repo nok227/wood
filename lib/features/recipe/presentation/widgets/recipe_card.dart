@@ -229,7 +229,7 @@ class RecipeCard extends StatelessWidget {
                 fit: BoxFit.cover,
                 memCacheWidth: 168,
                 placeholder: (c, u) => Container(color: RecipeStyle.brown50),
-                errorWidget: (_, __, ___) => Center(
+                errorWidget: (_, _, _) => Center(
                   child: Text(
                     recipe.category.emoji,
                     style: RecipeStyle.emojiFallback,

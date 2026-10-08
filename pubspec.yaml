@@ -1,8 +1,6 @@
 name: wood
 description: "A new Flutter project."
-# The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: 'none'
 
 version: 1.0.0+1
 
@@ -17,20 +15,20 @@ dependencies:
   get: ^4.6.6
   firebase_core: ^4.15.0
   cloud_firestore: ^6.10.0
-  firebase_auth: ^6.7.0      
-  google_sign_in: ^6.2.2      
+  firebase_auth: ^6.7.0
+  google_sign_in: ^6.2.2
   http: ^1.6.0
-  crypto: ^3.0.3  
+  crypto: ^3.0.3
   image_picker: ^1.2.3
   cached_network_image: ^3.4.1
-  intl: ^0.20.3     
+  intl: ^0.20.3
   sign_in_button: ^5.0.0
   lottie: ^3.1.2
   speech_to_text: ^7.0.0
   flutter_native_splash: ^2.4.4
   firebase_messaging: ^16.7.0
   flutter_local_notifications: ^17.2.4
-  onesignal_flutter: ^5.5.4  
+  onesignal_flutter: ^5.5.4
   app_badge_plus: ^1.2.0
   flutter_foreground_task: ^8.17.0
   screenshot: ^3.0.0
@@ -43,45 +41,28 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.1
-  
 
 flutter_native_splash:
-  color: "#42a5f5"  # สีพื้นหลัง
-  image: assets/Images/Image_screen.jpg  # ภาพที่แสดงตรงกลาง (ต้องเป็น PNG)
-  branding: assets/Images/Image_screen.jpg  # ภาพโลโก้ด้านล่าง (ถ้ามี)
+  color: "#42a5f5"
+  image: assets/Images/Image_screen.jpg
+  branding: assets/Images/Image_screen.jpg
   android_12:
     color: "#42a5f5"
-    image: assets/Images/Image_screen.jpg  # ภาพสำหรับ Android 12+
+    image: assets/Images/Image_screen.jpg
 
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/icons/icons_app.jpg"        # เปลี่ยนเป็น PNG
+  image_path: "assets/icons/icons_app.png"
   min_sdk_android: 21
   remove_alpha_ios: true
   adaptive_icon_background: "#ffffff"
-  adaptive_icon_foreground: "assets/icons/icons_app.jpg"
+  adaptive_icon_foreground: "assets/icons/icons_app.png"
 
-# The following section is specific to Flutter packages.
 flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
 
-  # fonts:
-  #   - family: NotoSansLao
-  #     fonts:
-  #       - asset: assets/fonts/NotoSansLao-Regular.ttf
-  #         weight: 400
-  #       - asset: assets/fonts/NotoSansLao-Bold.ttf
-  #         weight: 700
-  #       - asset: assets/fonts/NotoSansLao-Black.ttf
-  #         weight: 900
-
-  # To add assets to your application, add an assets section, like this:
   assets:
     - assets/Icons/
     - assets/Images/
-    # - images/Image_screen.jpg
+    - assets/lottie/          # ⭐ เพิ่มบรรทัดนี้

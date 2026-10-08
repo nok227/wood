@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:wood/core/constants/global/app_colors.dart';
-import 'package:wood/core/constants/global/app_layout.dart';
 import 'package:wood/core/constants/global/app_durations.dart';
 
 enum SnackType { success, error, warning, info }

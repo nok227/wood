@@ -133,73 +133,113 @@ class _Wood3DSceneState extends State<Wood3DScene> {
     });
   }
 
+  // ══════════════════════════════════════════════
+  // 🎯 Frame type detection
+  // ══════════════════════════════════════════════
+  // ຫຼັກການ:
+  //   1. ກວດ "ຫົວໜ່ວຍ" ກ່ອນ — ຖ້າຮູ້ → ໃຊ້ທັນທີ
+  //   2. ຖ້າບໍ່ຮູ້ → ກວດ "ຊື່" ແບບ startsWith ເທົ່ານັ້ນ
+  //      (ຫ້າມ contains('ວົງ') ຫຼື contains('ປະຕູ') ເພາະຈະຊົນກັບຊື່ໄມ້)
+  //   3. ຖ້າບໍ່ຮູ້ທັງສອງ → none (ແທ່ງທຶບ)
+  // ══════════════════════════════════════════════
   FrameType _getFrameType(String? name, String? unit) {
     final n = name?.trim().toLowerCase() ?? '';
     final u = unit?.trim().toLowerCase() ?? '';
 
-    bool isBundle(String s) => s.contains('ມັດ') || s.contains('มัด');
+    final fromUnit = _frameFromUnit(u);
+    if (fromUnit != null) return fromUnit;
 
-    bool isVent(String s) =>
-        s.contains('ປ່ອງລົມ') || s.contains('ຊ່ອງລົມ') || s.contains('ช่องลม');
+    final fromName = _frameFromName(n);
+    if (fromName != null) return fromName;
 
-    bool isWindowFrame(String s) =>
-        s.contains('ວົງປ່ອງຢ້ຽມ') ||
-        s.contains('ວົງໜ້າຕ່າງ') ||
-        s.contains('วงหน้าต่าง') ||
-        s.contains('ວົງປ່ອງ') ||
-        s.contains('วงช่อง') ||
-        s.contains('ວົງປະຕູລົມ');
+    return FrameType.none;
+  }
 
-    bool isDoorFrame(String s) =>
-        s.contains('ວົງນ້ອຍ') ||
-        s.contains('ວົງໄຫຍ່') ||
-        s.contains('ວົງປະຕູ') ||
-        s.contains('วงประตู');
+  /// ແປງ frame type ຈາກ "ຫົວໜ່ວຍ" — ຖ້າບໍ່ຮູ້ → null
+  FrameType? _frameFromUnit(String u) {
+    if (u.isEmpty) return null;
 
-    bool isDoorLeaf(String s) =>
-        s.contains('ບານປະຕູ') || s.contains('บานประตู');
+    // ມັດ
+    if (u.contains('ມັດ') || u.contains('ມຸດ') || u.contains('มัด')) {
+      return FrameType.bundle;
+    }
 
-    bool isWindowLeaf(String s) =>
-        s.contains('ບານປ່ອງຢ້ຽມ') ||
-        s.contains('ບານໜ້າຕ່າງ') ||
-        s.contains('บานหน้าต่าง') ||
-        s.contains('ບານຊ່ອງ') ||
-        s.contains('ບານປ່ອງລົມ') ||
-        s.contains('ບານປ່ອງ');
-
-    if (isBundle(u)) return FrameType.bundle;
-    if (isBundle(n)) return FrameType.bundle;
-
-    if (isDoorLeaf(u)) return FrameType.none;
-    if (isWindowLeaf(u)) return FrameType.none;
-
-    if (isVent(u)) return FrameType.window;
-
-    if (isWindowFrame(u)) return FrameType.windowFrame;
-    if (isDoorFrame(u)) return FrameType.door;
-    if (u == 'ວົງ' || u == 'วง') return FrameType.door;
-    if (u == 'ແຜ່ນ' ||
-        u == 'ທ່ອນ' ||
-        u == 'ແຜ່ນໄມ້' ||
-        u == 'ທ່ອນໄມ້') {
+    // ແຜ່ນ / ທ່ອນ / ບານ → ທຶບ
+    if (u.contains('ແຜ່ນ') ||
+        u.contains('ທ່ອນ') ||
+        u.contains('ບານປະຕູ') ||
+        u.contains('ບານປ່ອງຢ້ຽມ') ||
+        u.contains('ບານໜ້າຕ່າງ')) {
       return FrameType.none;
     }
 
-    if (isVent(n)) return FrameType.window;
-    if (isWindowFrame(n)) return FrameType.windowFrame;
-    if (isDoorFrame(n)) return FrameType.door;
-    if (!isDoorLeaf(n) && !isWindowLeaf(n)) {
-      if (n.contains('ປະຕູ') || n.contains('ประตู')) {
-        return FrameType.door;
-      }
-      if (n.contains('ປ່ອງຢ້ຽມ') ||
-          n.contains('ໜ້າຕ່າງ') ||
-          n.contains('หน้าต่าง')) {
-        return FrameType.windowFrame;
-      }
+    // ວົງປ່ອງຢ້ຽມ
+    if (u.contains('ວົງປ່ອງຢ້ຽມ') ||
+        u.contains('ວົງໜ້າຕ່າງ') ||
+        u.contains('ວົງປ່ອງ') ||
+        u.contains('ວົງປະຕູລົມ')) {
+      return FrameType.windowFrame;
     }
 
-    return FrameType.none;
+    // ປ່ອງລົມ
+    if (u.contains('ປ່ອງລົມ') || u.contains('ຊ່ອງລົມ')) {
+      return FrameType.window;
+    }
+
+    // ວົງປະຕູ
+    if (u.contains('ວົງນ້ອຍ') ||
+        u.contains('ວົງໄຫຍ່') ||
+        u.contains('ວົງປະຕູ')) {
+      return FrameType.door;
+    }
+
+    // "ວົງ" ລ້າໆ → ປະຕູ
+    if (u == 'ວົງ' || u == 'วง') return FrameType.door;
+
+    return null;
+  }
+
+  /// ແປງ frame type ຈາກ "ຊື່" — ໃຊ້ startsWith ເທົ່ານັ້ນ
+  /// ຫ້າມໃຊ້ contains('ວົງ') ຫຼື contains('ປະຕູ') ເພາະຈະຊົນກັບຊື່ໄມ້
+  FrameType? _frameFromName(String n) {
+    if (n.isEmpty) return null;
+
+    // ບານ → ທຶບ (ກວດກ່ອນສຸດ)
+    if (n.contains('ບານປະຕູ') ||
+        n.contains('ບານປ່ອງຢ້ຽມ') ||
+        n.contains('ບານໜ້າຕ່າງ') ||
+        n.contains('ບານຊ່ອງ') ||
+        n.contains('ບານປ່ອງລົມ') ||
+        n.contains('ບານປ່ອງ')) {
+      return FrameType.none;
+    }
+
+    // ມັດ
+    if (n.startsWith('ມັດ') || n.startsWith('ມຸດ')) {
+      return FrameType.bundle;
+    }
+
+    // ວົງປ່ອງຢ້ຽມ — ໃຊ້ startsWith
+    if (n.startsWith('ວົງປ່ອງຢ້ຽມ') ||
+        n.startsWith('ວົງໜ້າຕ່າງ') ||
+        n.startsWith('ວົງປ່ອງ') ||
+        n.startsWith('ວົງປະຕູລົມ')) {
+      return FrameType.windowFrame;
+    }
+
+    // ປ່ອງລົມ
+    if (n.startsWith('ປ່ອງລົມ') || n.startsWith('ຊ່ອງລົມ')) {
+      return FrameType.window;
+    }
+
+    // ວົງປະຕູ
+    if (n.startsWith('ວົງນ້ອຍ') ||
+        n.startsWith('ວົງໄຫຍ່') ||
+        n.startsWith('ວົງປະຕູ')) {
+      return FrameType.door;
+    }
+
+    return null;
   }
 
   int _getPanelCount(FrameType ft, String? unit) {
@@ -535,7 +575,7 @@ class _Wood3DSceneState extends State<Wood3DScene> {
   }) {
     final bgColor = active
         ? Wood3DStyle.brown700
-        : Wood3DStyle.white.withOpacity(0.95);
+        : Wood3DStyle.white.withValues(alpha: 0.95);
     final fgColor = active ? Wood3DStyle.white : Wood3DStyle.brown700;
     final textColor = active ? Wood3DStyle.white : Wood3DStyle.brown900;
 

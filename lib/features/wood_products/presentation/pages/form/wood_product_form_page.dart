@@ -5,11 +5,13 @@ import 'package:get/get.dart';
 import 'package:wood/core/constants/specific/wood_style.dart';
 import 'package:wood/core/utils/currency_formatter.dart';
 import 'package:wood/core/widgets/shared/custom_app_bar.dart';
+import 'package:wood/features/auth/domain/entities/menu_permission.dart';
+import 'package:wood/features/home/presentation/controllers/home_controller.dart';
+import 'package:wood/features/wood_products/presentation/widgets/form/wood_form_image_picker.dart';
+import 'package:wood/features/wood_products/presentation/widgets/form/wood_form_section.dart';
+import 'package:wood/features/wood_products/presentation/widgets/form/wood_form_zone_selector.dart';
 import '../../controllers/wood_product_controller.dart';
-import '../../widgets/wood_product_preview_card.dart';
-import '../../widgets/wood_form_section.dart';
-import '../../widgets/wood_form_image_picker.dart';
-import '../../widgets/wood_form_zone_selector.dart';
+import '../../widgets/preview/wood_product_preview_card.dart';
 
 class WoodProductFormPage extends StatefulWidget {
   final bool isPage;
@@ -409,7 +411,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
         const SizedBox(height: 12),
         Obx(
           () => DropdownButtonFormField<String>(
-            value: controller.selectedSizeUnit.value,
+            initialValue: controller.selectedSizeUnit.value,
             isExpanded: true,
             decoration: _inputDeco(WoodStyle.sizeUnitLabel),
             items: controller.sizeUnitOptions
@@ -451,7 +453,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
             const SizedBox(width: 8),
             Expanded(
               child: DropdownButtonFormField<String>(
-                value: controller.selectedUnit.value.isEmpty
+                initialValue: controller.selectedUnit.value.isEmpty
                     ? null
                     : controller.selectedUnit.value,
                 isExpanded: true,
@@ -559,17 +561,30 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     );
   }
 
-  Future<void> _onSave() async {
-    final isEditing = controller.editingProductId.value != null;
-    final ok = await controller.saveProduct();
-    if (ok) {
-      if (widget.isPage) Get.back();
-      Get.snackbar(
-        WoodStyle.successMsg,
-        isEditing ? WoodStyle.savedEdit : WoodStyle.savedNew,
-      );
+Future<void> _onSave() async {
+  final isEditing = controller.editingProductId.value != null;
+  final ok = await controller.saveProduct();
+  if (!ok) return;
+
+  // ── Page mode (เปิดผ่าน Get.to) → pop กลับ ──
+  if (widget.isPage) {
+    Get.back();
+  } else {
+    // ── Tab mode (อยู่ใน HomeShell) ──
+    // ⭐ เพิ่มใหม่: หลัง save → เด้งไป tab ລາຍການໄມ້
+    if (!isEditing) {
+      // เพิ่มใหม่ → เด้งไปดูรายการที่เพิ่งบันทึก
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().goToTab(MenuKey.woodList);
+      }
     }
   }
+
+  Get.snackbar(
+    WoodStyle.successMsg,
+    isEditing ? WoodStyle.savedEdit : WoodStyle.savedNew,
+  );
+}
 
   // ══════════════════════════════════════════
   // 💡 Suggestion chips

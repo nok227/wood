@@ -4,9 +4,9 @@ import 'package:wood/core/constants/specific/wood_style.dart';
 import 'package:wood/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wood/features/wood_products/domain/entities/wood_product.dart';
 import '../../controllers/wood_product_controller.dart';
-import '../../widgets/wood_list_filter_bar.dart';
-import '../../widgets/wood_list_group.dart';
-import '../../widgets/wood_list_skeleton.dart';
+import '../../widgets/list/wood_list_filter_bar.dart';
+import '../../widgets/list/wood_list_group.dart';
+import '../../widgets/list/wood_list_skeleton.dart';
 import '../form/wood_product_form_page.dart';
 
 class WoodProductListPage extends StatefulWidget {
@@ -41,8 +41,7 @@ class _WoodProductListPageState extends State<WoodProductListPage>
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent -
-                WoodStyle.listThreshold &&
+            _scrollController.position.maxScrollExtent - WoodStyle.listThreshold &&
         !_isLoadingMore) {
       _loadMore();
     }
@@ -74,55 +73,46 @@ class _WoodProductListPageState extends State<WoodProductListPage>
         }
         if (controller.products.isEmpty) {
           return const Center(
-            child: Text(
-              WoodStyle.noProductsList,
-              style: WoodStyle.txEmptyState,
-            ),
+            child: Text(WoodStyle.noProductsList, style: WoodStyle.txEmptyState),
           );
         }
 
-        final allNames = controller.products
-            .map((p) => p.name.trim())
-            .where((n) => n.isNotEmpty)
-            .toSet()
-            .toList();
-        final nameOptions = [WoodStyle.all, ...allNames];
+        // ── จัดกลุ่ม ──
+        final nameOptions = <String>[
+          WoodStyle.all,
+          ...controller.products
+              .map((p) => p.name.trim())
+              .where((n) => n.isNotEmpty)
+              .toSet(),
+        ];
 
-        final filteredList = selectedNameFilter == WoodStyle.all
+        final filtered = selectedNameFilter == WoodStyle.all
             ? controller.products.toList()
             : controller.products
-                  .where((p) => p.name.trim() == selectedNameFilter)
-                  .toList();
+                .where((p) => p.name.trim() == selectedNameFilter)
+                .toList();
 
-        // ✅ ປ່ຽນ WoodProductModel → WoodProduct
         final Map<String, Map<String, List<WoodProduct>>> nested = {};
-
-        for (final item in filteredList) {
-          final nameKey = item.name.trim().isEmpty
-              ? WoodStyle.noName
-              : item.name.trim();
-          final typeKey = item.woodType.trim().isEmpty
-              ? WoodStyle.noType
-              : item.woodType.trim();
-
+        for (final item in filtered) {
+          final nameKey =
+              item.name.trim().isEmpty ? WoodStyle.noName : item.name.trim();
+          final typeKey =
+              item.woodType.trim().isEmpty ? WoodStyle.noType : item.woodType.trim();
           nested.putIfAbsent(nameKey, () => {});
           nested[nameKey]!.putIfAbsent(typeKey, () => []);
           nested[nameKey]![typeKey]!.add(item);
         }
 
-        nested.forEach((_, Map<String, List<WoodProduct>> typeMap) {
-          typeMap.forEach((_, List<WoodProduct> productList) {
-            productList.sort((a, b) => b.price.compareTo(a.price));
-          });
+        nested.forEach((_, typeMap) {
+          typeMap.forEach((_, list) => list.sort((a, b) => b.price.compareTo(a.price)));
         });
 
         final nameKeys = nested.keys.toList()
           ..sort((a, b) {
-            int totalA = 0;
-            int totalB = 0;
-            nested[a]!.forEach((_, l) => totalA += l.length);
-            nested[b]!.forEach((_, l) => totalB += l.length);
-            return totalB.compareTo(totalA);
+            int ta = 0, tb = 0;
+            nested[a]!.forEach((_, l) => ta += l.length);
+            nested[b]!.forEach((_, l) => tb += l.length);
+            return tb.compareTo(ta);
           });
 
         final displayKeys = nameKeys.take(_displayLimit).toList();
@@ -146,34 +136,22 @@ class _WoodProductListPageState extends State<WoodProductListPage>
               Expanded(
                 child: nameKeys.isEmpty
                     ? const Center(
-                        child: Text(
-                          WoodStyle.noFilteredList,
-                          style: WoodStyle.txEmptyState,
-                        ),
+                        child: Text(WoodStyle.noFilteredList, style: WoodStyle.txEmptyState),
                       )
                     : ListView.builder(
                         controller: _scrollController,
                         padding: WoodStyle.padListPage,
-                        itemCount:
-                            displayKeys.length +
-                            (_isLoadingMore &&
-                                    displayKeys.length < nameKeys.length
-                                ? 1
-                                : 0),
+                        itemCount: displayKeys.length +
+                            (_isLoadingMore && displayKeys.length < nameKeys.length ? 1 : 0),
                         itemBuilder: (context, idx) {
                           if (idx == displayKeys.length) {
                             return const Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical: WoodStyle.pageLoadPadV,
-                              ),
+                              padding: EdgeInsets.symmetric(vertical: WoodStyle.pageLoadPadV),
                               child: Center(
-                                child: CircularProgressIndicator(
-                                  color: WoodStyle.primary,
-                                ),
+                                child: CircularProgressIndicator(color: WoodStyle.primary),
                               ),
                             );
                           }
-
                           final nameKey = displayKeys[idx];
                           return WoodListGroup(
                             nameKey: nameKey,
@@ -182,9 +160,7 @@ class _WoodProductListPageState extends State<WoodProductListPage>
                             controller: controller,
                             onEdit: (p) {
                               controller.startEdit(p);
-                              Get.to(
-                                () => const WoodProductFormPage(isPage: true),
-                              );
+                              Get.to(() => const WoodProductFormPage(isPage: true));
                             },
                             onDelete: (p) => _confirmDelete(controller, p),
                           );
@@ -198,12 +174,10 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     );
   }
 
-  // ✅ ປ່ຽນ WoodProductModel → WoodProduct
   void _confirmDelete(WoodProductController controller, WoodProduct item) {
     Get.defaultDialog(
       title: WoodStyle.deleteTitle,
-      middleText:
-          '${WoodStyle.deleteMsgPrefix}${item.name}${WoodStyle.deleteMsgSuffix}',
+      middleText: '${WoodStyle.deleteMsgPrefix}${item.name}${WoodStyle.deleteMsgSuffix}',
       textConfirm: WoodStyle.delete,
       textCancel: WoodStyle.cancel,
       confirmTextColor: WoodStyle.white,

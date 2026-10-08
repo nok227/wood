@@ -7,4 +7,7 @@ abstract class WoodRepository {
   Future<List<WoodProduct>> getWoodProducts();
   Future<void> updateWoodProduct(WoodProduct product);
   Future<void> deleteWoodProduct(String id);
+
+  // ⭐ เพิ่ม
+  Future<void> deleteImageFromCloudinary(String imageUrl);
 }

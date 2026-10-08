@@ -46,7 +46,10 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_camera, color: SaleStyle.brown700),
+              leading: const Icon(
+                Icons.photo_camera,
+                color: SaleStyle.brown700,
+              ),
               title: const Text(SaleStyle.pickCamera),
               onTap: () async {
                 Get.back();
@@ -61,8 +64,10 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
               },
             ),
             ListTile(
-              leading:
-                  const Icon(Icons.photo_library, color: SaleStyle.brown700),
+              leading: const Icon(
+                Icons.photo_library,
+                color: SaleStyle.brown700,
+              ),
               title: const Text(SaleStyle.pickGallery),
               onTap: () async {
                 Get.back();
@@ -86,29 +91,32 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
     if (_saving) return;
 
     if (_payUrls.isEmpty && _newPay.isEmpty) {
-      _snack(SaleStyle.alertTitleWarn, SaleStyle.alertImgRequired,
-          SaleStyle.orange800, Icons.warning_amber_rounded);
+      _snack(
+        SaleStyle.alertTitleWarn,
+        SaleStyle.alertImgRequired,
+        SaleStyle.orange800,
+        Icons.warning_amber_rounded,
+      );
       return;
     }
 
     setState(() => _saving = true);
 
     try {
+      // ⭐ 1. หา URL ที่ถอดออก (ยังไม่ลบ)
       final removed = <String>[
         ...widget.sale.paymentImageUrls.where((u) => !_payUrls.contains(u)),
         ...widget.sale.billImageUrls.where((u) => !_billUrls.contains(u)),
         ...widget.sale.topUpImageUrls.where((u) => !_topUpUrls.contains(u)),
       ];
-      if (removed.isNotEmpty) {
-        try {
-          await CloudinaryService.deleteImages(removed);
-        } catch (_) {}
-      }
 
+      // ⭐ 2. Upload รูปใหม่ (ก่อน)
       Future<String?> up(File f, String folder) async {
         try {
-          return await CloudinaryService.uploadImage(f, folder: folder)
-              .timeout(const Duration(seconds: 60));
+          return await CloudinaryService.uploadImage(
+            f,
+            folder: folder,
+          ).timeout(const Duration(seconds: 60));
         } catch (_) {
           return null;
         }
@@ -134,6 +142,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
       final finalBill = [..._billUrls, ...newBillUrls];
       final finalTopUp = [..._topUpUrls, ...newTopUpUrls];
 
+      // ⭐ 3. Save DB ก่อน (สำคัญ!)
       await c.updateSaleImages(
         widget.sale.id,
         paymentImageUrls: finalPay,
@@ -141,17 +150,32 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
         topUpImageUrls: finalTopUp,
       );
 
+      // ⭐ 4. ลบ Cloudinary ทีหลัง (background — ไม่ await)
+      if (removed.isNotEmpty) {
+        CloudinaryService.deleteImages(removed).catchError((e) {
+          debugPrint('Cloudinary cleanup error (ignored): $e');
+        });
+      }
+
       if (mounted) {
         Navigator.of(context).maybePop(true);
         Future.delayed(SaleStyle.delayAfter, () {
-          _snack(SaleStyle.alertSuccess, SaleStyle.alertEditImgOk,
-              SaleStyle.green700, Icons.check_circle);
+          _snack(
+            SaleStyle.alertSuccess,
+            SaleStyle.alertEditImgOk,
+            SaleStyle.green700,
+            Icons.check_circle,
+          );
         });
       }
     } catch (e) {
       if (mounted) setState(() => _saving = false);
-      _snack(SaleStyle.errorMsg, '${SaleStyle.alertEditImgFail}: $e',
-          SaleStyle.red700, Icons.error_outline);
+      _snack(
+        SaleStyle.errorMsg,
+        '${SaleStyle.alertEditImgFail}: $e',
+        SaleStyle.red700,
+        Icons.error_outline,
+      );
     }
   }
 
@@ -217,8 +241,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                   files: _newBill,
                   onAdd: () => _pick(_newBill),
                   onRemoveUrl: (i) => setState(() => _billUrls.removeAt(i)),
-                  onRemoveFile: (i) =>
-                      setState(() => _newBill.removeAt(i)),
+                  onRemoveFile: (i) => setState(() => _newBill.removeAt(i)),
                 ),
               ),
               SaleStyle.gap14,
@@ -231,10 +254,8 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                   urls: _topUpUrls,
                   files: _newTopUp,
                   onAdd: () => _pick(_newTopUp),
-                  onRemoveUrl: (i) =>
-                      setState(() => _topUpUrls.removeAt(i)),
-                  onRemoveFile: (i) =>
-                      setState(() => _newTopUp.removeAt(i)),
+                  onRemoveUrl: (i) => setState(() => _topUpUrls.removeAt(i)),
+                  onRemoveFile: (i) => setState(() => _newTopUp.removeAt(i)),
                 ),
               ),
               SaleStyle.gap90,
@@ -255,12 +276,11 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         CircularProgressIndicator(
-                            color: SaleStyle.brown700, strokeWidth: 3),
-                        SizedBox(height: 14),
-                        Text(
-                          SaleStyle.saving,
-                          style: SaleStyle.textLoadingBox,
+                          color: SaleStyle.brown700,
+                          strokeWidth: 3,
                         ),
+                        SizedBox(height: 14),
+                        Text(SaleStyle.saving, style: SaleStyle.textLoadingBox),
                       ],
                     ),
                   ),
@@ -276,8 +296,9 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
             color: SaleStyle.white,
             boxShadow: [
               BoxShadow(
-                color: SaleStyle.black
-                    .withOpacity(SaleStyle.imgSectionBgOpacity),
+                color: SaleStyle.black.withOpacity(
+                  SaleStyle.imgSectionBgOpacity,
+                ),
                 blurRadius: 10,
                 offset: const Offset(0, -3),
               ),
@@ -297,7 +318,8 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                     side: const BorderSide(color: SaleStyle.grey400),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: const RoundedRectangleBorder(
-                        borderRadius: SaleStyle.r10),
+                      borderRadius: SaleStyle.r10,
+                    ),
                   ),
                 ),
               ),
@@ -311,20 +333,25 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                           width: SaleStyle.loadingBoxSpinner,
                           height: SaleStyle.loadingBoxSpinner,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: SaleStyle.white),
+                            strokeWidth: 2,
+                            color: SaleStyle.white,
+                          ),
                         )
                       : const Icon(Icons.save),
                   label: Text(
                     _saving ? SaleStyle.saving : SaleStyle.save,
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: SaleStyle.brown700,
                     foregroundColor: SaleStyle.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: const RoundedRectangleBorder(
-                        borderRadius: SaleStyle.r10),
+                      borderRadius: SaleStyle.r10,
+                    ),
                   ),
                 ),
               ),
@@ -345,14 +372,14 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
       ),
       child: const Row(
         children: [
-          Icon(Icons.info_outline,
-              color: SaleStyle.brown700, size: SaleStyle.iconInfoMd),
+          Icon(
+            Icons.info_outline,
+            color: SaleStyle.brown700,
+            size: SaleStyle.iconInfoMd,
+          ),
           SizedBox(width: 8),
           Expanded(
-            child: Text(
-              SaleStyle.imgEditHint,
-              style: SaleStyle.textInfoHint,
-            ),
+            child: Text(SaleStyle.imgEditHint, style: SaleStyle.textInfoHint),
           ),
         ],
       ),
@@ -392,13 +419,20 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
-                          style: SaleStyle.textImgSectionTitle
-                              .copyWith(color: color)),
-                      Text(subtitle,
-                          style: SaleStyle.textImgSectionSub.copyWith(
-                              color:
-                                  color.withOpacity(SaleStyle.imgSectionSubOpacity))),
+                      Text(
+                        title,
+                        style: SaleStyle.textImgSectionTitle.copyWith(
+                          color: color,
+                        ),
+                      ),
+                      Text(
+                        subtitle,
+                        style: SaleStyle.textImgSectionSub.copyWith(
+                          color: color.withOpacity(
+                            SaleStyle.imgSectionSubOpacity,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -421,25 +455,29 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
     final tiles = <Widget>[];
 
     for (int i = 0; i < urls.length; i++) {
-      tiles.add(_imgTile(
-        child: CachedNetworkImage(
-          imageUrl: urls[i],
-          fit: BoxFit.cover,
-          memCacheWidth: 200,
-          placeholder: (c, u) => Container(color: SaleStyle.grey100),
-          errorWidget: (_, __, ___) =>
-              const Icon(Icons.broken_image, color: SaleStyle.grey500),
+      tiles.add(
+        _imgTile(
+          child: CachedNetworkImage(
+            imageUrl: urls[i],
+            fit: BoxFit.cover,
+            memCacheWidth: 200,
+            placeholder: (c, u) => Container(color: SaleStyle.grey100),
+            errorWidget: (_, _, _) =>
+                const Icon(Icons.broken_image, color: SaleStyle.grey500),
+          ),
+          onRemove: () => onRemoveUrl(i),
         ),
-        onRemove: () => onRemoveUrl(i),
-      ));
+      );
     }
 
     for (int i = 0; i < files.length; i++) {
-      tiles.add(_imgTile(
-        child: Image.file(files[i], fit: BoxFit.cover),
-        onRemove: () => onRemoveFile(i),
-        isNew: true,
-      ));
+      tiles.add(
+        _imgTile(
+          child: Image.file(files[i], fit: BoxFit.cover),
+          onRemove: () => onRemoveFile(i),
+          isNew: true,
+        ),
+      );
     }
 
     tiles.add(
@@ -459,13 +497,13 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.add_a_photo_outlined,
-                  color: SaleStyle.brown400, size: SaleStyle.iconAddPhoto),
-              SaleStyle.gap4,
-              const Text(
-                SaleStyle.imgEditAdd,
-                style: SaleStyle.textImgEditAdd,
+              const Icon(
+                Icons.add_a_photo_outlined,
+                color: SaleStyle.brown400,
+                size: SaleStyle.iconAddPhoto,
               ),
+              SaleStyle.gap4,
+              const Text(SaleStyle.imgEditAdd, style: SaleStyle.textImgEditAdd),
             ],
           ),
         ),
@@ -515,8 +553,11 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                 color: SaleStyle.black87,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.close,
-                  size: SaleStyle.iconCloseSm, color: SaleStyle.white),
+              child: const Icon(
+                Icons.close,
+                size: SaleStyle.iconCloseSm,
+                color: SaleStyle.white,
+              ),
             ),
           ),
         ),

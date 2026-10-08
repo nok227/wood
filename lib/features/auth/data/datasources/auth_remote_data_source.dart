@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:wood/features/auth/domain/models/user_model.dart';
+import 'package:wood/features/auth/data/models/user_model.dart';
 
 /// ══════════════════════════════════════════════
 /// 📡 AUTH REMOTE DATA SOURCE
@@ -105,7 +105,9 @@ class AuthRemoteDataSource {
     try {
       await _google.signOut().timeout(
         const Duration(seconds: 2),
-        onTimeout: () {},
+        onTimeout: () {
+          return null;
+        },
       );
     } catch (_) {}
     await _auth.signOut();

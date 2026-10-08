@@ -103,7 +103,7 @@ class _AnimatedNumberState extends State<AnimatedNumber>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _anim,
-      builder: (_, __) {
+      builder: (_, _) {
         final v = _anim.value;
         final text =
             widget.decimals > 0 ? _fmt.format(v) : _fmt.format(v.round());

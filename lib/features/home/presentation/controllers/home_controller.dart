@@ -1,9 +1,11 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'package:wood/core/utils/page_route_notifier.dart';
-import 'package:wood/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:wood/features/auth/domain/entities/menu_permission.dart';
+import 'package:wood/features/auth/presentation/controllers/auth_controller.dart';
 
 class TabDef {
   final MenuKey key;
@@ -15,38 +17,42 @@ class TabDef {
 class HomeController extends GetxController {
   final AuthController auth = Get.find<AuthController>();
 
-  static int? _lastTabIndex;
-  int? get lastTabIndex => _lastTabIndex;
-
-  final ValueNotifier<int> indexNotifier = ValueNotifier<int>(0);
-  final ValueNotifier<bool> lockSwipe = ValueNotifier<bool>(false);
-  final ValueNotifier<int> titleIndexNotifier = ValueNotifier<int>(0);
-  final ValueNotifier<bool> barsVisible = ValueNotifier<bool>(true);
-
+  // ══════════════════════════════════════════
+  // State
+  // ══════════════════════════════════════════
   final tabs = <TabDef>[].obs;
+  final currentIndex = 0.obs;
+  final titleIndex = 0.obs;
+  final barsVisible = true.obs;
+  final lockSwipe = false.obs;
+
+  // ⭐ flag: พร้อม render หรือยัง
+  final isReady = false.obs;
+
+  // ⭐ PageController nullable — สร้างเมื่อพร้อม
+  PageController? _pageController;
+  PageController get pageController => _pageController!;
+
+  bool _initialTabSet = false;
+
+  // ⭐ flag: ระหว่าง programmatic animation → block onPageChanged
+  bool _isAnimating = false;
 
   Timer? _bumpTimer;
   Timer? _titleDebounce;
+  Worker? _authWorker;
 
   @override
   void onInit() {
     super.onInit();
+
     _rebuildTabs();
-
-    // ⭐ เปลี่ยน: listen currentUser แทน allowedMenus
-    auth.currentUser.listen((_) => _rebuildTabs());
-
-    final fallback = auth.isAdmin ? 1 : 0;
-    final initial = (_lastTabIndex != null &&
-            _lastTabIndex! >= 0 &&
-            _lastTabIndex! < tabs.length)
-        ? _lastTabIndex!
-        : (tabs.isEmpty ? 0 : fallback.clamp(0, tabs.length - 1));
-    indexNotifier.value = initial;
-    titleIndexNotifier.value = initial;
-    _lastTabIndex = initial;
+    _authWorker = ever(auth.currentUser, (_) => _rebuildTabs());
   }
 
+  // ══════════════════════════════════════════
+  // Tabs
+  // ══════════════════════════════════════════
   void _rebuildTabs() {
     final all = <TabDef>[
       const TabDef(
@@ -77,23 +83,63 @@ class HomeController extends GetxController {
     ];
     final filtered = all.where((t) => auth.canAccess(t.key)).toList();
     tabs.assignAll(filtered);
+
+    if (tabs.isEmpty) return;
+
+    // ⭐ ครั้งแรก — สร้าง PageController ด้วย initialPage ที่ถูกต้อง
+    if (!_initialTabSet) {
+      _initialTabSet = true;
+      final idx = _computeDefaultIndex();
+
+      currentIndex.value = idx;
+      titleIndex.value = idx;
+
+      _pageController?.dispose();
+      _pageController = PageController(initialPage: idx);
+      isReady.value = true;
+      return;
+    }
+
+    // Rebuild ครั้งต่อ ๆ ไป (auth เปลี่ยน) → clamp กัน
+    final safe = currentIndex.value.clamp(0, tabs.length - 1);
+    if (safe != currentIndex.value) {
+      currentIndex.value = safe;
+      titleIndex.value = safe;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!isClosed && (_pageController?.hasClients ?? false)) {
+          _pageController!.jumpToPage(safe);
+        }
+      });
+    }
   }
 
+  /// 🎯 Default = ລາຍການໄມ້ (ທັງ admin ແລະ user)
+  int _computeDefaultIndex() {
+    if (tabs.isEmpty) return 0;
+    final i = tabs.indexWhere((t) => t.key == MenuKey.woodList);
+    return i >= 0 ? i : 0;
+  }
+
+  // ══════════════════════════════════════════
+  // User actions
+  // ══════════════════════════════════════════
   void setTab(int index) {
-    if (indexNotifier.value == index) return;
+    if (currentIndex.value == index) return;
     if (index < 0 || index >= tabs.length) return;
-    _lastTabIndex = index;
     if (!barsVisible.value) barsVisible.value = true;
   }
 
   void onPageChanged(int i) {
-    indexNotifier.value = i;
-    _lastTabIndex = i;
+    // ⭐ ข้ามถ้ากำลัง programmatic animate → กัน nav/title กระตุก
+    if (_isAnimating) return;
+
+    currentIndex.value = i;
     _scheduleBump();
     if (!barsVisible.value) barsVisible.value = true;
+
     _titleDebounce?.cancel();
     _titleDebounce = Timer(const Duration(milliseconds: 120), () {
-      titleIndexNotifier.value = i;
+      titleIndex.value = i;
     });
   }
 
@@ -104,11 +150,16 @@ class HomeController extends GetxController {
     });
   }
 
+  // ══════════════════════════════════════════
+  // Scroll → hide/show bars
+  // ══════════════════════════════════════════
   void onScroll(ScrollNotification n) {
     if (n.metrics.axis != Axis.vertical) return;
+
     if (n is ScrollUpdateNotification) {
       final delta = n.scrollDelta ?? 0;
       final pixels = n.metrics.pixels;
+
       if (pixels <= 20) {
         if (!barsVisible.value) barsVisible.value = true;
         return;
@@ -129,10 +180,48 @@ class HomeController extends GetxController {
   void onClose() {
     _bumpTimer?.cancel();
     _titleDebounce?.cancel();
-    indexNotifier.dispose();
-    titleIndexNotifier.dispose();
-    lockSwipe.dispose();
-    barsVisible.dispose();
+    _authWorker?.dispose();
+    _pageController?.dispose();
     super.onClose();
+  }
+
+  // ══════════════════════════════════════════
+  // 🎯 goToTab — เปลี่ยน tab ด้วย MenuKey
+  //    distance == 1 → animate
+  //    distance >  1 → jump (ไม่ scroll ผ่าน pages กลาง)
+  // ══════════════════════════════════════════
+  void goToTab(MenuKey key) {
+    final idx = tabs.indexWhere((t) => t.key == key);
+    if (idx < 0) return;
+    if (currentIndex.value == idx) return;
+    if (idx >= tabs.length) return;
+
+    final distance = (idx - currentIndex.value).abs();
+
+    // set ทันที → nav + title sync
+    currentIndex.value = idx;
+    titleIndex.value = idx;
+    if (!barsVisible.value) barsVisible.value = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (isClosed || !(_pageController?.hasClients ?? false)) return;
+
+      if (distance == 1) {
+        // ⭐ ข้ามใกล้ → animate นุ่มนวล + block onPageChanged
+        _isAnimating = true;
+        try {
+          await _pageController!.animateToPage(
+            idx,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        } finally {
+          _isAnimating = false;
+        }
+      } else {
+        // ⭐ ข้ามไกล → jump ทันที (ไม่ scroll ผ่าน pages กลาง)
+        _pageController!.jumpToPage(idx);
+      }
+    });
   }
 }

@@ -9,7 +9,7 @@ import '../../domain/entities/wood_product.dart';
 import '../../domain/repositories/wood_repository.dart';
 
 class WoodProductController extends GetxController {
-  final WoodRepository repository;   // ⭐ เปลี่ยนจาก dataSource → repository
+  final WoodRepository repository; // ⭐ เปลี่ยนจาก dataSource → repository
   WoodProductController({required this.repository});
 
   var isLoading = false.obs;
@@ -27,6 +27,8 @@ class WoodProductController extends GetxController {
 
   double? _originalPrice;
   DateTime? _originalPriceUpdatedAt;
+  // ⭐ เก็บ URL ตั้งต้นตอน edit เพื่อเทียบหาลบ
+  List<String> _originalImageUrls = [];
 
   // ── รูปภาพ ──
   static const maxImages = 6;
@@ -39,9 +41,20 @@ class WoodProductController extends GetxController {
 
   // ── หน่วยนับ ──
   final List<String> unitOptions = [
-    'ແຜ່ນ', 'ມັດ', 'ທ່ອນ', 'ວົງ', 'ວົງນ້ອຍ', 'ວົງໄຫຍ່',
-    'ວົງປ່ອງຢ້ຽມ 1 ບານ', 'ວົງປ່ອງຢ້ຽມ 2 ບານ', 'ວົງປ່ອງຢ້ຽມ 3 ບານ',
-    'ວົງປ່ອງລົມ', 'ບານປະຕູ', 'ບານປ່ອງຢ້ຽມ', 'ບານປ່ອງລົມ', 'ອື່ນໆ',
+    'ແຜ່ນ',
+    'ມັດ',
+    'ທ່ອນ',
+    'ວົງ',
+    'ວົງນ້ອຍ',
+    'ວົງໄຫຍ່',
+    'ວົງປ່ອງຢ້ຽມ 1 ບານ',
+    'ວົງປ່ອງຢ້ຽມ 2 ບານ',
+    'ວົງປ່ອງຢ້ຽມ 3 ບານ',
+    'ວົງປ່ອງລົມ',
+    'ບານປະຕູ',
+    'ບານປ່ອງຢ້ຽມ',
+    'ບານປ່ອງລົມ',
+    'ອື່ນໆ',
   ];
   var selectedUnit = ''.obs;
 
@@ -50,9 +63,9 @@ class WoodProductController extends GetxController {
   static const int zoneNumbersPerLetter = 13;
 
   List<String> get zoneOptions => [
-        for (final letter in zoneLetters)
-          for (int i = 1; i <= zoneNumbersPerLetter; i++) '$letter$i',
-      ];
+    for (final letter in zoneLetters)
+      for (int i = 1; i <= zoneNumbersPerLetter; i++) '$letter$i',
+  ];
 
   var selectedZones = <String>[].obs;
   var customZonesText = ''.obs;
@@ -150,7 +163,8 @@ class WoodProductController extends GetxController {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 42, height: 4,
+                  width: 42,
+                  height: 4,
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade300,
@@ -158,12 +172,18 @@ class WoodProductController extends GetxController {
                   ),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.photo_library_outlined, color: Colors.brown),
+                  leading: const Icon(
+                    Icons.photo_library_outlined,
+                    color: Colors.brown,
+                  ),
                   title: const Text('ເລືອກຈາກຄັງຮູບ'),
                   onTap: () => Get.back(result: ImageSource.gallery),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.camera_alt_outlined, color: Colors.brown),
+                  leading: const Icon(
+                    Icons.camera_alt_outlined,
+                    color: Colors.brown,
+                  ),
                   title: const Text('ຖ່າຍຮູບ'),
                   onTap: () => Get.back(result: ImageSource.camera),
                 ),
@@ -178,21 +198,30 @@ class WoodProductController extends GetxController {
       if (source == ImageSource.camera) {
         final shot = await ImagePicker().pickImage(
           source: ImageSource.camera,
-          maxWidth: 900, maxHeight: 900, imageQuality: 60,
+          maxWidth: 900,
+          maxHeight: 900,
+          imageQuality: 60,
         );
         if (shot != null) selectedImages.add(File(shot.path));
         return;
       }
 
       final pickedFiles = await ImagePicker().pickMultiImage(
-        maxWidth: 900, maxHeight: 900, imageQuality: 60,
+        maxWidth: 900,
+        maxHeight: 900,
+        imageQuality: 60,
       );
       if (pickedFiles.isEmpty) return;
 
-      final toAdd = pickedFiles.take(remainingSlots).map((x) => File(x.path)).toList();
+      final toAdd = pickedFiles
+          .take(remainingSlots)
+          .map((x) => File(x.path))
+          .toList();
       if (pickedFiles.length > remainingSlots) {
-        AppSnackbar.warn('ແຈ້ງເຕືອນ',
-            'ເລືອກໄດ້ສູງສຸດ $maxImages ຮູບ — ເກັບ $remainingSlots ຮູບທຳອິດໄຫ້ເທົ່ານັ້ນ');
+        AppSnackbar.warn(
+          'ແຈ້ງເຕືອນ',
+          'ເລືອກໄດ້ສູງສຸດ $maxImages ຮູບ — ເກັບ $remainingSlots ຮູບທຳອິດໄຫ້ເທົ່ານັ້ນ',
+        );
       }
       selectedImages.addAll(toAdd);
     } catch (e) {
@@ -212,7 +241,7 @@ class WoodProductController extends GetxController {
     try {
       isLoading.value = true;
       errorMessage.value = null;
-      final result = await repository.getWoodProducts();  // ⭐ ผ่าน repo
+      final result = await repository.getWoodProducts(); // ⭐ ผ่าน repo
       products.assignAll(result);
       _bumpRevision();
     } catch (e) {
@@ -251,8 +280,9 @@ class WoodProductController extends GetxController {
     quantityController.text = '1';
     priceController.text = _fmtPrice(product.price);
     noteController.text = product.note;
-    selectedSizeUnit.value =
-        sizeUnitOptions.contains(product.sizeUnit) ? product.sizeUnit : 'cm';
+    selectedSizeUnit.value = sizeUnitOptions.contains(product.sizeUnit)
+        ? product.sizeUnit
+        : 'cm';
 
     if (unitOptions.contains(product.unit)) {
       selectedUnit.value = product.unit;
@@ -276,6 +306,8 @@ class WoodProductController extends GetxController {
     customZonesController.text = custom.join(', ');
     customZonesText.value = customZonesController.text;
 
+    _originalImageUrls = List.from(product.imageUrls);
+
     existingImageUrls.assignAll(product.imageUrls);
     selectedImages.clear();
   }
@@ -295,7 +327,9 @@ class WoodProductController extends GetxController {
     final length = double.tryParse(lengthController.text.trim());
     final thickness = double.tryParse(thicknessController.text.trim());
     const quantity = 1;
-    final price = double.tryParse(priceController.text.replaceAll(',', '').trim());
+    final price = double.tryParse(
+      priceController.text.replaceAll(',', '').trim(),
+    );
     final unit = selectedUnit.value == 'ອື່ນໆ'
         ? customUnitController.text.trim()
         : selectedUnit.value;
@@ -340,7 +374,7 @@ class WoodProductController extends GetxController {
         saveProgress.value = 5;
 
         final futures = selectedImages.map((file) async {
-          final url = await repository.uploadImageToCloudinary(file);  // ⭐
+          final url = await repository.uploadImageToCloudinary(file); // ⭐
           completed++;
           saveProgress.value = 5 + (completed / total * 80).round();
           saveStep.value = 'ກຳລັງອັບໂຫຼດຮູບ $completed/$total...';
@@ -350,6 +384,9 @@ class WoodProductController extends GetxController {
         newUrls.addAll(await Future.wait(futures));
       }
 
+      final removedUrls = _originalImageUrls
+          .where((url) => !existingImageUrls.contains(url))
+          .toList();
       final finalImageUrls = [...existingImageUrls, ...newUrls];
       final isEditing = editingProductId.value != null;
 
@@ -383,9 +420,9 @@ class WoodProductController extends GetxController {
       saveProgress.value = 90;
 
       if (isEditing) {
-        await repository.updateWoodProduct(product);  // ⭐
+        await repository.updateWoodProduct(product); // ⭐
       } else {
-        await repository.saveWoodProduct(product);    // ⭐
+        await repository.saveWoodProduct(product); // ⭐
       }
 
       final idx = products.indexWhere((p) => p.id == product.id);
@@ -395,6 +432,9 @@ class WoodProductController extends GetxController {
         products.insert(0, product);
       }
       _bumpRevision();
+      for (final url in removedUrls) {
+        repository.deleteImageFromCloudinary(url).ignore();
+      }
 
       saveProgress.value = 100;
 
@@ -402,14 +442,17 @@ class WoodProductController extends GetxController {
       if (Get.isRegistered<NotificationController>()) {
         try {
           final noti = Get.find<NotificationController>();
-          final zoneTag = product.zones.isEmpty ? '' : ' [${product.zones.join(", ")}]';
+          final zoneTag = product.zones.isEmpty
+              ? ''
+              : ' [${product.zones.join(", ")}]';
           if (isEditing) {
             final oldP = _originalPrice;
             if (oldP != null && oldP != price) {
               noti.push(
                 type: AppNotificationType.priceChange,
                 title: 'ປ່ຽນແປງລາຄາໄມ້',
-                message: '$name$zoneTag: ${oldP.toStringAsFixed(0)} → ${price.toStringAsFixed(0)} ກີບ',
+                message:
+                    '$name$zoneTag: ${oldP.toStringAsFixed(0)} → ${price.toStringAsFixed(0)} ກີບ',
                 audience: NotificationAudience.all,
                 targetId: product.id,
                 meta: {'oldPrice': oldP, 'newPrice': price},
@@ -418,7 +461,8 @@ class WoodProductController extends GetxController {
               noti.push(
                 type: AppNotificationType.productEdit,
                 title: 'ແກ້ໄຂຂໍ້ມູນໄມ້',
-                message: 'ແກ້ໄຂ "$name"$zoneTag ຂະໜາດ '
+                message:
+                    'ແກ້ໄຂ "$name"$zoneTag ຂະໜາດ '
                     '${_fmt(width)}×${_fmt(length)}×${_fmt(thickness)} ${selectedSizeUnit.value}',
                 audience: NotificationAudience.all,
                 targetId: product.id,
@@ -428,7 +472,8 @@ class WoodProductController extends GetxController {
             noti.push(
               type: AppNotificationType.productAdd,
               title: 'ເພີ່ມໄມ້ໃໝ່',
-              message: 'ເພີ່ມ "$name"$zoneTag (${woodType.isEmpty ? "ບໍ່ລະບຸຊະນິດ" : woodType})',
+              message:
+                  'ເພີ່ມ "$name"$zoneTag (${woodType.isEmpty ? "ບໍ່ລະບຸຊະນິດ" : woodType})',
               audience: NotificationAudience.all,
               targetId: product.id,
             );
@@ -460,7 +505,14 @@ class WoodProductController extends GetxController {
       isLoading.value = true;
       final removed = products.firstWhereOrNull((p) => p.id == id);
 
-      await repository.deleteWoodProduct(id);  // ⭐
+      // ⭐ ลบรูปทั้งหมดใน Cloudinary ก่อน
+      if (removed != null && removed.imageUrls.isNotEmpty) {
+        for (final url in removed.imageUrls) {
+          repository.deleteImageFromCloudinary(url).ignore();
+        }
+      }
+
+      await repository.deleteWoodProduct(id);
       products.removeWhere((p) => p.id == id);
       _bumpRevision();
 
@@ -491,6 +543,7 @@ class WoodProductController extends GetxController {
   // 🧹 Clear form
   // ══════════════════════════════════════════
   void clearForm() {
+    _originalImageUrls = [];
     editingProductId.value = null;
     _originalPrice = null;
     _originalPriceUpdatedAt = null;

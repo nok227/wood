@@ -14,7 +14,7 @@ class RecipeListSkeleton extends StatelessWidget {
         padding: RecipeStyle.padListSkeleton,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: count,
-        itemBuilder: (_, __) => Card(
+        itemBuilder: (_, _) => Card(
           margin: RecipeStyle.padCardMargin,
           shape: const RoundedRectangleBorder(
             borderRadius: RecipeStyle.cardRadius,
