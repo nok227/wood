@@ -8,6 +8,7 @@ import '../../widgets/list/wood_list_filter_bar.dart';
 import '../../widgets/list/wood_list_group.dart';
 import '../../widgets/list/wood_list_skeleton.dart';
 import '../form/wood_product_form_page.dart';
+import 'package:wood/core/widgets/global/loading/loading.dart';
 
 class WoodProductListPage extends StatefulWidget {
   const WoodProductListPage({super.key});
@@ -20,36 +21,31 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     with AutomaticKeepAliveClientMixin {
   String selectedNameFilter = WoodStyle.all;
 
-  final ScrollController _scrollController = ScrollController();
   int _displayLimit = WoodStyle.perPage;
   bool _isLoadingMore = false;
 
   @override
   bool get wantKeepAlive => true;
 
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent - WoodStyle.listThreshold &&
+  bool _onScrollNotification(ScrollNotification n) {
+    if (n.metrics.pixels >=
+            n.metrics.maxScrollExtent - WoodStyle.listThreshold &&
         !_isLoadingMore) {
-      _loadMore();
+      // ⭐ เลื่อน setState ไปหลังเฟรม — กัน "Build scheduled during frame"
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadMore();
+      });
     }
+    return false;
   }
 
   Future<void> _loadMore() async {
-    setState(() => _isLoadingMore = true);
+    if (_isLoadingMore) return;
+    _isLoadingMore = true;
+    if (mounted) setState(() {}); // ⭐ โชว์ loader ทันที
+
     await Future.delayed(WoodStyle.debounce);
+
     if (mounted) {
       setState(() {
         _displayLimit += WoodStyle.perPage;
@@ -68,16 +64,18 @@ class _WoodProductListPageState extends State<WoodProductListPage>
     return Scaffold(
       backgroundColor: WoodStyle.brown50,
       body: Obx(() {
+        // ── Loading ──
         if (controller.isLoading.value && controller.products.isEmpty) {
           return const WoodListSkeleton();
         }
         if (controller.products.isEmpty) {
           return const Center(
-            child: Text(WoodStyle.noProductsList, style: WoodStyle.txEmptyState),
+            child: Text(WoodStyle.noProductsList,
+                style: WoodStyle.txEmptyState),
           );
         }
 
-        // ── จัดกลุ่ม ──
+        // ── Filter + Group ──
         final nameOptions = <String>[
           WoodStyle.all,
           ...controller.products
@@ -96,15 +94,17 @@ class _WoodProductListPageState extends State<WoodProductListPage>
         for (final item in filtered) {
           final nameKey =
               item.name.trim().isEmpty ? WoodStyle.noName : item.name.trim();
-          final typeKey =
-              item.woodType.trim().isEmpty ? WoodStyle.noType : item.woodType.trim();
+          final typeKey = item.woodType.trim().isEmpty
+              ? WoodStyle.noType
+              : item.woodType.trim();
           nested.putIfAbsent(nameKey, () => {});
           nested[nameKey]!.putIfAbsent(typeKey, () => []);
           nested[nameKey]![typeKey]!.add(item);
         }
 
         nested.forEach((_, typeMap) {
-          typeMap.forEach((_, list) => list.sort((a, b) => b.price.compareTo(a.price)));
+          typeMap.forEach(
+              (_, list) => list.sort((a, b) => b.price.compareTo(a.price)));
         });
 
         final nameKeys = nested.keys.toList()
@@ -117,58 +117,53 @@ class _WoodProductListPageState extends State<WoodProductListPage>
 
         final displayKeys = nameKeys.take(_displayLimit).toList();
 
-        return RefreshIndicator(
-          color: WoodStyle.primary,
-          onRefresh: () async {
-            setState(() => _displayLimit = WoodStyle.perPage);
-            await controller.fetchProducts();
-          },
-          child: Column(
-            children: [
-              WoodListFilterBar(
-                options: nameOptions,
-                selected: selectedNameFilter,
-                onSelected: (v) => setState(() {
-                  selectedNameFilter = v;
-                  _displayLimit = WoodStyle.perPage;
-                }),
-              ),
-              Expanded(
-                child: nameKeys.isEmpty
-                    ? const Center(
-                        child: Text(WoodStyle.noFilteredList, style: WoodStyle.txEmptyState),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: WoodStyle.padListPage,
-                        itemCount: displayKeys.length +
-                            (_isLoadingMore && displayKeys.length < nameKeys.length ? 1 : 0),
-                        itemBuilder: (context, idx) {
-                          if (idx == displayKeys.length) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: WoodStyle.pageLoadPadV),
-                              child: Center(
-                                child: CircularProgressIndicator(color: WoodStyle.primary),
-                              ),
-                            );
-                          }
-                          final nameKey = displayKeys[idx];
-                          return WoodListGroup(
-                            nameKey: nameKey,
-                            typeMap: nested[nameKey]!,
-                            isAdmin: isAdmin,
-                            controller: controller,
-                            onEdit: (p) {
-                              controller.startEdit(p);
-                              Get.to(() => const WoodProductFormPage(isPage: true));
-                            },
-                            onDelete: (p) => _confirmDelete(controller, p),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
+        return Column(
+          children: [
+            // ═══════════════════════════════
+            // 🏷️ Filter bar (ด้านบน)
+            // ═══════════════════════════════
+            WoodListFilterBar(
+              options: nameOptions,
+              selected: selectedNameFilter,
+              onSelected: (v) => setState(() {
+                selectedNameFilter = v;
+                _displayLimit = WoodStyle.perPage;
+              }),
+            ),
+
+            // ═══════════════════════════════
+            // 📋 List / Empty
+            // ═══════════════════════════════
+            Expanded(
+              child: nameKeys.isEmpty
+                  ? const Center(
+                      child: Text(WoodStyle.noFilteredList,
+                          style: WoodStyle.txEmptyState),
+                    )
+                  // ⭐ UniqueKey — บังคับ ListView สร้างใหม่ทุกครั้ง
+                  //    ป้องกัน ScrollController ผูกซ้ำ
+                  : _ProductListView(
+                      key: ValueKey('product-list-$selectedNameFilter'),
+                      controller: controller,
+                      nameKeys: nameKeys,
+                      displayKeys: displayKeys,
+                      nested: nested,
+                      isAdmin: isAdmin,
+                      isLoadingMore: _isLoadingMore,
+                      onScrollNotification: _onScrollNotification,
+                      onRefresh: () async {
+                        setState(() => _displayLimit = WoodStyle.perPage);
+                        await controller.fetchProducts();
+                      },
+                      onEdit: (p) {
+                        controller.startEdit(p);
+                        Get.to(() =>
+                            const WoodProductFormPage(isPage: true));
+                      },
+                      onDelete: (p) => _confirmDelete(controller, p),
+                    ),
+            ),
+          ],
         );
       }),
     );
@@ -177,7 +172,8 @@ class _WoodProductListPageState extends State<WoodProductListPage>
   void _confirmDelete(WoodProductController controller, WoodProduct item) {
     Get.defaultDialog(
       title: WoodStyle.deleteTitle,
-      middleText: '${WoodStyle.deleteMsgPrefix}${item.name}${WoodStyle.deleteMsgSuffix}',
+      middleText:
+          '${WoodStyle.deleteMsgPrefix}${item.name}${WoodStyle.deleteMsgSuffix}',
       textConfirm: WoodStyle.delete,
       textCancel: WoodStyle.cancel,
       confirmTextColor: WoodStyle.white,
@@ -186,6 +182,75 @@ class _WoodProductListPageState extends State<WoodProductListPage>
         Get.back();
         controller.deleteProduct(item.id);
       },
+    );
+  }
+}
+
+// ══════════════════════════════════════════════
+// 📋 Product List — แยก widget เด็ดขาด
+// ══════════════════════════════════════════════
+class _ProductListView extends StatelessWidget {
+  final WoodProductController controller;
+  final List<String> nameKeys;
+  final List<String> displayKeys;
+  final Map<String, Map<String, List<WoodProduct>>> nested;
+  final bool isAdmin;
+  final bool isLoadingMore;
+  final bool Function(ScrollNotification) onScrollNotification;
+  final Future<void> Function() onRefresh;
+  final void Function(WoodProduct) onEdit;
+  final void Function(WoodProduct) onDelete;
+
+  const _ProductListView({
+    super.key,
+    required this.controller,
+    required this.nameKeys,
+    required this.displayKeys,
+    required this.nested,
+    required this.isAdmin,
+    required this.isLoadingMore,
+    required this.onScrollNotification,
+    required this.onRefresh,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      color: WoodStyle.primary,
+      onRefresh: onRefresh,
+      child: NotificationListener<ScrollNotification>(
+        onNotification: onScrollNotification,
+        child: ListView.builder(
+          // ⭐ PageStorageKey — จำตำแหน่ง scroll
+          key: const PageStorageKey('wood_products_list'),
+          padding: WoodStyle.padListPage,
+          physics: const AlwaysScrollableScrollPhysics(),
+          itemCount: displayKeys.length +
+              (isLoadingMore && displayKeys.length < nameKeys.length ? 1 : 0),
+          itemBuilder: (context, idx) {
+            if (idx == displayKeys.length) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                    vertical: WoodStyle.pageLoadPadV),
+                child: Center(
+                  child: RotatingSquaresLoader(size: 40),
+                ),
+              );
+            }
+            final nameKey = displayKeys[idx];
+            return WoodListGroup(
+              nameKey: nameKey,
+              typeMap: nested[nameKey]!,
+              isAdmin: isAdmin,
+              controller: controller,
+              onEdit: onEdit,
+              onDelete: onDelete,
+            );
+          },
+        ),
+      ),
     );
   }
 }

@@ -74,7 +74,7 @@ class _ShimmerGroup extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(
                 horizontal: 12, vertical: 9),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [WoodStyle.brown300, WoodStyle.brown200],
                 begin: Alignment.centerLeft,

@@ -6,6 +6,7 @@ import 'package:wood/core/bootstrap/controller_bootstrap.dart';
 import 'package:wood/core/bootstrap/firebase_bootstrap.dart';
 import 'package:wood/core/bootstrap/foreground_bootstrap.dart';
 import 'package:wood/core/bootstrap/onesignal_bootstrap.dart';
+import 'package:wood/core/services/local_storage.dart';
 import 'package:wood/core/utils/page_route_notifier.dart';
 import 'package:wood/core/theme/app_theme.dart';
 
@@ -14,6 +15,8 @@ import 'package:wood/features/auth/presentation/pages/register_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await LocalStorage.init();
 
   final firebaseError = await FirebaseBootstrap.init();
 

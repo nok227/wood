@@ -179,7 +179,7 @@ class SaleCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2, left: 9),
               child: Text(
                 '+${sale.items.length - 2} ${SaleStyle.itemsSuffix}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10.5,
                   color: SaleStyle.brown600,
                   fontStyle: FontStyle.italic,
@@ -887,7 +887,7 @@ class SaleCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               '${NumberFormat('#,###').format(sale.totalAmount)} ${SaleStyle.currency}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: SaleStyle.brown700,

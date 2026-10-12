@@ -15,19 +15,19 @@ class AccountStyle {
   // ══════════════════════════════════════════
   // 🎨 COLORS
   // ══════════════════════════════════════════
-  static const Color primary = AppColors.primary;
-  static const Color primaryDark = AppColors.primaryDark;
-  static const Color primaryLight = AppColors.primaryLight;
-  static const Color brown50 = AppColors.brown50;
-  static const Color brown100 = AppColors.brown100;
-  static const Color brown200 = AppColors.brown200;
-  static const Color brown300 = AppColors.brown300;
-  static const Color brown400 = AppColors.brown400;
-  static const Color brown500 = AppColors.brown500;
-  static const Color brown700 = AppColors.brown700;
-  static const Color brown800 = AppColors.brown800;
+  static final Color primary = AppColors.primary;
+  static  Color primaryDark = AppColors.primaryDark;
+  static  Color primaryLight = AppColors.primaryLight;
+  static  Color brown50 = AppColors.brown50;
+  static  Color brown100 = AppColors.brown100;
+  static  Color brown200 = AppColors.brown200;
+  static  Color brown300 = AppColors.brown300;
+  static  Color brown400 = AppColors.brown400;
+  static  Color brown500 = AppColors.brown500;
+  static  Color brown700 = AppColors.brown700;
+  static  Color brown800 = AppColors.brown800;
 
-  static const Color bg = AppColors.bg;
+  static  Color bg = AppColors.bg;
   static const Color surface = AppColors.surface;
   static const Color divider = AppColors.divider;
 
@@ -86,15 +86,15 @@ class AccountStyle {
   static const Color transfer = AppColors.transfer;
 
   // ── Extend — Token alias ──
-  static const Color bannerGradStart = AppColors.brown700;
-  static const Color bannerGradEnd = AppColors.brown500;
+  static  Color bannerGradStart = AppColors.brown700;
+  static  Color bannerGradEnd = AppColors.brown500;
   static const Color bannerNegative = AppColors.red200;
   static const Color incomeBtnStart = AppColors.green600;
   static const Color incomeBtnEnd = AppColors.green700;
   static const Color expenseBtnStart = AppColors.red600;
   static const Color expenseBtnEnd = AppColors.red700;
   static const Color sessionDivider = AppColors.grey200;
-  static const Color sessionDateBadge = AppColors.brown800;
+  static  Color sessionDateBadge = AppColors.brown800;
   static const Color sessionCashIcon = AppColors.amber800;
   static const Color sessionTransferIcon = AppColors.blue700;
 
@@ -121,7 +121,7 @@ class AccountStyle {
   static const TextStyle moneyBig = AppTextStyles.moneyBig;
 
   // ── Alias ຈາກ Global ──
-  static const TextStyle dateHeader = AppTextStyles.dateHeader;
+  static  TextStyle dateHeader = AppTextStyles.dateHeader;
 
   // ── Extend — Form ──
   static const TextStyle formTitle = TextStyle(

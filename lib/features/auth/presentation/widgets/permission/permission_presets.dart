@@ -27,7 +27,7 @@ class PermissionPresets extends StatelessWidget {
             label: const Text(AuthStyle.viewOnly),
             style: OutlinedButton.styleFrom(
               foregroundColor: AuthStyle.primary,
-              side: const BorderSide(color: AuthStyle.brown300),
+              side: BorderSide(color: AuthStyle.brown300),
               padding: AuthStyle.padPresetBtn,
             ),
           ),

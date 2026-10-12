@@ -86,7 +86,7 @@ class AddPaymentDebtForm extends StatelessWidget {
             decoration: InputDecoration(
               hintText: '0',
               border: const OutlineInputBorder(),
-              prefixIcon: const Icon(Icons.payments, color: SaleStyle.brown700),
+              prefixIcon: Icon(Icons.payments, color: SaleStyle.brown700),
               suffixText: SaleStyle.currency,
               helperText:
                   'ຍອດ ${fmt.format(net)} · ເຫຼືອ ${fmt.format(debtReal)}',
@@ -340,7 +340,7 @@ class AddPaymentDebtForm extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
             color: SaleStyle.brown700,
@@ -424,7 +424,7 @@ class AddPaymentDebtForm extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: SaleStyle.brown700,
@@ -467,7 +467,7 @@ class _RowLabel extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12.5,
             fontWeight: FontWeight.bold,
             color: SaleStyle.brown700,

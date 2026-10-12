@@ -39,7 +39,7 @@ class WoodFormSavingBox extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              const SizedBox(
+              SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
@@ -53,7 +53,7 @@ class WoodFormSavingBox extends StatelessWidget {
                   controller.saveStep.value.isEmpty
                       ? WoodStyle.savingProgress
                       : controller.saveStep.value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: WoodStyle.brown800,
@@ -62,7 +62,7 @@ class WoodFormSavingBox extends StatelessWidget {
               ),
               Text(
                 '${controller.saveProgress.value}%',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
                   color: WoodStyle.brown800,

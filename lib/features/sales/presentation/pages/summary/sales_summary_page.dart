@@ -329,7 +329,7 @@ class _SalesSummaryPageState extends State<SalesSummaryPage> {
     return Container(
       padding: SaleStyle.padCardLg,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [SaleStyle.brown700, SaleStyle.brown500],
           begin: Alignment.topLeft, end: Alignment.bottomRight,
         ),
@@ -478,10 +478,10 @@ class _SalesSummaryPageState extends State<SalesSummaryPage> {
         ),
         const Divider(height: 18),
         Row(children: [
-          const Expanded(child: Row(children: [
+          Expanded(child: Row(children: [
             Icon(Icons.receipt_long, size: 16, color: SaleStyle.brown700),
-            SizedBox(width: 4),
-            Text(SaleStyle.summaryTotal,
+            const SizedBox(width: 4),
+            const Text(SaleStyle.summaryTotal,
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
           ])),
           Text('$totalBills ${SaleStyle.billCountSuffix}',
@@ -489,10 +489,10 @@ class _SalesSummaryPageState extends State<SalesSummaryPage> {
           const SizedBox(width: 10),
           AnimatedNumber(
             value: total, suffix: ' ${SaleStyle.currency}', duration: 1200,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: SaleStyle.brown700),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: SaleStyle.brown700),
           ),
           const SizedBox(width: 4),
-          const Icon(Icons.chevron_right, size: 18, color: SaleStyle.brown700),
+          Icon(Icons.chevron_right, size: 18, color: SaleStyle.brown700),
         ]),
       ]),
     );
@@ -517,7 +517,7 @@ class _SalesSummaryPageState extends State<SalesSummaryPage> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: SaleStyle.r12,
-        side: const BorderSide(color: SaleStyle.brown100, width: 1.2),
+        side: BorderSide(color: SaleStyle.brown100, width: 1.2),
       ),
       child: ListTile(
         onTap: onTap,
@@ -534,7 +534,7 @@ class _SalesSummaryPageState extends State<SalesSummaryPage> {
         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
           AnimatedNumber(
             value: e.value.total, suffix: ' ${SaleStyle.currency}', duration: 1200,
-            style: const TextStyle(fontWeight: FontWeight.bold, color: SaleStyle.brown700),
+            style: TextStyle(fontWeight: FontWeight.bold, color: SaleStyle.brown700),
           ),
           const Icon(Icons.chevron_right, color: SaleStyle.grey500),
         ]),

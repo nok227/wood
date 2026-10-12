@@ -11,13 +11,13 @@ class NotificationEmpty extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.notifications_none,
             size: NotificationStyle.emptyIconSize,
             color: NotificationStyle.brown200,
           ),
           NotificationStyle.gapMd,
-          const Text(
+          Text(
             NotificationStyle.empty,
             style: NotificationStyle.emptyText,
           ),

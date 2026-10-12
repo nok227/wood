@@ -16,7 +16,7 @@ class RecipeEmptyState extends StatelessWidget {
     return ListView(
       children: [
         RecipeStyle.gap80,
-        const Icon(
+        Icon(
           Icons.restaurant_menu,
           size: RecipeStyle.emptyIconLg,
           color: RecipeStyle.brown200,

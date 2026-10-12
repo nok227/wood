@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wood/core/constants/specific/auth_style.dart';
+import 'package:wood/core/widgets/global/loading/loading.dart';   // ⭐
 
 class PermissionSaveButton extends StatelessWidget {
   final bool isSaving;
@@ -24,15 +25,9 @@ class PermissionSaveButton extends StatelessWidget {
           ),
         ),
         onPressed: isSaving ? null : onSave,
+        // ⭐ เปลี่ยนเป็น RotatingSquaresLoader
         icon: isSaving
-            ? const SizedBox(
-                width: AuthStyle.spinnerSmall,
-                height: AuthStyle.spinnerSmall,
-                child: CircularProgressIndicator(
-                  strokeWidth: AuthStyle.spinnerStroke,
-                  color: AuthStyle.white,
-                ),
-              )
+            ? const RotatingSquaresLoader(size: 20)
             : const Icon(Icons.save),
         label: Text(
           isSaving ? AuthStyle.saving : AuthStyle.save,

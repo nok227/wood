@@ -91,7 +91,7 @@ class SaleOrderPreviewCard extends StatelessWidget {
             padding: SaleStyle.padImgHeader,
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.receipt_long,
                   color: SaleStyle.brown700,
                   size: SaleStyle.iconMdLg,
@@ -101,7 +101,7 @@ class SaleOrderPreviewCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         SaleStyle.previewTitle,
                         style: SaleStyle.txPreviewTitle,
                       ),
@@ -186,7 +186,7 @@ class SaleOrderPreviewCard extends StatelessWidget {
                       ),
                       Text(
                         fmt.format(received),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
                           color: SaleStyle.brown700,
@@ -225,7 +225,7 @@ class SaleOrderPreviewCard extends StatelessWidget {
                     children: bills.entries.map((e) {
                       return Text(
                         '${fmt.format(e.key)} × ${e.value}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: SaleStyle.brown800,

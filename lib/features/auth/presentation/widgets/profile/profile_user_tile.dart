@@ -117,7 +117,7 @@ class ProfileUserTile extends StatelessWidget {
             if (!isAdmin && !isMe) ...[
               AuthStyle.gap4,
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.tune,
                   size: AuthStyle.iconTile,
                   color: AuthStyle.primary,

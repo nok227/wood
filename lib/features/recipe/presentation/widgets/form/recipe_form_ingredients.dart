@@ -60,7 +60,7 @@ class RecipeFormIngredients extends StatelessWidget {
                       const Icon(Icons.close, size: RecipeStyle.iconSmMd),
                   onDeleted: () => controller.removeIngredient(e.key),
                   backgroundColor: RecipeStyle.brown50,
-                  side: const BorderSide(color: RecipeStyle.brown200),
+                  side: BorderSide(color: RecipeStyle.brown200),
                 );
               }).toList(),
             ),

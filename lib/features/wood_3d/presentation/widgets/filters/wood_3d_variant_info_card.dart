@@ -43,7 +43,7 @@ class Wood3DVariantInfoCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text(
+              Text(
                 Wood3DStyle.sizeLabelColon,
                 style: Wood3DStyle.txInfoLabel,
               ),
@@ -76,7 +76,7 @@ class Wood3DVariantInfoCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 Wood3DStyle.priceLabelColon,
                 style: Wood3DStyle.txInfoLabel,
               ),
@@ -90,7 +90,7 @@ class Wood3DVariantInfoCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 Wood3DStyle.qtyLabelColon,
                 style: Wood3DStyle.txInfoLabel,
               ),
@@ -103,7 +103,7 @@ class Wood3DVariantInfoCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   Wood3DStyle.zoneLabelColon,
                   style: Wood3DStyle.txInfoLabel,
                 ),

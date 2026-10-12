@@ -20,7 +20,7 @@ class SalesDateHeader extends StatelessWidget {
       padding: SaleStyle.padDateHeader,
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.calendar_today,
             size: SaleStyle.iconCalendar,
             color: SaleStyle.brown700,

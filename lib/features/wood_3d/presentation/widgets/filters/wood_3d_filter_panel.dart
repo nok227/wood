@@ -140,7 +140,7 @@ class Wood3DFilterPanel extends StatelessWidget {
         backgroundColor: active ? Wood3DStyle.brown700 : null,
         foregroundColor:
             active ? Wood3DStyle.white : Wood3DStyle.brown700,
-        side: const BorderSide(color: Wood3DStyle.brown700),
+        side: BorderSide(color: Wood3DStyle.brown700),
       ),
       onPressed: () => ctrl.focusDimension(active ? null : value),
       child: Text(label),
@@ -256,15 +256,15 @@ class Wood3DFilterPanel extends StatelessWidget {
         fillColor: Wood3DStyle.brown50
             .withValues(alpha: Wood3DStyle.dropdownFillOpacity),
         contentPadding: Wood3DStyle.padDropdown,
-        border: const OutlineInputBorder(
+        border: OutlineInputBorder(
           borderRadius: Wood3DStyle.r10,
           borderSide: BorderSide(color: Wood3DStyle.brown200),
         ),
-        enabledBorder: const OutlineInputBorder(
+        enabledBorder: OutlineInputBorder(
           borderRadius: Wood3DStyle.r10,
           borderSide: BorderSide(color: Wood3DStyle.brown200),
         ),
-        focusedBorder: const OutlineInputBorder(
+        focusedBorder: OutlineInputBorder(
           borderRadius: Wood3DStyle.r10,
           borderSide: BorderSide(color: Wood3DStyle.brown500, width: 1.5),
         ),

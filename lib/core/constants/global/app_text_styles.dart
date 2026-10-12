@@ -78,7 +78,7 @@ class AppTextStyles {
   // ══════════════════════════════════════════
   // 📅 Date header
   // ══════════════════════════════════════════
-  static const dateHeader = TextStyle(
+  static final dateHeader = TextStyle(
     fontSize: 12.5,
     fontWeight: FontWeight.w900,
     color: AppColors.brown800,     // ← แก้แล้ว
@@ -94,14 +94,14 @@ class AppTextStyles {
   // ══════════════════════════════════════════
   // 🏷️ Section
   // ══════════════════════════════════════════
-  static const sectionLabel = TextStyle(
+  static final sectionLabel = TextStyle(
     fontSize: 10.5,
     fontWeight: FontWeight.w900,
     color: AppColors.brown700,     // ← แก้แล้ว
     letterSpacing: 1.2,
   );
 
-  static const sectionTitle = TextStyle(
+  static final sectionTitle = TextStyle(
     fontSize: 14.5,
     fontWeight: FontWeight.w900,
     color: AppColors.brown700,     // ← แก้แล้ว
@@ -149,7 +149,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
   );
 
-  static const filterTitle = TextStyle(
+  static final filterTitle = TextStyle(
     fontSize: 12.5,
     fontWeight: FontWeight.bold,
     color: AppColors.brown700,     // ← แก้แล้ว
@@ -178,7 +178,7 @@ class AppTextStyles {
     letterSpacing: 0.3,
   );
 
-  static const zoneChipText = TextStyle(
+  static final zoneChipText = TextStyle(
     fontSize: 9.5,
     fontWeight: FontWeight.bold,
     color: AppColors.brown800,     // ← แก้แล้ว

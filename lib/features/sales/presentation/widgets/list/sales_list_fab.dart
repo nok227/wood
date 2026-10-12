@@ -73,34 +73,19 @@ class SalesListFab extends StatelessWidget {
   }
 
   Widget _mainFab() {
-    return Container(
-      width: SaleStyle.fabMain,
-      height: SaleStyle.fabMain,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          colors: [SaleStyle.brown600, SaleStyle.brown800],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: SaleStyle.brown800
-                .withValues(alpha: SaleStyle.fabGlowOpacity),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Material(
-        color: SaleStyle.transparent,
-        shape: const CircleBorder(),
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            controller.toggleFab();
-          },
-          customBorder: const CircleBorder(),
+    return Material(
+      color: SaleStyle.transparent, // ⭐ โปร่งใส ไม่มีพื้นหลัง
+      shape: const CircleBorder(),
+      elevation: 0, // ⭐ ไม่มีเงา
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          controller.toggleFab();
+        },
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: SaleStyle.fabMain,
+          height: SaleStyle.fabMain,
           child: Center(
             child: AnimatedRotation(
               turns: controller.isFabOpen.value ? 0.125 : 0,
@@ -108,7 +93,7 @@ class SalesListFab extends StatelessWidget {
               curve: Curves.easeOutCubic,
               child: Icon(
                 controller.isFabOpen.value ? Icons.close : Icons.add,
-                color: SaleStyle.white,
+                color: SaleStyle.brown700, // ⭐ icon สีน้ำตาล
                 size: SaleStyle.fabMainIcon,
               ),
             ),
@@ -166,8 +151,9 @@ class SalesFabBackdrop extends StatelessWidget {
           child: GestureDetector(
             onTap: controller.closeFab,
             child: Container(
-              color:
-                  SaleStyle.black.withValues(alpha: SaleStyle.overlayOpacity),
+              color: SaleStyle.black.withValues(
+                alpha: SaleStyle.overlayOpacity,
+              ),
             ),
           ),
         ),

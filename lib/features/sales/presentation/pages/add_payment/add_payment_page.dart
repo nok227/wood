@@ -21,6 +21,7 @@ import 'package:wood/features/sales/presentation/widgets/sale_order_preview_card
 import 'package:wood/features/wood_products/presentation/widgets/section_wrapper.dart';
 
 import '../../controllers/sales_controller.dart';
+import 'package:wood/core/widgets/global/loading/loading.dart';
 
 enum _A { success, error, warning }
 
@@ -73,7 +74,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   bool get _noPay => _paid <= 0;
   bool get _hasShort => _short > 0;
   bool get _hasChange => _change > 0;
-  bool get _missDebt => nameC.text.trim().isEmpty ||
+  bool get _missDebt =>
+      nameC.text.trim().isEmpty ||
       phoneC.text.trim().isEmpty ||
       addrC.text.trim().isEmpty;
   bool get _missDebtBill => _debtBillImg == null;
@@ -120,7 +122,17 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     nameC.removeListener(_onTextChanged);
     phoneC.removeListener(_onTextChanged);
     addrC.removeListener(_onTextChanged);
-    for (final x in [noteC, qtyC, discC, paidC, nameC, addrC, phoneC, debtNoteC, debtPaidC]) {
+    for (final x in [
+      noteC,
+      qtyC,
+      discC,
+      paidC,
+      nameC,
+      addrC,
+      phoneC,
+      debtNoteC,
+      debtPaidC,
+    ]) {
       x.dispose();
     }
     super.dispose();
@@ -131,25 +143,32 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     final bg = type == _A.success
         ? SaleStyle.green700
         : type == _A.error
-            ? SaleStyle.red700
-            : SaleStyle.orange800;
+        ? SaleStyle.red700
+        : SaleStyle.orange800;
     final ic = type == _A.success
         ? Icons.check_circle
         : type == _A.error
-            ? Icons.error_outline
-            : Icons.warning_amber_rounded;
+        ? Icons.error_outline
+        : Icons.warning_amber_rounded;
     Get.snackbar(
-      t, m,
+      t,
+      m,
       backgroundColor: bg,
       colorText: SaleStyle.white,
       icon: Icon(ic, color: SaleStyle.white, size: 26),
       snackPosition: SnackPosition.TOP,
       margin: const EdgeInsets.all(12),
       borderRadius: SaleStyle.snackbarRadius,
-      duration: type == _A.error ? SaleStyle.snackbarLong : SaleStyle.snackbarShort,
+      duration: type == _A.error
+          ? SaleStyle.snackbarLong
+          : SaleStyle.snackbarShort,
       animationDuration: SaleStyle.delayDialog,
       boxShadows: [
-        BoxShadow(color: bg.withOpacity(0.35), blurRadius: 12, offset: const Offset(0, 4)),
+        BoxShadow(
+          color: bg.withOpacity(0.35),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
+        ),
       ],
     );
   }
@@ -174,20 +193,22 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     }
 
     setState(() {
-      _items.add(SaleItemEntity(
-        itemId: 'i_${DateTime.now().microsecondsSinceEpoch}',
-        productId: p.id,
-        productName: p.name,
-        woodType: p.woodType,
-        productWidth: p.width,
-        productLength: p.length,
-        productThickness: p.thickness,
-        productSizeUnit: p.sizeUnit,
-        unitPrice: p.price,
-        quantity: _qty,
-        unit: p.unit,
-        discountPerUnit: _disc,
-      ));
+      _items.add(
+        SaleItemEntity(
+          itemId: 'i_${DateTime.now().microsecondsSinceEpoch}',
+          productId: p.id,
+          productName: p.name,
+          woodType: p.woodType,
+          productWidth: p.width,
+          productLength: p.length,
+          productThickness: p.thickness,
+          productSizeUnit: p.sizeUnit,
+          unitPrice: p.price,
+          quantity: _qty,
+          unit: p.unit,
+          discountPerUnit: _disc,
+        ),
+      );
       c.selectedProduct.value = null;
       _wood = null;
       _type = null;
@@ -213,7 +234,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     setState(() {
       c.selectedProduct.value = p;
       _wood = p.name;
-      _type = p.woodType.trim().isEmpty ? SaleStyle.woodUnnamedType : p.woodType;
+      _type = p.woodType.trim().isEmpty
+          ? SaleStyle.woodUnnamedType
+          : p.woodType;
       _qty = item.quantity;
       _disc = item.discountPerUnit;
       qtyC.text = _qty.toString();
@@ -227,7 +250,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       _items.clear();
       _wood = _type = _choice = null;
       _unitFilter = SaleStyle.woodStatusAll;
-      _payImg = _billImg = _topUpSlip = _topUpCash = _debtImg = _debtBillImg = null;
+      _payImg = _billImg = _topUpSlip = _topUpCash = _debtImg = _debtBillImg =
+          null;
       _qty = 1;
       _disc = _paid = _debtPaid = 0;
       _debtType = 'none';
@@ -235,7 +259,17 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       _apptTime = null;
       _bills.clear();
       c.paymentType.value = 'cash';
-      for (final x in [noteC, qtyC, discC, paidC, nameC, addrC, phoneC, debtNoteC, debtPaidC]) {
+      for (final x in [
+        noteC,
+        qtyC,
+        discC,
+        paidC,
+        nameC,
+        addrC,
+        phoneC,
+        debtNoteC,
+        debtPaidC,
+      ]) {
         x.clear();
       }
       qtyC.text = '1';
@@ -248,36 +282,56 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   Future<void> _pick({String which = 'pay'}) async {
     Future<void> h(ImageSource s) async {
       Get.back();
-      final p = await picker.pickImage(source: s, maxWidth: 1600, maxHeight: 1600, imageQuality: 80);
+      final p = await picker.pickImage(
+        source: s,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 80,
+      );
       if (p == null) return;
       setState(() {
         final f = File(p.path);
         switch (which) {
-          case 'bill': _billImg = f; break;
-          case 'topSlip': _topUpSlip = f; break;
-          case 'topCash': _topUpCash = f; break;
-          case 'debt': _debtImg = f; break;
-          case 'debtBill': _debtBillImg = f; break;
-          default: _payImg = f;
+          case 'bill':
+            _billImg = f;
+            break;
+          case 'topSlip':
+            _topUpSlip = f;
+            break;
+          case 'topCash':
+            _topUpCash = f;
+            break;
+          case 'debt':
+            _debtImg = f;
+            break;
+          case 'debtBill':
+            _debtBillImg = f;
+            break;
+          default:
+            _payImg = f;
         }
       });
     }
 
-    Get.bottomSheet(Container(
-      color: SaleStyle.white,
-      child: Wrap(children: [
-        ListTile(
-          leading: const Icon(Icons.photo_camera, color: SaleStyle.brown700),
-          title: const Text(SaleStyle.pickCamera),
-          onTap: () => h(ImageSource.camera),
+    Get.bottomSheet(
+      Container(
+        color: SaleStyle.white,
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: Icon(Icons.photo_camera, color: SaleStyle.brown700),
+              title: const Text(SaleStyle.pickCamera),
+              onTap: () => h(ImageSource.camera),
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_library, color: SaleStyle.brown700),
+              title: const Text(SaleStyle.pickGallery),
+              onTap: () => h(ImageSource.gallery),
+            ),
+          ],
         ),
-        ListTile(
-          leading: const Icon(Icons.photo_library, color: SaleStyle.brown700),
-          title: const Text(SaleStyle.pickGallery),
-          onTap: () => h(ImageSource.gallery),
-        ),
-      ]),
-    ));
+      ),
+    );
   }
 
   Future<void> _pickAppt() async {
@@ -303,7 +357,10 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
 
   void _addBill(int d) {
     if (d > _paid - _billsTot) {
-      _warn(SaleStyle.alertBillOver, 'ເຫຼືອ ${fmt.format(_paid - _billsTot)} ${SaleStyle.currency}');
+      _warn(
+        SaleStyle.alertBillOver,
+        'ເຫຼືອ ${fmt.format(_paid - _billsTot)} ${SaleStyle.currency}',
+      );
       return;
     }
     setState(() => _bills[d] = (_bills[d] ?? 0) + 1);
@@ -318,7 +375,10 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   void _addBillBy(int d, int count) {
     final remaining = _paid - _billsTot;
     if (remaining < d) {
-      _warn(SaleStyle.alertBillOver, 'ເຫຼືອ ${fmt.format(remaining)} ${SaleStyle.currency}');
+      _warn(
+        SaleStyle.alertBillOver,
+        'ເຫຼືອ ${fmt.format(remaining)} ${SaleStyle.currency}',
+      );
       return;
     }
     final allowed = (remaining / d).floor();
@@ -354,7 +414,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       resizeToAvoidBottomInset: true,
       backgroundColor: SaleStyle.grey50,
       appBar: AppBar(
-        title: Text('${SaleStyle.addPageTitle}${_items.isNotEmpty ? " (${_items.length})" : ""}'),
+        title: Text(
+          '${SaleStyle.addPageTitle}${_items.isNotEmpty ? " (${_items.length})" : ""}',
+        ),
         backgroundColor: SaleStyle.brown700,
         foregroundColor: SaleStyle.white,
       ),
@@ -372,17 +434,29 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                 color: SaleStyle.brown700,
                 done: _done1,
                 child: AddPaymentWoodPicker(
-                  c: c, pc: pc, fmt: fmt,
-                  wood: _wood, type: _type, unitFilter: _unitFilter,
-                  qty: _qty, disc: _disc, qtyC: qtyC, discC: discC,
+                  c: c,
+                  pc: pc,
+                  fmt: fmt,
+                  wood: _wood,
+                  type: _type,
+                  unitFilter: _unitFilter,
+                  qty: _qty,
+                  disc: _disc,
+                  qtyC: qtyC,
+                  discC: discC,
                   onWoodChanged: (v) => setState(() {
-                    _wood = v; _type = null; c.selectedProduct.value = null;
+                    _wood = v;
+                    _type = null;
+                    c.selectedProduct.value = null;
                   }),
                   onTypeChanged: (v) => setState(() {
-                    _type = v; c.selectedProduct.value = null;
+                    _type = v;
+                    c.selectedProduct.value = null;
                   }),
                   onUnitFilterChanged: (v) => setState(() {
-                    _unitFilter = v; _wood = null; _type = null;
+                    _unitFilter = v;
+                    _wood = null;
+                    _type = null;
                     c.selectedProduct.value = null;
                   }),
                   onQtyChanged: (v) => setState(() => _qty = v),
@@ -394,8 +468,11 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
               if (_items.isNotEmpty) ...[
                 SaleStyle.gapLg,
                 AddPaymentItemsPanel(
-                  items: _items, fmt: fmt, net: _net,
-                  onEdit: _editItem, onRemove: _removeItem,
+                  items: _items,
+                  fmt: fmt,
+                  net: _net,
+                  onEdit: _editItem,
+                  onRemove: _removeItem,
                 ),
               ],
 
@@ -413,17 +490,19 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
 
                 Obx(() {
                   if (_isDebt) return const SizedBox.shrink();
-                  return Column(children: [
-                    SectionWrapper(
-                      number: SaleStyle.sec3,
-                      title: SaleStyle.sectionImages,
-                      icon: Icons.photo_library_outlined,
-                      color: SaleStyle.brown700,
-                      done: _done3,
-                      child: _imgPickers(),
-                    ),
-                    SaleStyle.gapLg,
-                  ]);
+                  return Column(
+                    children: [
+                      SectionWrapper(
+                        number: SaleStyle.sec3,
+                        title: SaleStyle.sectionImages,
+                        icon: Icons.photo_library_outlined,
+                        color: SaleStyle.brown700,
+                        done: _done3,
+                        child: _imgPickers(),
+                      ),
+                      SaleStyle.gapLg,
+                    ],
+                  );
                 }),
 
                 Obx(() {
@@ -435,12 +514,19 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                       color: SaleStyle.orange800,
                       done: _doneDebt,
                       child: AddPaymentDebtForm(
-                        nameC: nameC, phoneC: phoneC, addrC: addrC,
-                        debtNoteC: debtNoteC, debtPaidC: debtPaidC,
-                        debtType: _debtType, debtPaid: _debtPaid,
-                        net: _net, debtReal: _debtReal,
-                        apptDate: _apptDate, apptTime: _apptTime,
-                        debtImg: _debtImg, debtBillImg: _debtBillImg,
+                        nameC: nameC,
+                        phoneC: phoneC,
+                        addrC: addrC,
+                        debtNoteC: debtNoteC,
+                        debtPaidC: debtPaidC,
+                        debtType: _debtType,
+                        debtPaid: _debtPaid,
+                        net: _net,
+                        debtReal: _debtReal,
+                        apptDate: _apptDate,
+                        apptTime: _apptTime,
+                        debtImg: _debtImg,
+                        debtBillImg: _debtBillImg,
                         onDebtTypeChanged: (v) => setState(() {
                           _debtType = v;
                           if (v == 'none') {
@@ -454,7 +540,8 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                         onPickDebtImg: () => _pick(which: 'debt'),
                         onClearDebtImg: () => setState(() => _debtImg = null),
                         onPickDebtBill: () => _pick(which: 'debtBill'),
-                        onClearDebtBill: () => setState(() => _debtBillImg = null),
+                        onClearDebtBill: () =>
+                            setState(() => _debtBillImg = null),
                         onClearAppt: () => setState(() {
                           _apptDate = null;
                           _apptTime = null;
@@ -473,8 +560,11 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                       children: [
                         _paidInput(),
                         AddPaymentBillsPanel(
-                          bills: _bills, isCash: _isCash, paid: _paid,
-                          billsTot: _billsTot, fmt: fmt,
+                          bills: _bills,
+                          isCash: _isCash,
+                          paid: _paid,
+                          billsTot: _billsTot,
+                          fmt: fmt,
                           onAdd: _addBill,
                           onAddBy5: (d) => _addBillBy(d, 5),
                           onDelete: _delBill,
@@ -508,7 +598,12 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                 ),
                 SaleStyle.gapLg,
 
-                AddPaymentSummary(items: _items, discTot: _discTot, net: _net, fmt: fmt),
+                AddPaymentSummary(
+                  items: _items,
+                  discTot: _discTot,
+                  net: _net,
+                  fmt: fmt,
+                ),
 
                 if (_previewReady) ...[
                   SaleStyle.gapLg,
@@ -532,9 +627,14 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                         : null,
                     appointmentDate: _isDebt ? _apptDate : null,
                     note: noteC.text.trim().isEmpty ? null : noteC.text.trim(),
-                    payImgCount: (_payImg != null ? 1 : 0) + (_debtImg != null ? 1 : 0),
-                    billImgCount: (_billImg != null ? 1 : 0) + (_debtBillImg != null ? 1 : 0),
-                    topUpImgCount: (_topUpSlip != null ? 1 : 0) + (_topUpCash != null ? 1 : 0),
+                    payImgCount:
+                        (_payImg != null ? 1 : 0) + (_debtImg != null ? 1 : 0),
+                    billImgCount:
+                        (_billImg != null ? 1 : 0) +
+                        (_debtBillImg != null ? 1 : 0),
+                    topUpImgCount:
+                        (_topUpSlip != null ? 1 : 0) +
+                        (_topUpCash != null ? 1 : 0),
                     debtPayImgCount: _debtImg != null ? 1 : 0,
                     debtBillCount: _debtBillImg != null ? 1 : 0,
                   ),
@@ -568,123 +668,212 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           });
         },
         borderRadius: SaleStyle.r10,
-        child: Container(
+        child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-          decoration: BoxDecoration(
-            color: sel ? active : SaleStyle.white,
-            borderRadius: SaleStyle.r10,
-            border: Border.all(
-              color: sel ? active : SaleStyle.grey300,
-              width: sel ? 2 : 1.2,
-            ),
-          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: sel ? SaleStyle.white : active, size: 22),
-              const SizedBox(height: 4),
-              Text(l,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                    color: sel ? SaleStyle.white : active,
-                  ),
-                  overflow: TextOverflow.ellipsis),
+              // ⭐ เปลี่ยนสีเฉพาะ icon — ไม่มี background/border
+              Icon(icon, color: sel ? active : SaleStyle.grey400, size: 24),
+              const SizedBox(height: 6),
+              // ⭐ เส้นขีดๆ ใต้ icon เมื่อเลือก
+              AnimatedContainer(
+                duration: SaleStyle.animFast,
+                height: 2,
+                width: sel ? 26 : 0,
+                decoration: BoxDecoration(
+                  color: active,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                l,
+                style: TextStyle(
+                  fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+                  fontSize: 12.5,
+                  color: sel ? active : SaleStyle.grey700,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
         ),
       );
     });
 
-    return Row(children: [
-      Expanded(child: chip(SaleStyle.cashLabel, Icons.payments_outlined, 'cash', SaleStyle.brown700)),
-      SaleStyle.gapSm,
-      Expanded(child: chip(SaleStyle.transferLabel, Icons.account_balance, 'transfer', SaleStyle.brown700)),
-      SaleStyle.gapSm,
-      Expanded(child: chip(SaleStyle.debtLabel, Icons.receipt_long_outlined, 'debt', SaleStyle.orange800)),
-    ]);
+    return Row(
+      children: [
+        Expanded(
+          child: chip(
+            SaleStyle.cashLabel,
+            Icons.payments_outlined,
+            'cash',
+            SaleStyle.brown700,
+          ),
+        ),
+        SaleStyle.gapSm,
+        Expanded(
+          child: chip(
+            SaleStyle.transferLabel,
+            Icons.account_balance,
+            'transfer',
+            SaleStyle.brown700,
+          ),
+        ),
+        SaleStyle.gapSm,
+        Expanded(
+          child: chip(
+            SaleStyle.debtLabel,
+            Icons.receipt_long_outlined,
+            'debt',
+            SaleStyle.orange800,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _imgPickers() {
     return Obx(() {
       if (_isDebt) return const SizedBox.shrink();
-      return Row(children: [
-        Expanded(child: _imgTile(
-          _isCash ? SaleStyle.detailCashLabel : SaleStyle.detailTransferLabel,
-          _payImg,
-          () => _pick(which: 'pay'),
-          () => setState(() => _payImg = null),
-        )),
-        const SizedBox(width: 10),
-        Expanded(child: _imgTile(
-          SaleStyle.detailBillLabel,
-          _billImg,
-          () => _pick(which: 'bill'),
-          () => setState(() => _billImg = null),
-        )),
-      ]);
+      return Row(
+        children: [
+          Expanded(
+            child: _imgTile(
+              _isCash
+                  ? SaleStyle.detailCashLabel
+                  : SaleStyle.detailTransferLabel,
+              _payImg,
+              () => _pick(which: 'pay'),
+              () => setState(() => _payImg = null),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _imgTile(
+              SaleStyle.detailBillLabel,
+              _billImg,
+              () => _pick(which: 'bill'),
+              () => setState(() => _billImg = null),
+            ),
+          ),
+        ],
+      );
     });
   }
 
-  Widget _imgTile(String title, File? f, VoidCallback onTap, VoidCallback onRm,
-      {double h = SaleStyle.imgTileHeight, BoxFit fit = BoxFit.cover, VoidCallback? onView}) {
+  Widget _imgTile(
+    String title,
+    File? f,
+    VoidCallback onTap,
+    VoidCallback onRm, {
+    double h = SaleStyle.imgTileHeight,
+    BoxFit fit = BoxFit.contain, // ⭐ เปลี่ยน default → contain
+    VoidCallback? onView,
+  }) {
     return InkWell(
       onTap: f == null ? onTap : onView,
       borderRadius: SaleStyle.r10,
       child: Container(
         height: h,
         decoration: BoxDecoration(
-          color: fit == BoxFit.contain && f != null ? SaleStyle.grey100 : SaleStyle.grey50,
+          color: SaleStyle.grey50,
           borderRadius: SaleStyle.r10,
-          border: Border.all(
-            color: f == null ? SaleStyle.grey300 : SaleStyle.green700,
-            width: f == null ? 1.2 : 2,
-          ),
+          // ⭐ border เดียว บางๆ เบาๆ ไม่เปลี่ยนสีตอนมีรูป
+          border: Border.all(color: SaleStyle.grey200, width: 1),
         ),
         child: f != null
-            ? Stack(children: [
-                ClipRRect(
-                  borderRadius: SaleStyle.r10,
-                  child: Image.file(f,
-                      width: double.infinity, height: double.infinity,
-                      fit: fit, alignment: Alignment.center),
-                ),
-                if (onView != null)
-                  Positioned(bottom: 6, right: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: SaleStyle.black54,
-                        borderRadius: SaleStyle.r20,
-                      ),
-                      child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.zoom_out_map, color: SaleStyle.white, size: 14),
-                        SizedBox(width: 4),
-                        Text(SaleStyle.detailZoomHint,
-                            style: TextStyle(color: SaleStyle.white, fontSize: 10.5)),
-                      ]),
-                    )),
-                Positioned(top: 4, right: 4,
-                  child: GestureDetector(
-                    onTap: onRm,
-                    child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(
-                          color: SaleStyle.black54, shape: BoxShape.circle),
-                      child: const Icon(Icons.close, color: SaleStyle.white, size: 16),
+            ? Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: SaleStyle.r10,
+                    child: Image.file(
+                      f,
+                      width: double.infinity,
+                      height: double.infinity,
+                      // ⭐ แสดงรูปเต็ม ไม่ตัด
+                      fit: fit,
+                      alignment: Alignment.center,
                     ),
-                  )),
-              ])
-            : Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.add_a_photo_outlined,
-                    size: title.isEmpty ? 56 : 38, color: SaleStyle.brown400),
-                if (title.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.bold, color: SaleStyle.brown700)),
+                  ),
+                  if (onView != null)
+                    Positioned(
+                      bottom: 6,
+                      right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: SaleStyle.black54,
+                          borderRadius: SaleStyle.r20,
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.zoom_out_map,
+                              color: SaleStyle.white,
+                              size: 14,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              SaleStyle.detailZoomHint,
+                              style: TextStyle(
+                                color: SaleStyle.white,
+                                fontSize: 10.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: GestureDetector(
+                      onTap: onRm,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(
+                          color: SaleStyle.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: SaleStyle.white,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
-              ])),
+              )
+            : Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.add_a_photo_outlined,
+                      size: title.isEmpty ? 56 : 38,
+                      color: SaleStyle.brown400,
+                    ),
+                    if (title.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: SaleStyle.brown700,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
       ),
     );
   }
@@ -693,7 +882,10 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     return TextField(
       controller: paidC,
       keyboardType: TextInputType.number,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly, NumberFormatter()],
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        NumberFormatter(),
+      ],
       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
       decoration: InputDecoration(
         labelText: _isCash ? 'ລູກຄ້າຈ່າຍມາ *' : 'ຈຳນວນທີ່ໂອນມາ *',
@@ -703,8 +895,13 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           color: SaleStyle.brown700,
         ),
         suffixText: SaleStyle.currency,
-        helperText: _net > 0 ? '${SaleStyle.helperNet} ${fmt.format(_net)} ${SaleStyle.currency}' : null,
-        helperStyle: const TextStyle(color: SaleStyle.brown700, fontWeight: FontWeight.bold),
+        helperText: _net > 0
+            ? '${SaleStyle.helperNet} ${fmt.format(_net)} ${SaleStyle.currency}'
+            : null,
+        helperStyle: TextStyle(
+          color: SaleStyle.brown700,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       onChanged: (v) => setState(() {
         _paid = double.tryParse(v.replaceAll(',', '')) ?? 0;
@@ -722,38 +919,58 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         margin: const EdgeInsets.only(top: 12),
         padding: SaleStyle.padAll16,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             colors: [SaleStyle.brown800, SaleStyle.brown600],
-            begin: Alignment.topLeft, end: Alignment.bottomRight,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
           borderRadius: SaleStyle.r12,
           boxShadow: [
-            BoxShadow(color: SaleStyle.brown700.withOpacity(0.3),
-                blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(
+              color: SaleStyle.brown700.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
-        child: Column(children: [
-          const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(Icons.redeem, color: SaleStyle.white, size: 22),
-            SizedBox(width: 6),
-            Text(SaleStyle.changeTitle,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: SaleStyle.white)),
-          ]),
-          const SizedBox(height: 8),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text('${fmt.format(_change)} ${SaleStyle.currency}',
+        child: Column(
+          children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.redeem, color: SaleStyle.white, size: 22),
+                SizedBox(width: 6),
+                Text(
+                  SaleStyle.changeTitle,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: SaleStyle.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                '${fmt.format(_change)} ${SaleStyle.currency}',
                 style: const TextStyle(
-                  fontSize: 42, fontWeight: FontWeight.w900,
-                  color: SaleStyle.white, letterSpacing: 1.2, height: 1.1,
-                )),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${SaleStyle.changeMsgPrefix} ${fmt.format(_paid)} ${SaleStyle.changeMsgMid} ${fmt.format(_net)}',
-            style: const TextStyle(fontSize: 11, color: SaleStyle.white70),
-          ),
-        ]),
+                  fontSize: 42,
+                  fontWeight: FontWeight.w900,
+                  color: SaleStyle.white,
+                  letterSpacing: 1.2,
+                  height: 1.1,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${SaleStyle.changeMsgPrefix} ${fmt.format(_paid)} ${SaleStyle.changeMsgMid} ${fmt.format(_net)}',
+              style: const TextStyle(fontSize: 11, color: SaleStyle.white70),
+            ),
+          ],
+        ),
       );
     }
 
@@ -766,12 +983,22 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
           borderRadius: SaleStyle.r10,
           border: Border.all(color: SaleStyle.green700, width: 2),
         ),
-        child: const Row(children: [
-          Icon(Icons.check_circle, color: SaleStyle.green700, size: 24),
-          SizedBox(width: 8),
-          Expanded(child: Text(SaleStyle.paidExact,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: SaleStyle.green800))),
-        ]),
+        child: const Row(
+          children: [
+            Icon(Icons.check_circle, color: SaleStyle.green700, size: 24),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                SaleStyle.paidExact,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: SaleStyle.green800,
+                ),
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -790,61 +1017,108 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         borderRadius: SaleStyle.r12,
         border: Border.all(color: SaleStyle.orange400, width: 2),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Row(children: [
-          const Icon(Icons.help_outline, color: SaleStyle.orange900, size: 22),
-          const SizedBox(width: 8),
-          Expanded(child: Text(
-            debtOnly
-                ? SaleStyle.notPaidYet
-                : _isCash
-                    ? SaleStyle.notEnoughCash
-                    : SaleStyle.notEnoughTransfer,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: SaleStyle.orange900),
-          )),
-        ]),
-        SaleStyle.gapMd,
-        if (debtOnly)
-          _choiceBtn(Icons.receipt_long, SaleStyle.debtLabel, SaleStyle.debtOnlySub,
-              SaleStyle.orange800, 'debt')
-        else ...[
-          _choiceBtn(
-            _isCash ? Icons.account_balance : Icons.payments,
-            _isCash ? SaleStyle.topUpTransfer : SaleStyle.topUpCash,
-            _isCash ? SaleStyle.topUpTransferSub : SaleStyle.topUpCashSub,
-            _isCash ? SaleStyle.blue700 : SaleStyle.green700,
-            _isCash ? 'transfer' : 'cash',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.help_outline,
+                color: SaleStyle.orange900,
+                size: 22,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  debtOnly
+                      ? SaleStyle.notPaidYet
+                      : _isCash
+                      ? SaleStyle.notEnoughCash
+                      : SaleStyle.notEnoughTransfer,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: SaleStyle.orange900,
+                  ),
+                ),
+              ),
+            ],
           ),
-          SaleStyle.gapSm,
-          _choiceBtn(Icons.receipt_long, SaleStyle.debtLabel, SaleStyle.debtHoldSub,
-              SaleStyle.orange800, 'debt'),
-        ],
-        if (_choice == 'transfer') ...[
           SaleStyle.gapMd,
-          _subImg(SaleStyle.topUpSlipLabel, _topUpSlip, Icons.receipt_long_outlined,
-              () => _pick(which: 'topSlip'), () => setState(() => _topUpSlip = null)),
-        ] else if (_choice == 'cash') ...[
-          SaleStyle.gapMd,
-          _subImg(SaleStyle.topUpCashLabel, _topUpCash, Icons.payments_outlined,
-              () => _pick(which: 'topCash'), () => setState(() => _topUpCash = null)),
-        ] else if (_choice == 'debt') ...[
-          SaleStyle.gapMd,
-          Container(
-            padding: SaleStyle.padCardLg,
-            decoration: BoxDecoration(
-              color: SaleStyle.orange50,
-              borderRadius: SaleStyle.r10,
-              border: Border.all(color: SaleStyle.orange300),
+          if (debtOnly)
+            _choiceBtn(
+              Icons.receipt_long,
+              SaleStyle.debtLabel,
+              SaleStyle.debtOnlySub,
+              SaleStyle.orange800,
+              'debt',
+            )
+          else ...[
+            _choiceBtn(
+              _isCash ? Icons.account_balance : Icons.payments,
+              _isCash ? SaleStyle.topUpTransfer : SaleStyle.topUpCash,
+              _isCash ? SaleStyle.topUpTransferSub : SaleStyle.topUpCashSub,
+              _isCash ? SaleStyle.blue700 : SaleStyle.green700,
+              _isCash ? 'transfer' : 'cash',
             ),
-            child: const Text('ປ້ອນຂໍ້ມູນລູກຄ້າຕິດໜີ້ຢູ່ຂ້າງລຸ່ມ',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: SaleStyle.orange900)),
-          ),
+            SaleStyle.gapSm,
+            _choiceBtn(
+              Icons.receipt_long,
+              SaleStyle.debtLabel,
+              SaleStyle.debtHoldSub,
+              SaleStyle.orange800,
+              'debt',
+            ),
+          ],
+          if (_choice == 'transfer') ...[
+            SaleStyle.gapMd,
+            _subImg(
+              SaleStyle.topUpSlipLabel,
+              _topUpSlip,
+              Icons.receipt_long_outlined,
+              () => _pick(which: 'topSlip'),
+              () => setState(() => _topUpSlip = null),
+            ),
+          ] else if (_choice == 'cash') ...[
+            SaleStyle.gapMd,
+            _subImg(
+              SaleStyle.topUpCashLabel,
+              _topUpCash,
+              Icons.payments_outlined,
+              () => _pick(which: 'topCash'),
+              () => setState(() => _topUpCash = null),
+            ),
+          ] else if (_choice == 'debt') ...[
+            SaleStyle.gapMd,
+            Container(
+              padding: SaleStyle.padCardLg,
+              decoration: BoxDecoration(
+                color: SaleStyle.orange50,
+                borderRadius: SaleStyle.r10,
+                border: Border.all(color: SaleStyle.orange300),
+              ),
+              child: const Text(
+                'ປ້ອນຂໍ້ມູນລູກຄ້າຕິດໜີ້ຢູ່ຂ້າງລຸ່ມ',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: SaleStyle.orange900,
+                ),
+              ),
+            ),
+          ],
         ],
-      ]),
+      ),
     );
   }
 
-  Widget _choiceBtn(IconData icon, String label, String sub, Color color, String val) {
+  Widget _choiceBtn(
+    IconData icon,
+    String label,
+    String sub,
+    Color color,
+    String val,
+  ) {
     final sel = _choice == val;
     return InkWell(
       onTap: () => setState(() => _choice = sel ? null : val),
@@ -859,87 +1133,145 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
             width: sel ? 2 : 1.5,
           ),
         ),
-        child: Row(children: [
-          Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(
-              color: sel ? SaleStyle.white.withOpacity(0.25) : color.withOpacity(0.12),
-              shape: BoxShape.circle,
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: sel
+                    ? SaleStyle.white.withOpacity(0.25)
+                    : color.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: sel ? SaleStyle.white : color, size: 24),
             ),
-            child: Icon(icon, color: sel ? SaleStyle.white : color, size: 24),
-          ),
-          const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,
-                    color: sel ? SaleStyle.white : color)),
-            const SizedBox(height: 2),
-            Text(sub,
-                style: TextStyle(fontSize: 12,
-                    color: sel ? SaleStyle.white.withOpacity(0.9) : SaleStyle.grey600)),
-          ])),
-          Icon(
-            sel ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: sel ? SaleStyle.white : SaleStyle.grey400,
-            size: sel ? 26 : 24,
-          ),
-        ]),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: sel ? SaleStyle.white : color,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    sub,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: sel
+                          ? SaleStyle.white.withOpacity(0.9)
+                          : SaleStyle.grey600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              sel ? Icons.check_circle : Icons.radio_button_unchecked,
+              color: sel ? SaleStyle.white : SaleStyle.grey400,
+              size: sel ? 26 : 24,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _subImg(String title, File? f, IconData icon, VoidCallback onPick, VoidCallback onRm,
-      {bool big = false}) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: SaleStyle.brown700)),
-      SaleStyle.gapSm,
-      _imgTile('', f, onPick, onRm,
+  Widget _subImg(
+    String title,
+    File? f,
+    IconData icon,
+    VoidCallback onPick,
+    VoidCallback onRm, {
+    bool big = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: SaleStyle.brown700,
+          ),
+        ),
+        SaleStyle.gapSm,
+        _imgTile(
+          '',
+          f,
+          onPick,
+          onRm,
           h: (big && f != null) ? SaleStyle.imgTileHeightXLg : 120,
           fit: big ? BoxFit.contain : BoxFit.cover,
-          onView: (big && f != null) ? () => _viewFull(f) : null),
-    ]);
+          onView: (big && f != null) ? () => _viewFull(f) : null,
+        ),
+      ],
+    );
   }
 
   void _viewFull(File f) {
-    Get.dialog(FullImageViewer(file: f),
-        barrierColor: SaleStyle.transparent, useSafeArea: false);
+    Get.dialog(
+      FullImageViewer(file: f),
+      barrierColor: SaleStyle.transparent,
+      useSafeArea: false,
+    );
   }
 
   Widget _buttons() {
-    return Row(children: [
-      Expanded(child: OutlinedButton.icon(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: SaleStyle.red600,
-          side: const BorderSide(color: SaleStyle.red600),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: const RoundedRectangleBorder(borderRadius: SaleStyle.r10),
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: SaleStyle.red600,
+              side: const BorderSide(color: SaleStyle.red600),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: const RoundedRectangleBorder(borderRadius: SaleStyle.r10),
+            ),
+            onPressed: _clear,
+            icon: const Icon(Icons.clear_all),
+            label: const Text(
+              SaleStyle.clearForm,
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+          ),
         ),
-        onPressed: _clear,
-        icon: const Icon(Icons.clear_all),
-        label: const Text(SaleStyle.clearForm,
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-      )),
-      const SizedBox(width: 10),
-      Expanded(flex: 2, child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: SaleStyle.brown700,
-          foregroundColor: SaleStyle.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: const RoundedRectangleBorder(borderRadius: SaleStyle.r10),
-          elevation: 2,
+        const SizedBox(width: 10),
+        Expanded(
+          flex: 2,
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: SaleStyle.brown700,
+              foregroundColor: SaleStyle.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: const RoundedRectangleBorder(borderRadius: SaleStyle.r10),
+              elevation: 2,
+            ),
+            onPressed: _save,
+            icon: const Icon(Icons.save),
+            label: const Text(
+              SaleStyle.savePayBtn,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
         ),
-        onPressed: _save,
-        icon: const Icon(Icons.save),
-        label: const Text(SaleStyle.savePayBtn,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-      )),
-    ]);
+      ],
+    );
   }
 
   Future<String?> _upload(File? f, String folder, String label) async {
     if (f == null) return null;
-    final url = await CloudinaryService.uploadImage(f, folder: folder)
-        .timeout(const Duration(seconds: 60));
+    final url = await CloudinaryService.uploadImage(
+      f,
+      folder: folder,
+    ).timeout(const Duration(seconds: 60));
     if (url == null || url.isEmpty) throw Exception('ອັບໂຫຼດ$labelບໍ່ສຳເລັດ');
     return url;
   }
@@ -947,19 +1279,34 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
   Future<void> _save() async {
     FocusScope.of(context).unfocus();
 
-    if (_items.isEmpty) { _warn(SaleStyle.alertTitle, SaleStyle.alertMinItem); return; }
-    if (_net <= 0) { _warn(SaleStyle.alertTitle, SaleStyle.alertTotalZero); return; }
+    if (_items.isEmpty) {
+      _warn(SaleStyle.alertTitle, SaleStyle.alertMinItem);
+      return;
+    }
+    if (_net <= 0) {
+      _warn(SaleStyle.alertTitle, SaleStyle.alertTotalZero);
+      return;
+    }
 
     if (_isDebt) {
-      if (_missDebt) { _warn(SaleStyle.alertTitleWarn, SaleStyle.alertMissDebt); return; }
-      if (_missDebtBill) { _warn(SaleStyle.alertTitleWarn, SaleStyle.alertMissDebtBill); return; }
+      if (_missDebt) {
+        _warn(SaleStyle.alertTitleWarn, SaleStyle.alertMissDebt);
+        return;
+      }
+      if (_missDebtBill) {
+        _warn(SaleStyle.alertTitleWarn, SaleStyle.alertMissDebtBill);
+        return;
+      }
       final canPay = _debtType == 'cash' || _debtType == 'transfer';
       if (canPay && _debtPaid <= 0) {
         _warn(SaleStyle.alertTitleWarn, SaleStyle.alertMissDebtPaid);
         return;
       }
       if (_debtPaid > _net) {
-        _warn(SaleStyle.alertTitleError, '${SaleStyle.alertDebtOverflow} ${fmt.format(_net)} ${SaleStyle.currency}');
+        _warn(
+          SaleStyle.alertTitleError,
+          '${SaleStyle.alertDebtOverflow} ${fmt.format(_net)} ${SaleStyle.currency}',
+        );
         return;
       }
       await _doSave(
@@ -972,16 +1319,24 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       return;
     }
 
-    if (_noPay && _choice != 'debt') { _warn(SaleStyle.alertTitleWarn, SaleStyle.alertNoPayment); return; }
+    if (_noPay && _choice != 'debt') {
+      _warn(SaleStyle.alertTitleWarn, SaleStyle.alertNoPayment);
+      return;
+    }
     if (_paid > 0 && _hasShort && _choice == null) {
       _warn(SaleStyle.alertTitleWarn, SaleStyle.alertShortPayment);
       return;
     }
     if (_isCash && _paid > 0) {
-      if (_bills.isEmpty) { _warn(SaleStyle.alertTitleWarn, SaleStyle.alertNoBills); return; }
+      if (_bills.isEmpty) {
+        _warn(SaleStyle.alertTitleWarn, SaleStyle.alertNoBills);
+        return;
+      }
       if (_billsTot != _paid) {
-        _err(SaleStyle.alertBillsMismatch,
-            'ນັບໄດ້ ${fmt.format(_billsTot)} · ຕ້ອງຕົງກັບ ${fmt.format(_paid)}');
+        _err(
+          SaleStyle.alertBillsMismatch,
+          'ນັບໄດ້ ${fmt.format(_billsTot)} · ຕ້ອງຕົງກັບ ${fmt.format(_paid)}',
+        );
         return;
       }
     }
@@ -995,27 +1350,51 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
 
     if (_paid > 0 && _hasShort) {
       if (_choice == 'transfer') {
-        if (_topUpSlip == null) { _warn(SaleStyle.alertTitleWarn, SaleStyle.alertBillSkip); return; }
+        if (_topUpSlip == null) {
+          _warn(SaleStyle.alertTitleWarn, SaleStyle.alertBillSkip);
+          return;
+        }
         trans += _short;
         payType = 'mixed';
       } else if (_choice == 'cash') {
-        if (_topUpCash == null) { _warn(SaleStyle.alertTitleWarn, SaleStyle.alertCashSkip); return; }
+        if (_topUpCash == null) {
+          _warn(SaleStyle.alertTitleWarn, SaleStyle.alertCashSkip);
+          return;
+        }
         cash += _short;
         payType = 'mixed';
       } else if (_choice == 'debt') {
-        if (_missDebt) { _warn(SaleStyle.alertTitleWarn, SaleStyle.alertCustomerData); return; }
-        if (_missDebtBill) { _warn(SaleStyle.alertTitleWarn, SaleStyle.alertMissDebtBill); return; }
+        if (_missDebt) {
+          _warn(SaleStyle.alertTitleWarn, SaleStyle.alertCustomerData);
+          return;
+        }
+        if (_missDebtBill) {
+          _warn(SaleStyle.alertTitleWarn, SaleStyle.alertMissDebtBill);
+          return;
+        }
         debt = _short;
       }
     }
 
     if (_noPay && _choice == 'debt') {
-      if (_missDebt) { _warn(SaleStyle.alertTitleWarn, SaleStyle.alertCustomerData); return; }
-      if (_missDebtBill) { _warn(SaleStyle.alertTitleWarn, SaleStyle.alertMissDebtBill); return; }
+      if (_missDebt) {
+        _warn(SaleStyle.alertTitleWarn, SaleStyle.alertCustomerData);
+        return;
+      }
+      if (_missDebtBill) {
+        _warn(SaleStyle.alertTitleWarn, SaleStyle.alertMissDebtBill);
+        return;
+      }
       debt = total;
     }
 
-    await _doSave(payType: payType, cash: cash, trans: trans, debt: debt, received: _paid);
+    await _doSave(
+      payType: payType,
+      cash: cash,
+      trans: trans,
+      debt: debt,
+      received: _paid,
+    );
   }
 
   Future<void> _doSave({
@@ -1029,8 +1408,12 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     final isDebt = c.paymentType.value == 'debt';
 
     Get.dialog(
-      const Center(child: CircularProgressIndicator(color: SaleStyle.brown700)),
+      const PopScope(
+        canPop: false,
+        child: LoadingDialog(message: 'ກຳລັງບັນທຶກ...'),
+      ),
       barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha:0.25),
     );
 
     try {
@@ -1065,8 +1448,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         if (note.isNotEmpty) note.write(' | ');
         final t = _apptTime ?? const TimeOfDay(hour: 9, minute: 0);
         note.write(
-            'ນັດຈ່າຍ: ${_apptDate!.day}/${_apptDate!.month}/${_apptDate!.year} '
-            '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}');
+          'ນັດຈ່າຍ: ${_apptDate!.day}/${_apptDate!.month}/${_apptDate!.year} '
+          '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}',
+        );
       }
 
       final newOrder = SaleOrderEntity(
@@ -1084,7 +1468,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
         customerAddress: debt > 0 ? addrC.text.trim() : null,
         customerPhone: debt > 0 ? phoneC.text.trim() : null,
         debtDate: debt > 0 ? DateTime.now() : null,
-        debtNote: debt > 0 && debtNoteC.text.trim().isNotEmpty ? debtNoteC.text.trim() : null,
+        debtNote: debt > 0 && debtNoteC.text.trim().isNotEmpty
+            ? debtNoteC.text.trim()
+            : null,
         appointmentDate: isDebt ? _apptDate : null,
         note: note.toString().trim(),
         date: DateTime.now(),
@@ -1095,8 +1481,10 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       await c.addOrder(newOrder);
       Get.back();
       Get.back();
-      _ok(SaleStyle.alertSuccess,
-          '${SaleStyle.alertSaveSaleOk} ${_items.length} ${SaleStyle.summaryItemsUnit}');
+      _ok(
+        SaleStyle.alertSuccess,
+        '${SaleStyle.alertSaveSaleOk} ${_items.length} ${SaleStyle.summaryItemsUnit}',
+      );
 
       c.notifyNewSale(newOrder);
     } catch (e) {

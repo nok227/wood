@@ -22,7 +22,7 @@ class SalesSummaryDetailPage extends StatefulWidget {
     required this.title,
     required this.sales,
     this.icon = Icons.list_alt,
-    this.accentColor = SaleStyle.brown700,
+    this.accentColor = const Color(0xFF5D4037),
     this.detailType = SummaryDetailType.list,
   });
 
@@ -141,7 +141,7 @@ class _SalesSummaryDetailPageState extends State<SalesSummaryDetailPage> {
             Padding(
               padding: const EdgeInsets.fromLTRB(4, 8, 4, 6),
               child: Row(children: [
-                const Icon(Icons.calendar_today, size: 13, color: SaleStyle.brown700),
+                Icon(Icons.calendar_today, size: 13, color: SaleStyle.brown700),
                 const SizedBox(width: 6),
                 Expanded(child: Text(headerTitle,
                     style: SaleStyle.dateHeader, maxLines: 1, overflow: TextOverflow.ellipsis)),
@@ -180,13 +180,13 @@ class _SalesSummaryDetailPageState extends State<SalesSummaryDetailPage> {
           Container(
             padding: SaleStyle.padCardLg,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 colors: [SaleStyle.brown700, SaleStyle.brown500],
                 begin: Alignment.topLeft, end: Alignment.bottomRight,
               ),
               borderRadius: SaleStyle.r14,
               boxShadow: [
-                BoxShadow(color: SaleStyle.brown700.withOpacity(0.25),
+                BoxShadow(color: SaleStyle.brown700.withValues(alpha:0.25),
                     blurRadius: 10, offset: const Offset(0, 4)),
               ],
             ),
@@ -245,7 +245,7 @@ class _SalesSummaryDetailPageState extends State<SalesSummaryDetailPage> {
 
   Widget _sectionLabel(IconData icon, String text) {
     return Row(children: [
-      const Icon(Icons.list_alt, size: 13, color: SaleStyle.brown700),
+      Icon(Icons.list_alt, size: 13, color: SaleStyle.brown700),
       const SizedBox(width: 6),
       Text(text, style: SaleStyle.sectionLabel),
     ]);
@@ -329,13 +329,13 @@ class _SalesSummaryDetailPageState extends State<SalesSummaryDetailPage> {
           _dashedDivider(),
           Row(children: [
             Expanded(flex: 3, child: Text(SaleStyle.summaryTotalLabel,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: SaleStyle.brown800))),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: SaleStyle.brown800))),
             Expanded(flex: 2, child: Text('$totalBills ${SaleStyle.billCountSuffix}',
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: SaleStyle.grey700))),
             Expanded(flex: 3, child: Text('${fmt.format(total)} ${SaleStyle.currency}',
                 textAlign: TextAlign.right,
-                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900,
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900,
                     color: SaleStyle.brown800, letterSpacing: 0.2))),
           ]),
         ]),

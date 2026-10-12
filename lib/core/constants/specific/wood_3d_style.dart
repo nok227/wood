@@ -3,23 +3,19 @@ import 'package:wood/core/constants/global/app_colors.dart';
 import 'package:wood/core/constants/global/app_layout.dart';
 import 'package:wood/core/constants/global/app_durations.dart';
 
-/// ══════════════════════════════════════════════
-/// 📍 WOOD 3D STYLE — Feature: wood_3d
-/// ══════════════════════════════════════════════
 class Wood3DStyle {
   Wood3DStyle._();
 
-  // ══════════ COLORS ══════════
-  static const Color brown50 = AppColors.brown50;
-  static const Color brown100 = AppColors.brown100;
-  static const Color brown200 = AppColors.brown200;
-  static const Color brown300 = AppColors.brown300;
-  static const Color brown400 = AppColors.brown400;
-  static const Color brown500 = AppColors.brown500;
-  static const Color brown600 = AppColors.brown600;
-  static const Color brown700 = AppColors.brown700;
-  static const Color brown800 = AppColors.brown800;
-  static const Color brown900 = AppColors.brown900;
+  static Color get brown50 => AppColors.brown50;
+  static Color get brown100 => AppColors.brown100;
+  static Color get brown200 => AppColors.brown200;
+  static Color get brown300 => AppColors.brown300;
+  static Color get brown400 => AppColors.brown400;
+  static Color get brown500 => AppColors.brown500;
+  static Color get brown600 => AppColors.brown600;
+  static Color get brown700 => AppColors.brown700;
+  static Color get brown800 => AppColors.brown800;
+  static Color get brown900 => AppColors.brown900;
   static const Color white = AppColors.white;
   static const Color black = AppColors.black;
   static const Color black12 = AppColors.black12;
@@ -41,22 +37,18 @@ class Wood3DStyle {
   static const Color info = AppColors.info;
   static const Color textSecondary = AppColors.textSecondary;
 
-  // ── Wood 3D ──
-  static const Color wood3dBg = AppColors.woodBg;
-  static const Color wood3dBgAlt = AppColors.bg;
+  static Color get wood3dBg => AppColors.woodBg;
+  static Color get wood3dBgAlt => AppColors.bg;
   static const Color woodLight = AppColors.woodLight;
   static const Color woodMid = AppColors.woodMid;
   static const Color woodDark = AppColors.woodDark;
   static const Color woodShadow = AppColors.woodShadow;
   static const Color woodLightGrain = AppColors.woodLightGrain;
 
-  // ── Opacity factors ──
   static const double overlayBgOpacity = 0.4;
   static const double panelShadowOpacity = 0.06;
   static const double chipBorderActive = 0.4;
   static const double dropdownFillOpacity = 0.4;
-
-  // ── Painter opacities ──
   static const double grainDarkOpacity = 0.22;
   static const double grainLightOpacity = 0.12;
   static const double aoOpacity = 0.28;
@@ -68,8 +60,6 @@ class Wood3DStyle {
   static const double groundShadow1 = 0.22;
   static const double groundShadow2 = 0.08;
   static const double viewBtnBgOpacity = 0.95;
-
-  // ── Lerp factors ──
   static const double lerpGrainDark = 0.35;
   static const double lerpGrainLight = 0.35;
   static const double lerpEdgeShadow = 0.65;
@@ -77,8 +67,6 @@ class Wood3DStyle {
   static const double lerpShadeRange = 0.58;
   static const double lerpHighlight = 0.10;
   static const double lerpGradientDark = 0.12;
-
-  // ── Border widths ──
   static const double borderW1_0 = 1.0;
   static const double borderW1_2 = 1.2;
   static const double borderW1_5 = 1.5;
@@ -86,16 +74,12 @@ class Wood3DStyle {
   static const double edgeStrokeW = 1.2;
   static const double edgeHighlightW = 0.5;
   static const double arrowStrokeW = 1.5;
-
-  // ── Sizes — Icons ──
   static const double iconStar13 = 13;
   static const double iconStar14 = 14;
   static const double iconStar15 = 15;
   static const double iconStar16 = 16;
   static const double iconDot3 = 3;
   static const double iconDot4 = 4;
-
-  // ── Sizes — Layout ──
   static const double sliderHandleW = 40;
   static const double sliderHandleH = 4;
   static const double viewBtnH = 32;
@@ -109,8 +93,6 @@ class Wood3DStyle {
   static const double dropdownPadH = 12;
   static const double dropdownPadV = 10;
   static const double panelHandlePadV = 6;
-
-  // ── Sizes — Skeleton ──
   static const double skelCardW = 200;
   static const double skelCardH = 160;
   static const double skelCardRadius = 14;
@@ -118,35 +100,26 @@ class Wood3DStyle {
   static const double skelBoxW = 90;
   static const double skelBoxRadius = 6;
   static const double skelBoxRadiusSm = 4;
-
-  // ── Sizes — Painter ──
   static const double cameraDistance = 4.0;
   static const double baseScaleFactor = 0.8;
   static const double grainLineMin = 8;
   static const double grainLineMax = 60;
   static const double grainDivisor = 3;
-
-  // ── Animations (3D) ──
   static const double defaultRotationX = 0.4;
   static const double defaultRotationY = 2.38;
   static const double defaultZoom = 1.0;
   static const double minZoom = 0.5;
   static const double maxZoom = 3.5;
   static const double dragFactor = 0.01;
-
-  // ── Sizes — 3D label placement ──
   static const double labelGap = 10;
   static const double labelPad = 4;
   static const double labelW = 20;
   static const double labelH = 7;
   static const double labelInflate = 3;
   static const double labelOverlapMul = 0.5;
-
-  // ── Wrap spacing ──
   static const double wrapSpacing = 4.0;
   static const double wrapRunSpacing = 4.0;
 
-  // ── Layout — Gaps ──
   static const Widget gap2 = SizedBox(height: 2, width: 2);
   static const Widget gap4 = SizedBox(height: 4, width: 4);
   static const Widget gap5 = SizedBox(height: 5, width: 5);
@@ -156,24 +129,19 @@ class Wood3DStyle {
   static const Widget gap12 = SizedBox(height: 12, width: 12);
   static const Widget gap14 = SizedBox(height: 14, width: 14);
 
-  // ── Padding ──
   static const EdgeInsets padCard = AppLayout.padAll12;
   static const EdgeInsets padPanelRow = EdgeInsets.fromLTRB(14, 0, 14, 8);
   static const EdgeInsets padPanelBottom = EdgeInsets.fromLTRB(14, 2, 14, 14);
   static const EdgeInsets padEmpty = EdgeInsets.all(10);
   static const EdgeInsets padChipRight = EdgeInsets.only(right: 6);
-  static const EdgeInsets padChipInner =
-      EdgeInsets.symmetric(horizontal: 8, vertical: 0);
+  static const EdgeInsets padChipInner = EdgeInsets.symmetric(horizontal: 8, vertical: 0);
   static const EdgeInsets padChipLabel = EdgeInsets.symmetric(horizontal: 2);
-  static const EdgeInsets padDropdown =
-      EdgeInsets.symmetric(horizontal: 12, vertical: 10);
-  static const EdgeInsets padZoneChip =
-      EdgeInsets.symmetric(horizontal: 6, vertical: 1);
+  static const EdgeInsets padDropdown = EdgeInsets.symmetric(horizontal: 12, vertical: 10);
+  static const EdgeInsets padZoneChip = EdgeInsets.symmetric(horizontal: 6, vertical: 1);
   static const EdgeInsets padViewBtn = EdgeInsets.symmetric(horizontal: 10);
   static const EdgeInsets padSkeleton = EdgeInsets.fromLTRB(16, 12, 16, 16);
   static const EdgeInsets padSkeletonGap = EdgeInsets.all(12);
 
-  // ── BorderRadius ──
   static const BorderRadius r2 = AppLayout.r4;
   static const BorderRadius r4 = AppLayout.r4;
   static const BorderRadius r6 = AppLayout.r6;
@@ -183,70 +151,28 @@ class Wood3DStyle {
   static const BorderRadius r16 = AppLayout.r16;
   static const BorderRadius r20 = AppLayout.r20;
 
-  // ── Text Styles ──
-  static const TextStyle txSectionLabel = TextStyle(
-    fontSize: 12,
-    fontWeight: FontWeight.w800,
-    color: AppColors.brown700,
-    letterSpacing: 0.2,
-  );
-  static const TextStyle txChip = TextStyle(
-    fontSize: 11.5,
-    fontWeight: FontWeight.w600,
-  );
-  static const TextStyle txChipSelected = TextStyle(
-    fontSize: 11.5,
-    fontWeight: FontWeight.bold,
-  );
-  static const TextStyle txPanelHint = TextStyle(
-    fontSize: 10,
-    fontWeight: FontWeight.w600,
-    color: AppColors.grey500,
-  );
+  static TextStyle get txSectionLabel => TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.brown700, letterSpacing: 0.2);
+  static const TextStyle txChip = TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600);
+  static const TextStyle txChipSelected = TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold);
+  static const TextStyle txPanelHint = TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.grey500);
   static const TextStyle txClearBtn = TextStyle(fontSize: 11.5);
-  static const TextStyle txInfoLabel = TextStyle(
-    fontSize: 12,
-    fontWeight: FontWeight.bold,
-    color: AppColors.brown700,
-  );
-  static const TextStyle txInfoPrice = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w900,
-    color: AppColors.green700,
-  );
-  static const TextStyle txInfoQty = TextStyle(
-    fontSize: 12,
-    fontWeight: FontWeight.w700,
-  );
-  static const TextStyle txZone = TextStyle(
-    fontSize: 10,
-    fontWeight: FontWeight.bold,
-    color: AppColors.brown800,
-  );
-  static const TextStyle txPlaceholder = TextStyle(
-    color: AppColors.textSecondary,
-    fontSize: 15,
-  );
-  static const TextStyle txViewBtn = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.bold,
-  );
-  static const TextStyle txSkelPlaceholder = TextStyle(
-    color: AppColors.textSecondary,
-  );
+  static TextStyle get txInfoLabel => TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.brown700);
+  static TextStyle get txInfoPrice => TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppColors.green700);
+  static const TextStyle txInfoQty = TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
+  static TextStyle get txZone => TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.brown800);
+  static const TextStyle txPlaceholder = TextStyle(color: AppColors.textSecondary, fontSize: 15);
+  static const TextStyle txViewBtn = TextStyle(fontSize: 11, fontWeight: FontWeight.bold);
+  static const TextStyle txSkelPlaceholder = TextStyle(color: AppColors.textSecondary);
 
-  // ── Durations ──
   static const Duration fast = AppDurations.fast;
   static const Duration normal = AppDurations.normal;
   static const Duration viewAnim = Duration(milliseconds: 120);
 
-  // ── Strings ──
   static const String wood3dPlaceholder = 'ພື້ນທີ່ສະແດງໂມເດວໄມ້ 3D';
   static const String dimWidth = 'ກວ້າງ';
   static const String dimLength = 'ຍາວ';
   static const String dimThickness = 'ໜາ';
-  static const String noProductsForm =
-      'ຍັງບໍ່ມີຂໍ້ມູນໃນຄັງ ກະລຸນາເພີ່ມຂໍ້ມູນກ່ອນ';
+  static const String noProductsForm = 'ຍັງບໍ່ມີຂໍ້ມູນໃນຄັງ ກະລຸນາເພີ່ມຂໍ້ມູນກ່ອນ';
   static const String woodTypeLabel = 'ຊະນິດໄມ້';
   static const String unitLabel = 'ໜ່ວຍນັບ';
   static const String nameLabel = 'ຊື່ໄມ້';
@@ -261,8 +187,6 @@ class Wood3DStyle {
   static const String panelShow = 'ປັດຂຶ້ນ ຫຼື ແຕະ ເພື່ອສະແດງ';
   static const String allFilter = 'ທັງໝົດ';
   static const String currency = 'ກີບ';
-
-  // ── 3D Scene ──
   static const String viewTop = 'ດ້ານເທິງ';
   static const String viewFront = 'ດ້ານໜ້າ';
   static const String viewSide = 'ດ້ານຂ້າງ';

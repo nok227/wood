@@ -83,7 +83,7 @@ class RecipeFormSteps extends StatelessWidget {
           padding: RecipeStyle.padLangRow,
           child: Row(
             children: [
-              const Icon(Icons.language,
+              Icon(Icons.language,
                   size: RecipeStyle.iconXs, color: RecipeStyle.brown600),
               RecipeStyle.gap4,
               Text(RecipeStyle.langLabel, style: RecipeStyle.langLabelStyle),

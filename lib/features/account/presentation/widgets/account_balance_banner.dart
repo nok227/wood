@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import 'package:wood/core/constants/specific/account_style.dart';
+import 'package:wood/core/theme/app_color_service.dart';   // ⭐ เพิ่ม
 import 'package:wood/core/widgets/global/animated_number.dart';
 
 class AccountBalanceBanner extends StatelessWidget {
@@ -17,86 +19,91 @@ class AccountBalanceBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      padding: AccountStyle.padBanner,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AccountStyle.bannerGradStart, AccountStyle.bannerGradEnd],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    // ⭐ ครอบ Obx เพื่อให้ rebuild เมื่อเปลี่ยนธีม
+    return Obx(() {
+      final theme = AppColorService.to.current;
+
+      return Container(
+        margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+        padding: AccountStyle.padBanner,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            // ⭐ ใช้สีจากธีม
+            colors: [theme.gradStart, theme.gradEnd],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: AccountStyle.r14,
+          boxShadow: [
+            BoxShadow(
+              color: theme.primary.withValues(alpha: 0.35),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
-        borderRadius: AccountStyle.r14,
-        boxShadow: [
-          BoxShadow(
-            color: AccountStyle.brown700
-                .withValues(alpha: AccountStyle.bannerShadowOpacity),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.account_balance_wallet,
-                  color: AccountStyle.white70, size: 12),
-              SizedBox(width: 4),
-              Text(AccountStyle.balanceLabel,
-                  style: TextStyle(
-                      color: AccountStyle.white70,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.3)),
-            ],
-          ),
-          AccountStyle.gap2,
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: AnimatedNumber(
-              value: balance,
-              suffix: ' ${AccountStyle.currency}',
-              duration: AccountStyle.animNormal.inMilliseconds,
-              style: TextStyle(
-                color: balance < 0
-                    ? AccountStyle.bannerNegative
-                    : AccountStyle.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.3,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.account_balance_wallet,
+                    color: AccountStyle.white70, size: 12),
+                SizedBox(width: 4),
+                Text(AccountStyle.balanceLabel,
+                    style: TextStyle(
+                        color: AccountStyle.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3)),
+              ],
+            ),
+            AccountStyle.gap2,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: AnimatedNumber(
+                value: balance,
+                suffix: ' ${AccountStyle.currency}',
+                duration: AccountStyle.animNormal.inMilliseconds,
+                style: TextStyle(
+                  color: balance < 0
+                      ? AccountStyle.bannerNegative
+                      : AccountStyle.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.3,
+                ),
               ),
             ),
-          ),
-          AccountStyle.gapSm,
-          Row(
-            children: [
-              Expanded(
-                child: _Tile(
-                  icon: Icons.payments_outlined,
-                  label: AccountStyle.cashLabel,
-                  value: cashBalance,
+            AccountStyle.gapSm,
+            Row(
+              children: [
+                Expanded(
+                  child: _Tile(
+                    icon: Icons.payments_outlined,
+                    label: AccountStyle.cashLabel,
+                    value: cashBalance,
+                  ),
                 ),
-              ),
-              Container(
-                width: 1,
-                height: AccountStyle.bannerDividerH,
-                color: AccountStyle.white24,
-              ),
-              Expanded(
-                child: _Tile(
-                  icon: Icons.account_balance,
-                  label: AccountStyle.transferLabel,
-                  value: transferBalance,
+                Container(
+                  width: 1,
+                  height: AccountStyle.bannerDividerH,
+                  color: AccountStyle.white24,
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+                Expanded(
+                  child: _Tile(
+                    icon: Icons.account_balance,
+                    label: AccountStyle.transferLabel,
+                    value: transferBalance,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 

@@ -16,8 +16,8 @@ class AddPaymentBillsPanel extends StatelessWidget {
   final void Function(int, int) onSetCount;
   final VoidCallback onClear;
 
-static const List<int> _r1 = [500, 1000, 2000, 5000];
-static const List<int> _r2 = [10000, 20000, 50000, 100000];
+  static const List<int> _r1 = [500, 1000, 2000, 5000];
+  static const List<int> _r2 = [10000, 20000, 50000, 100000];
 
   const AddPaymentBillsPanel({
     super.key,
@@ -43,9 +43,9 @@ static const List<int> _r2 = [10000, 20000, 50000, 100000];
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(children: [
-            const Icon(Icons.list_alt, color: SaleStyle.brown700, size: 18),
+            Icon(Icons.list_alt, color: SaleStyle.brown700, size: 18),
             const SizedBox(width: 6),
-            const Expanded(child: Text(SaleStyle.billCountLabel,
+            Expanded(child: Text(SaleStyle.billCountLabel,
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: SaleStyle.brown700))),
             if (bills.isNotEmpty)
               GestureDetector(
@@ -62,7 +62,7 @@ static const List<int> _r2 = [10000, 20000, 50000, 100000];
               ),
           ]),
           const SizedBox(height: 4),
-          const Text(SaleStyle.billCountHint,
+          Text(SaleStyle.billCountHint,
               style: TextStyle(fontSize: 10, color: SaleStyle.brown600, fontStyle: FontStyle.italic)),
           const SizedBox(height: 10),
           Row(children: [
@@ -87,7 +87,7 @@ static const List<int> _r2 = [10000, 20000, 50000, 100000];
                   color: SaleStyle.brown100, borderRadius: SaleStyle.r8,
                   border: Border.all(color: SaleStyle.brown300)),
                 child: Text('$totalBills ${SaleStyle.billCountSuffix}',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: SaleStyle.brown800)),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: SaleStyle.brown800)),
               ),
               const Spacer(),
               const Text('ນັບໄດ້: ',
@@ -130,14 +130,14 @@ static const List<int> _r2 = [10000, 20000, 50000, 100000];
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: fg))),
             )),
           )),
-if (on) Positioned(top: 1, right: 1,
-  child: GestureDetector(
-    onTap: () => onReset(d),
-    child: Container(
-      width: SaleStyle.billCloseSize,
-      height: SaleStyle.billCloseSize,
-      decoration: const BoxDecoration(color: SaleStyle.red600, shape: BoxShape.circle),
-      child: const Icon(Icons.close, size: SaleStyle.billIconClose, color: SaleStyle.white)),
+          if (on) Positioned(top: 1, right: 1,
+            child: GestureDetector(
+              onTap: () => onReset(d),
+              child: Container(
+                width: SaleStyle.billCloseSize,
+                height: SaleStyle.billCloseSize,
+                decoration: const BoxDecoration(color: SaleStyle.red600, shape: BoxShape.circle),
+                child: const Icon(Icons.close, size: SaleStyle.billIconClose, color: SaleStyle.white)),
             )),
         ])),
         Container(
@@ -172,41 +172,98 @@ if (on) Positioned(top: 1, right: 1,
   }
 
   Future<void> _showInputDialog(BuildContext context, int d) async {
-    final ctrl = TextEditingController(text: '${bills[d] ?? 0}');
-    try {
-      final result = await showDialog<int>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Row(children: [
-            const Icon(Icons.payments, color: SaleStyle.brown700, size: 20),
-            const SizedBox(width: 8),
-            Text('${SaleStyle.billCountDialog} ${fmt.format(d)}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ]),
-          content: TextField(
-            controller: ctrl, autofocus: true,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            decoration: const InputDecoration(
-              labelText: SaleStyle.billCountInput,
-              suffixText: SaleStyle.billCountSuffix,
-              border: OutlineInputBorder(), hintText: '0'),
-            onSubmitted: (v) { Navigator.pop(ctx, int.tryParse(v) ?? 0); },
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text(SaleStyle.cancel)),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: SaleStyle.brown700, foregroundColor: SaleStyle.white),
-              onPressed: () => Navigator.pop(ctx, int.tryParse(ctrl.text) ?? 0),
-              child: const Text(SaleStyle.ok)),
-          ],
+    final result = await showDialog<int>(
+      context: context,
+      builder: (ctx) => _BillCountDialog(
+        denomination: d,
+        initialCount: bills[d] ?? 0,
+        fmt: fmt,
+      ),
+    );
+    if (result != null) onSetCount(d, result);
+  }
+}
+
+// ══════════════════════════════════════════════
+// 🆕 Dialog แยกออกมาเป็น StatefulWidget
+//    → dispose controller เองตอนปิด dialog (ไม่มี error แล้ว)
+// ══════════════════════════════════════════════
+class _BillCountDialog extends StatefulWidget {
+  final int denomination;
+  final int initialCount;
+  final NumberFormat fmt;
+
+  const _BillCountDialog({
+    required this.denomination,
+    required this.initialCount,
+    required this.fmt,
+  });
+
+  @override
+  State<_BillCountDialog> createState() => _BillCountDialogState();
+}
+
+class _BillCountDialogState extends State<_BillCountDialog> {
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: '${widget.initialCount}');
+    _ctrl.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: _ctrl.text.length,
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final v = int.tryParse(_ctrl.text) ?? 0;
+    Navigator.pop(context, v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Row(children: [
+        Icon(Icons.payments, color: SaleStyle.brown700, size: 20),
+        const SizedBox(width: 8),
+        Text('${SaleStyle.billCountDialog} ${widget.fmt.format(widget.denomination)}',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      ]),
+      content: TextField(
+        controller: _ctrl,
+        autofocus: true,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        decoration: const InputDecoration(
+          labelText: SaleStyle.billCountInput,
+          suffixText: SaleStyle.billCountSuffix,
+          border: OutlineInputBorder(),
+          hintText: '0',
         ),
-      );
-      if (result != null) onSetCount(d, result);
-    } finally {
-      ctrl.dispose();
-    }
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text(SaleStyle.cancel),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: SaleStyle.brown700,
+            foregroundColor: SaleStyle.white,
+          ),
+          onPressed: _submit,
+          child: const Text(SaleStyle.ok),
+        ),
+      ],
+    );
   }
 }

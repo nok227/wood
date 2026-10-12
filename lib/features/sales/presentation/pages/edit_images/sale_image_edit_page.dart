@@ -46,7 +46,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.photo_camera,
                 color: SaleStyle.brown700,
               ),
@@ -64,7 +64,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
               },
             ),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.photo_library,
                 color: SaleStyle.brown700,
               ),
@@ -272,14 +272,14 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                       color: SaleStyle.white,
                       borderRadius: SaleStyle.r16,
                     ),
-                    child: const Column(
+                    child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         CircularProgressIndicator(
                           color: SaleStyle.brown700,
                           strokeWidth: 3,
                         ),
-                        SizedBox(height: 14),
+                        const SizedBox(height: 14),
                         Text(SaleStyle.saving, style: SaleStyle.textLoadingBox),
                       ],
                     ),
@@ -370,14 +370,14 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
         borderRadius: SaleStyle.cardRadius,
         border: Border.all(color: SaleStyle.brown200),
       ),
-      child: const Row(
+      child: Row(
         children: [
           Icon(
             Icons.info_outline,
             color: SaleStyle.brown700,
             size: SaleStyle.iconInfoMd,
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(SaleStyle.imgEditHint, style: SaleStyle.textInfoHint),
           ),
@@ -497,13 +497,13 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.add_a_photo_outlined,
                 color: SaleStyle.brown400,
                 size: SaleStyle.iconAddPhoto,
               ),
               SaleStyle.gap4,
-              const Text(SaleStyle.imgEditAdd, style: SaleStyle.textImgEditAdd),
+              Text(SaleStyle.imgEditAdd, style: SaleStyle.textImgEditAdd),
             ],
           ),
         ),

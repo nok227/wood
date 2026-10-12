@@ -9,7 +9,7 @@ import '../../domain/entities/wood_product.dart';
 import '../../domain/repositories/wood_repository.dart';
 
 class WoodProductController extends GetxController {
-  final WoodRepository repository; // ⭐ เปลี่ยนจาก dataSource → repository
+  final WoodRepository repository;
   WoodProductController({required this.repository});
 
   var isLoading = false.obs;
@@ -241,7 +241,7 @@ class WoodProductController extends GetxController {
     try {
       isLoading.value = true;
       errorMessage.value = null;
-      final result = await repository.getWoodProducts(); // ⭐ ผ่าน repo
+      final result = await repository.getWoodProducts();
       products.assignAll(result);
       _bumpRevision();
     } catch (e) {
@@ -374,7 +374,7 @@ class WoodProductController extends GetxController {
         saveProgress.value = 5;
 
         final futures = selectedImages.map((file) async {
-          final url = await repository.uploadImageToCloudinary(file); // ⭐
+          final url = await repository.uploadImageToCloudinary(file);
           completed++;
           saveProgress.value = 5 + (completed / total * 80).round();
           saveStep.value = 'ກຳລັງອັບໂຫຼດຮູບ $completed/$total...';
@@ -420,9 +420,9 @@ class WoodProductController extends GetxController {
       saveProgress.value = 90;
 
       if (isEditing) {
-        await repository.updateWoodProduct(product); // ⭐
+        await repository.updateWoodProduct(product);
       } else {
-        await repository.saveWoodProduct(product); // ⭐
+        await repository.saveWoodProduct(product);
       }
 
       final idx = products.indexWhere((p) => p.id == product.id);
@@ -505,16 +505,20 @@ class WoodProductController extends GetxController {
       isLoading.value = true;
       final removed = products.firstWhereOrNull((p) => p.id == id);
 
-      // ⭐ ลบรูปทั้งหมดใน Cloudinary ก่อน
+      // 1) ⭐ ลบเอกสารใน Firestore ก่อน
+      await repository.deleteWoodProduct(id);
+
+      // 2) ⭐ เอาออกจาก list ทันที → widget ที่ถือรูปถูก dispose ไปแล้ว
+      //             ป้องกัน "broken image" ตอนกดลบ
+      products.removeWhere((p) => p.id == id);
+      _bumpRevision();
+
+      // 3) ⭐ ค่อยลบรูปใน Cloudinary (fire-and-forget)
       if (removed != null && removed.imageUrls.isNotEmpty) {
         for (final url in removed.imageUrls) {
           repository.deleteImageFromCloudinary(url).ignore();
         }
       }
-
-      await repository.deleteWoodProduct(id);
-      products.removeWhere((p) => p.id == id);
-      _bumpRevision();
 
       if (Get.isRegistered<NotificationController>()) {
         try {

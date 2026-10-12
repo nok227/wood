@@ -1,66 +1,49 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_color_service.dart';
 
-/// ══════════════════════════════════════════════
-/// 🌐 GLOBAL COLORS — ใช้ใน 50+ ไฟล์ทั่วโปรเจกต์
-///
-/// หลักการ:
-///   • สีที่ใช้ ≥ 3 ไฟล์ → อยู่ที่นี่
-///   • สีที่ใช้ 1-2 ไฟล์ → ไปที่ specific/<feature>_colors.dart
-///
-/// หมวดหมู่:
-///   • Basic      → white, black, transparent (ใช้ 50+ ไฟล์)
-///   • Background → bg, surface, divider (ใช้ 40+ ไฟล์)
-///   • Brand      → primary, brown* (ใช้ 45+ ไฟล์)
-///   • Semantic   → success, error, warning, info (ใช้ 30+ ไฟล์)
-///   • Text       → textPrimary, textSecondary (ใช้ 40+ ไฟล์)
-///   • Overlay    → white70, black54 (ใช้ 25+ ไฟล์)
-///   • Grey scale → grey50-grey900 (ใช้ 30+ ไฟล์)
-/// ══════════════════════════════════════════════
 class AppColors {
   AppColors._();
 
   // ══════════════════════════════════════════
-  // 🎨 Basic — ใช้ 50+ ไฟล์
+  // 🎨 Theme accessor
   // ══════════════════════════════════════════
+  static theme() => AppColorService.to.current;
+
+  // ── Basic ──
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
   static const Color transparent = Color(0x00000000);
 
-  // ══════════════════════════════════════════
-  // 🖼️ Background — ใช้ 40+ ไฟล์
-  //    pages: home_shell, sales_list, account_page, ...
-  //    widgets: sale_card, balance_banner, ...
-  // ══════════════════════════════════════════
-  static const Color bg = Color(0xFFF5F0EA);
+  // ── Background (dynamic) ──
+  static Color get bg => theme().bg;
   static const Color surface = Color(0xFFFFFFFF);
   static const Color divider = Color(0xFFEEEEEE);
 
-  // ══════════════════════════════════════════
-  // 🌐 Brand — Brown — ใช้ 45+ ไฟล์
-  //    primary: AppBar, FAB, Primary buttons
-  //    brown50: light background
-  //    brown200: borders
-  // ══════════════════════════════════════════
-  static const Color brown50 = Color(0xFFEFEBE9);
-  static const Color brown100 = Color(0xFFD7CCC8);
-  static const Color brown200 = Color(0xFFBCAAA4);
-  static const Color brown300 = Color(0xFFA1887F);
-  static const Color brown400 = Color(0xFF8D6E63);
-  static const Color brown500 = Color(0xFF795548);
-  static const Color brown600 = Color(0xFF6D4C41);
-  static const Color brown700 = Color(0xFF5D4037);
-  static const Color brown800 = Color(0xFF4E342E);
-  static const Color brown900 = Color(0xFF3E2723);
+  // ── Brand (dynamic) ──
+  static Color get brown50  => theme().p50;
+  static Color get brown100 => theme().p100;
+  static Color get brown200 => theme().p200;
+  static Color get brown300 => theme().p300;
+  static Color get brown400 => theme().p400;
+  static Color get brown500 => theme().p500;
+  static Color get brown600 => theme().p600;
+  static Color get brown700 => theme().p700;
+  static Color get brown800 => theme().p800;
+  static Color get brown900 => theme().p900;
 
-  // ── Aliases ──
-  static const Color primary = brown700;
-  static const Color primaryDark = brown800;
-  static const Color primaryLight = brown50;
-  static const Color primaryMid = brown400;
-  static const Color primarySoft = brown200;
+  static Color get primary        => theme().primary;
+  static Color get primaryDark    => theme().primaryDark;
+  static Color get primaryLight   => theme().primaryLight;
+  static Color get primaryMid     => theme().primaryMid;
+  static Color get primarySoft    => theme().primarySoft;
+
+  static Color get gradStart      => theme().gradStart;
+  static Color get gradEnd        => theme().gradEnd;
+  static Color get gradStartDark  => theme().gradStartDark;
+  static Color get gradEndDark    => theme().gradEndDark;
 
   // ══════════════════════════════════════════
-  // ⬜ Grey scale — ใช้ 30+ ไฟล์
+  // ⬜ Grey scale — คงที่
   // ══════════════════════════════════════════
   static const Color grey50 = Color(0xFFFAFAFA);
   static const Color grey100 = Color(0xFFF5F5F5);
@@ -74,7 +57,7 @@ class AppColors {
   static const Color grey900 = Color(0xFF212121);
 
   // ══════════════════════════════════════════
-  // ✅ Success (Green) — ใช้ 30+ ไฟล์
+  // ✅ Success / ❌ Error / ⚠️ Warning — คงที่
   // ══════════════════════════════════════════
   static const Color green50 = Color(0xFFE8F5E9);
   static const Color green100 = Color(0xFFC8E6C9);
@@ -87,17 +70,12 @@ class AppColors {
   static const Color green800 = Color(0xFF2E7D32);
   static const Color green900 = Color(0xFF1B5E20);
 
-  // ── Aliases ──
-  // ── Aliases ──
   static const Color success = green700;
   static const Color successLight = green50;
   static const Color successMid = green100;
   static const Color success300 = green300;
   static const Color successDark = green800;
 
-  // ══════════════════════════════════════════
-  // ❌ Error (Red) — ใช้ 30+ ไฟล์
-  // ══════════════════════════════════════════
   static const Color red50 = Color(0xFFFFEBEE);
   static const Color red100 = Color(0xFFFFCDD2);
   static const Color red200 = Color(0xFFEF9A9A);
@@ -109,18 +87,14 @@ class AppColors {
   static const Color red800 = Color(0xFFC62828);
   static const Color red900 = Color(0xFFB71C1C);
 
-  // ── Aliases ──
-  static const Color error = Color(0xFFB71C1C); // = red900
+  static const Color error = red900;
   static const Color errorLight = red50;
   static const Color error300 = red300;
   static const Color error400 = red400;
   static const Color error600 = red600;
   static const Color error700 = red700;
-  static const Color errorRed = red500; // = red500
+  static const Color errorRed = red500;
 
-  // ══════════════════════════════════════════
-  // ⚠️ Warning (Orange) — ใช้ 25+ ไฟล์
-  // ══════════════════════════════════════════
   static const Color orange = Color(0xFFFF9800);
   static const Color orange50 = Color(0xFFFFF3E0);
   static const Color orange100 = Color(0xFFFFE0B2);
@@ -133,16 +107,12 @@ class AppColors {
   static const Color orange800 = Color(0xFFEF6C00);
   static const Color orange900 = Color(0xFFE65100);
 
-  // ── Aliases ──
   static const Color warning = orange800;
   static const Color warningLight = orange50;
   static const Color warning300 = orange300;
   static const Color warning400 = orange400;
   static const Color warning900 = orange900;
 
-  // ══════════════════════════════════════════
-  // 🟡 Amber — ใช้ 20+ ไฟล์
-  // ══════════════════════════════════════════
   static const Color amber = Color(0xFFFFC107);
   static const Color amber50 = Color(0xFFFFF8E1);
   static const Color amber100 = Color(0xFFFFECB3);
@@ -155,9 +125,6 @@ class AppColors {
   static const Color amber800 = Color(0xFFFF8F00);
   static const Color amber900 = Color(0xFFFF6F00);
 
-  // ══════════════════════════════════════════
-  // 🔵 Info (Blue) — ใช้ 25+ ไฟล์
-  // ══════════════════════════════════════════
   static const Color blue = Color(0xFF2196F3);
   static const Color blue50 = Color(0xFFE3F2FD);
   static const Color blue100 = Color(0xFFBBDEFB);
@@ -170,21 +137,14 @@ class AppColors {
   static const Color blue800 = Color(0xFF1565C0);
   static const Color blue900 = Color(0xFF0D47A1);
 
-  // ── Aliases ──
   static const Color info = blue700;
   static const Color infoLight = blue50;
 
-  // ══════════════════════════════════════════
-  // 🟣 Accent — ใช้ 8 ไฟล์
-  // ══════════════════════════════════════════
   static const Color indigo = Color(0xFF3F51B5);
   static const Color indigo700 = Color(0xFF303F9F);
   static const Color blueAccent = Colors.blueAccent;
   static const Color tealAccent = Colors.tealAccent;
 
-  // ══════════════════════════════════════════
-  // 🎭 Overlay — ใช้ 25+ ไฟล์
-  // ══════════════════════════════════════════
   static const Color white24 = Color(0x3DFFFFFF);
   static const Color white54 = Color(0x8AFFFFFF);
   static const Color white70 = Color(0xB3FFFFFF);
@@ -194,25 +154,15 @@ class AppColors {
   static const Color black54 = Color(0x8A000000);
   static const Color black87 = Color(0xDD000000);
 
-  // ══════════════════════════════════════════
-  // 📝 Text — ใช้ 40+ ไฟล์
-  // ══════════════════════════════════════════
-  static const Color textPrimary = Color(0xDD000000); // = black87
-  static const Color textSecondary = Color(0x8A000000); // = black54
+  static const Color textPrimary = Color(0xDD000000);
+  static const Color textSecondary = Color(0x8A000000);
   static const Color textHint = grey500;
 
-  // ══════════════════════════════════════════
-  // 💰 Payment — ใช้ 15+ ไฟล์
-  //    sales: sale_card, sale_detail, add_payment, debt_payment
-  // ══════════════════════════════════════════
   static const Color cash = amber800;
   static const Color transfer = blue700;
   static const Color mixed = indigo700;
   static const Color debt = orange800;
 
-  // ══════════════════════════════════════════
-  // 🏷️ Status — ใช้ 10+ ไฟล์
-  // ══════════════════════════════════════════
   static const Color confirmed = Color(0xFF2E7D32);
   static const Color mismatch = Color(0xFFB71C1C);
   static const Color mismatchClear = Color(0xFF00695C);
@@ -221,21 +171,10 @@ class AppColors {
   static const Color infoBlue = Color(0xFF1565C0);
   static const Color accountAdd = Color(0xFF283593);
 
-  // ══════════════════════════════════════════
-  // 🌲 Wood shared — ຍ້າຍມາຈາກ wood_style + wood_3d_style
-  // ══════════════════════════════════════════
   static const Color woodLight = Color(0xFFE8C99B);
   static const Color woodMid = Color(0xFFCE9C5E);
   static const Color woodDark = Color(0xFF8B5A2B);
   static const Color woodShadow = Color(0xFF3E2723);
   static const Color woodLightGrain = Color(0xFFF5E0B5);
   static const Color woodBg = Color(0xFFEFEBE9);
-
-  // ══════════════════════════════════════════
-  // 🎨 Gradient shared — ຍ້າຍມາຈາກ sale/wood/account
-  // ══════════════════════════════════════════
-  static const Color gradStart = brown700;
-  static const Color gradEnd = brown500;
-  static const Color gradStartDark = brown800;
-  static const Color gradEndDark = brown600;
 }

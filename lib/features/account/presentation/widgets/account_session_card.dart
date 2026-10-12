@@ -84,7 +84,7 @@ class _Header extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.calendar_today,
+              Icon(Icons.calendar_today,
                   size: 13, color: AccountStyle.primary),
               AccountStyle.gap6,
               Expanded(
@@ -109,7 +109,7 @@ class _Header extends StatelessWidget {
                     Text(group.icon, style: const TextStyle(fontSize: 11)),
                     AccountStyle.gap3,
                     Text(group.label,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w900,
                             color: AccountStyle.brown800)),

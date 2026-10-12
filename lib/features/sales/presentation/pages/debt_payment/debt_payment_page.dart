@@ -284,10 +284,10 @@ class _DebtPaymentPageState extends State<DebtPaymentPage> {
                       )),
                   ])
                 : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    const Icon(Icons.add_a_photo, size: 48, color: SaleStyle.brown400),
+                    Icon(Icons.add_a_photo, size: 48, color: SaleStyle.brown400),
                     const SizedBox(height: 8),
                     Text(SaleStyle.debtPayImgEmpty,
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: SaleStyle.brown600)),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: SaleStyle.brown600)),
                   ]),
             ),
           ),
@@ -332,10 +332,10 @@ class _DebtPaymentPageState extends State<DebtPaymentPage> {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(color: SaleStyle.white, borderRadius: SaleStyle.r16),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const CircularProgressIndicator(color: SaleStyle.brown700, strokeWidth: 3),
+                CircularProgressIndicator(color: SaleStyle.brown700, strokeWidth: 3),
                 const SizedBox(height: 14),
                 Text(SaleStyle.debtPaySaving,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: SaleStyle.brown800)),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: SaleStyle.brown800)),
               ]),
             )),
           ),

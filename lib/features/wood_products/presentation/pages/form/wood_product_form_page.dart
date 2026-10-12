@@ -12,6 +12,7 @@ import 'package:wood/features/wood_products/presentation/widgets/form/wood_form_
 import 'package:wood/features/wood_products/presentation/widgets/form/wood_form_zone_selector.dart';
 import '../../controllers/wood_product_controller.dart';
 import '../../widgets/preview/wood_product_preview_card.dart';
+import 'package:wood/core/widgets/global/loading/loading.dart';
 
 class WoodProductFormPage extends StatefulWidget {
   final bool isPage;
@@ -146,14 +147,11 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                       decoration: _inputDeco(WoodStyle.secWoodType),
                     ),
                     Obx(
-                      () => _suggestion(
-                        controller.uniqueWoodTypes,
-                        (t) {
-                          controller.woodTypeController.text = t;
-                          controller.woodTypeController.selection =
-                              TextSelection.collapsed(offset: t.length);
-                        },
-                      ),
+                      () => _suggestion(controller.uniqueWoodTypes, (t) {
+                        controller.woodTypeController.text = t;
+                        controller.woodTypeController.selection =
+                            TextSelection.collapsed(offset: t.length);
+                      }),
                     ),
                   ],
                 ),
@@ -174,14 +172,11 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                       decoration: _inputDeco(WoodStyle.secName),
                     ),
                     Obx(
-                      () => _suggestion(
-                        controller.uniqueProductNames,
-                        (t) {
-                          controller.nameController.text = t;
-                          controller.nameController.selection =
-                              TextSelection.collapsed(offset: t.length);
-                        },
-                      ),
+                      () => _suggestion(controller.uniqueProductNames, (t) {
+                        controller.nameController.text = t;
+                        controller.nameController.selection =
+                            TextSelection.collapsed(offset: t.length);
+                      }),
                     ),
                   ],
                 ),
@@ -238,8 +233,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     CurrencyFormatter(),
                   ],
-                  decoration: _inputDeco(WoodStyle.priceLabelInput)
-                      .copyWith(suffixText: '${WoodStyle.currency} '),
+                  decoration: _inputDeco(
+                    WoodStyle.priceLabelInput,
+                  ).copyWith(suffixText: '${WoodStyle.currency} '),
                 ),
               ),
               WoodStyle.gapLg,
@@ -257,8 +253,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                   minLines: 2,
                   keyboardType: TextInputType.multiline,
                   textInputAction: TextInputAction.newline,
-                  decoration: _inputDeco(WoodStyle.noteHint)
-                      .copyWith(alignLabelWithHint: true),
+                  decoration: _inputDeco(
+                    WoodStyle.noteHint,
+                  ).copyWith(alignLabelWithHint: true),
                 ),
               ),
 
@@ -272,15 +269,18 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     newImages: controller.selectedImages.toList(),
                     woodType: controller.woodTypeController.text.trim(),
                     name: controller.nameController.text.trim(),
-                    width: double.tryParse(
+                    width:
+                        double.tryParse(
                           controller.widthController.text.trim(),
                         ) ??
                         0,
-                    length: double.tryParse(
+                    length:
+                        double.tryParse(
                           controller.lengthController.text.trim(),
                         ) ??
                         0,
-                    thickness: double.tryParse(
+                    thickness:
+                        double.tryParse(
                           controller.thicknessController.text.trim(),
                         ) ??
                         0,
@@ -288,7 +288,8 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     unit: controller.selectedUnit.value == WoodStyle.unitOther
                         ? controller.customUnitController.text.trim()
                         : controller.selectedUnit.value,
-                    price: double.tryParse(
+                    price:
+                        double.tryParse(
                           controller.priceController.text
                               .replaceAll(',', '')
                               .trim(),
@@ -311,8 +312,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          minimumSize:
-                              const Size.fromHeight(WoodStyle.buttonHeight),
+                          minimumSize: const Size.fromHeight(
+                            WoodStyle.buttonHeight,
+                          ),
                           elevation: 0,
                           backgroundColor: WoodStyle.blueAccent,
                           shape: const RoundedRectangleBorder(
@@ -336,8 +338,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                     Expanded(
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          minimumSize:
-                              const Size.fromHeight(WoodStyle.buttonHeight),
+                          minimumSize: const Size.fromHeight(
+                            WoodStyle.buttonHeight,
+                          ),
                           side: const BorderSide(color: WoodStyle.grey300),
                           shape: const RoundedRectangleBorder(
                             borderRadius: WoodStyle.r12,
@@ -415,10 +418,12 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
             isExpanded: true,
             decoration: _inputDeco(WoodStyle.sizeUnitLabel),
             items: controller.sizeUnitOptions
-                .map((u) => DropdownMenuItem(
-                      value: u,
-                      child: Text(u, overflow: TextOverflow.ellipsis),
-                    ))
+                .map(
+                  (u) => DropdownMenuItem(
+                    value: u,
+                    child: Text(u, overflow: TextOverflow.ellipsis),
+                  ),
+                )
                 .toList(),
             onChanged: (v) {
               if (v != null) controller.selectedSizeUnit.value = v;
@@ -444,10 +449,9 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                 controller: controller.quantityController,
                 readOnly: true,
                 enabled: false,
-                decoration: _inputDeco(WoodStyle.qtyLabel).copyWith(
-                  filled: true,
-                  fillColor: WoodStyle.grey100,
-                ),
+                decoration: _inputDeco(
+                  WoodStyle.qtyLabel,
+                ).copyWith(filled: true, fillColor: WoodStyle.grey100),
               ),
             ),
             const SizedBox(width: 8),
@@ -459,18 +463,16 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
                 isExpanded: true,
                 hint: const Text(
                   WoodStyle.unitHint,
-                  style: TextStyle(
-                    color: WoodStyle.grey500,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: WoodStyle.grey500, fontSize: 14),
                 ),
                 decoration: _inputDeco(WoodStyle.unitLabel),
                 items: controller.unitOptions
-                    .map((u) => DropdownMenuItem(
-                          value: u,
-                          child:
-                              Text(u, overflow: TextOverflow.ellipsis),
-                        ))
+                    .map(
+                      (u) => DropdownMenuItem(
+                        value: u,
+                        child: Text(u, overflow: TextOverflow.ellipsis),
+                      ),
+                    )
                     .toList(),
                 onChanged: (v) {
                   if (v != null) controller.selectedUnit.value = v;
@@ -511,6 +513,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
       ),
       child: Column(
         children: [
+          // ── Progress bar ยาว ──
           ClipRRect(
             borderRadius: WoodStyle.r4,
             child: LinearProgressIndicator(
@@ -523,23 +526,19 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
             ),
           ),
           const SizedBox(height: 12),
+
+          // ── Loader + step + % ──
           Row(
             children: [
-              const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.2,
-                  color: WoodStyle.brown700,
-                ),
-              ),
+              // ⭐ เปลี่ยนจาก CircularProgressIndicator → RotatingSquaresLoader
+              const RotatingSquaresLoader(size: 26),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   controller.saveStep.value.isEmpty
                       ? WoodStyle.savingProgress
                       : controller.saveStep.value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: WoodStyle.brown800,
@@ -548,7 +547,7 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
               ),
               Text(
                 '${controller.saveProgress.value}%',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
                   color: WoodStyle.brown800,
@@ -561,30 +560,30 @@ class _WoodProductFormPageState extends State<WoodProductFormPage>
     );
   }
 
-Future<void> _onSave() async {
-  final isEditing = controller.editingProductId.value != null;
-  final ok = await controller.saveProduct();
-  if (!ok) return;
+  Future<void> _onSave() async {
+    final isEditing = controller.editingProductId.value != null;
+    final ok = await controller.saveProduct();
+    if (!ok) return;
 
-  // ── Page mode (เปิดผ่าน Get.to) → pop กลับ ──
-  if (widget.isPage) {
-    Get.back();
-  } else {
-    // ── Tab mode (อยู่ใน HomeShell) ──
-    // ⭐ เพิ่มใหม่: หลัง save → เด้งไป tab ລາຍການໄມ້
-    if (!isEditing) {
-      // เพิ่มใหม่ → เด้งไปดูรายการที่เพิ่งบันทึก
-      if (Get.isRegistered<HomeController>()) {
-        Get.find<HomeController>().goToTab(MenuKey.woodList);
+    // ── Page mode (เปิดผ่าน Get.to) → pop กลับ ──
+    if (widget.isPage) {
+      Get.back();
+    } else {
+      // ── Tab mode (อยู่ใน HomeShell) ──
+      // ⭐ เพิ่มใหม่: หลัง save → เด้งไป tab ລາຍການໄມ້
+      if (!isEditing) {
+        // เพิ่มใหม่ → เด้งไปดูรายการที่เพิ่งบันทึก
+        if (Get.isRegistered<HomeController>()) {
+          Get.find<HomeController>().goToTab(MenuKey.woodList);
+        }
       }
     }
-  }
 
-  Get.snackbar(
-    WoodStyle.successMsg,
-    isEditing ? WoodStyle.savedEdit : WoodStyle.savedNew,
-  );
-}
+    Get.snackbar(
+      WoodStyle.successMsg,
+      isEditing ? WoodStyle.savedEdit : WoodStyle.savedNew,
+    );
+  }
 
   // ══════════════════════════════════════════
   // 💡 Suggestion chips
@@ -599,8 +598,11 @@ Future<void> _onSave() async {
         children: [
           Row(
             children: [
-              const Icon(Icons.lightbulb_outline,
-                  size: 13, color: WoodStyle.brown400),
+              Icon(
+                Icons.lightbulb_outline,
+                size: 13,
+                color: WoodStyle.brown400,
+              ),
               const SizedBox(width: 4),
               Text(
                 '${WoodStyle.prevInput} (${sorted.length})',
@@ -616,7 +618,7 @@ Future<void> _onSave() async {
               return ActionChip(
                 label: Text(t, style: WoodStyle.suggestionChip),
                 backgroundColor: WoodStyle.brown50,
-                side: const BorderSide(color: WoodStyle.brown200),
+                side: BorderSide(color: WoodStyle.brown200),
                 visualDensity: VisualDensity.compact,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 onPressed: () => onTap(t),
@@ -632,19 +634,18 @@ Future<void> _onSave() async {
   // 🎨 Input decoration
   // ══════════════════════════════════════════
   InputDecoration _inputDeco(String label) => InputDecoration(
-        labelText: label,
-        labelStyle: WoodStyle.formLabel,
-        filled: true,
-        fillColor: WoodStyle.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        enabledBorder: const OutlineInputBorder(
-          borderRadius: WoodStyle.r12,
-          borderSide: BorderSide(color: WoodStyle.grey300, width: 1),
-        ),
-        focusedBorder: const OutlineInputBorder(
-          borderRadius: WoodStyle.r12,
-          borderSide: BorderSide(color: WoodStyle.black87, width: 1.5),
-        ),
-      );
+    labelText: label,
+    labelStyle: WoodStyle.formLabel,
+    filled: true,
+    fillColor: WoodStyle.white,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    enabledBorder: const OutlineInputBorder(
+      borderRadius: WoodStyle.r12,
+      borderSide: BorderSide(color: WoodStyle.grey300, width: 1),
+    ),
+    focusedBorder: const OutlineInputBorder(
+      borderRadius: WoodStyle.r12,
+      borderSide: BorderSide(color: WoodStyle.black87, width: 1.5),
+    ),
+  );
 }

@@ -31,10 +31,55 @@ class HomeShell extends StatelessWidget {
         return const PendingApprovalPage();
       }
       if (ctrl.tabs.isEmpty) return const PendingApprovalPage();
+
+      // ⭐ ถ้ามีแค่ 1 tab → แสดงหน้าเดียว ไม่มี BottomNav
+      if (ctrl.tabs.length == 1) {
+        return _singlePage(ctrl);
+      }
+
       return _scaffold(ctrl);
     });
   }
 
+  // ══════════════════════════════════════════
+  // 🎯 1 Tab — แสดงหน้าเดียว ไม่มี BottomNav
+  // ══════════════════════════════════════════
+  Widget _singlePage(HomeController ctrl) {
+    return Scaffold(
+      backgroundColor: HomeStyle.bg,
+      body: Column(
+        children: [
+          // ── AppBar ──
+          Obx(
+            () => AnimatedSize(
+              duration: HomeStyle.barsAnim,
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: ctrl.barsVisible.value
+                  ? _appBar(ctrl)
+                  : const SizedBox(width: double.infinity),
+            ),
+          ),
+
+          // ── Body ──
+          Expanded(
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (n) {
+                ctrl.onScroll(n);
+                return false;
+              },
+              child: _pageFor(ctrl.tabs[0].key, 0, ctrl),
+            ),
+          ),
+        ],
+      ),
+      // ❌ ไม่มี bottomNavigationBar
+    );
+  }
+
+  // ══════════════════════════════════════════
+  // 🎯 หลาย Tabs — UI ปกติ + BottomNav
+  // ══════════════════════════════════════════
   Widget _scaffold(HomeController ctrl) {
     return Scaffold(
       backgroundColor: HomeStyle.bg,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:wood/core/constants/global/app_durations.dart';
+import 'package:wood/core/widgets/global/bounce_wrapper.dart';
 import 'package:wood/core/widgets/global/notification_bell.dart';
 import 'package:wood/core/widgets/global/wave_text.dart';
 import 'package:wood/features/recipe/presentation/pages/library/recipe_library_page.dart';
@@ -30,31 +31,40 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               fontWeight: FontWeight.w600,
               fontSize: 18,
             ),
-            replayOnRouteChange: false,
+            replayOnRouteChange: true,
           ),
       actions: [
-        // 🍴 Recipe
-        IconButton(
-          icon: const Icon(Icons.restaurant_menu, size: 24),
-          tooltip: 'ຄັງເມນູອາຫານ',
-          onPressed: () => Get.to(
-            () => const RecipeLibraryPage(),
-            transition: Transition.downToUp,
-            duration: AppDurations.normal,
+        // 🍴 Recipe — เด้งตัวแรก (delay 0)
+        BounceWrapper(
+          delay: Duration.zero,
+          child: IconButton(
+            icon: const Icon(Icons.restaurant_menu, size: 24),
+            tooltip: 'ຄັງເມນູອາຫານ',
+            onPressed: () => Get.to(
+              () => const RecipeLibraryPage(),
+              transition: Transition.downToUp,
+              duration: AppDurations.normal,
+            ),
           ),
         ),
 
-        // 🔔 Notification bell (ย้ายมาเป็น widget)
-        const NotificationBell(),
+        // 🔔 Bell — เด้งตัวที่ 2 (delay 80ms)
+        const BounceWrapper(
+          delay: Duration(milliseconds: 80),
+          child: NotificationBell(),
+        ),
 
-        // 👤 Profile
-        IconButton(
-          icon: const Icon(Icons.account_circle, size: 28),
-          tooltip: 'ໂປຣຟາຍ',
-          onPressed: () => Get.to(
-            () => const ProfileViewPage(),
-            transition: Transition.downToUp,
-            duration: AppDurations.normal,
+        // 👤 Profile — เด้งตัวที่ 3 (delay 160ms)
+        BounceWrapper(
+          delay: const Duration(milliseconds: 160),
+          child: IconButton(
+            icon: const Icon(Icons.account_circle, size: 28),
+            tooltip: 'ໂປຣຟາຍ',
+            onPressed: () => Get.to(
+              () => const ProfileViewPage(),
+              transition: Transition.downToUp,
+              duration: AppDurations.normal,
+            ),
           ),
         ),
       ],

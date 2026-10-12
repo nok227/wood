@@ -14,7 +14,7 @@ class ProfileMyCard extends StatelessWidget {
     return Container(
       padding: AuthStyle.padProfileCard,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [AuthStyle.profileGradStart, AuthStyle.profileGradEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

@@ -16,7 +16,7 @@ class PermissionHeader extends StatelessWidget {
     return Container(
       padding: AuthStyle.padHeader,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [AuthStyle.brown700, AuthStyle.brown500],
         ),
         borderRadius: AuthStyle.r14,

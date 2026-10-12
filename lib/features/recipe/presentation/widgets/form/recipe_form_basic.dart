@@ -20,7 +20,7 @@ class RecipeFormBasic extends StatelessWidget {
             labelText: RecipeStyle.nameLabel,
             border: const OutlineInputBorder(),
             prefixIcon:
-                const Icon(Icons.restaurant, color: RecipeStyle.primary),
+                Icon(Icons.restaurant, color: RecipeStyle.primary),
             hintText: RecipeStyle.nameHint,
           ),
         ),
@@ -40,7 +40,7 @@ class RecipeFormBasic extends StatelessWidget {
                         style: RecipeStyle.chipText
                             .copyWith(color: RecipeStyle.primary)),
                     backgroundColor: RecipeStyle.white,
-                    side: const BorderSide(color: RecipeStyle.brown200),
+                    side: BorderSide(color: RecipeStyle.brown200),
                     onPressed: () => controller.insertNameSuggestion(text),
                   ))
               .toList(),
@@ -55,8 +55,8 @@ class RecipeFormBasic extends StatelessWidget {
         DropdownButtonFormField<RecipeCategory>(
           initialValue: controller.category.value,
           isExpanded: true,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
             isDense: true,
             contentPadding: RecipeStyle.padDropdown,
             prefixIcon: Icon(Icons.category, color: RecipeStyle.primary),

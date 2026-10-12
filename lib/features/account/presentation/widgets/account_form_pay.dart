@@ -16,33 +16,37 @@ class AccountFormPay extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(AccountStyle.itemsLabel,
-            style: AccountStyle.sectionLabel),
+        const Text(AccountStyle.itemsLabel, style: AccountStyle.sectionLabel),
         AccountStyle.gap6,
-        Obx(() => Column(
-              children: [
-                for (var i = 0; i < controller.rows.length; i++)
-                  _RowItem(
-                    index: i,
-                    row: controller.rows[i],
-                    showDelete: controller.rows.length > 1,
-                    onDelete: () => controller.removeRow(i),
-                  ),
-              ],
-            )),
+        Obx(
+          () => Column(
+            children: [
+              for (var i = 0; i < controller.rows.length; i++)
+                _RowItem(
+                  index: i,
+                  row: controller.rows[i],
+                  showDelete: controller.rows.length > 1,
+                  onDelete: () => controller.removeRow(i),
+                ),
+            ],
+          ),
+        ),
         AccountStyle.gapXs,
         OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
             foregroundColor: AccountStyle.brown700,
-            side: const BorderSide(color: AccountStyle.brown300),
+            side: BorderSide(color: AccountStyle.brown300),
             padding: AccountStyle.padAddItem,
             shape: const RoundedRectangleBorder(
-                borderRadius: AccountStyle.inputRadius),
+              borderRadius: AccountStyle.inputRadius,
+            ),
           ),
           onPressed: controller.addRow,
           icon: const Icon(Icons.add, size: 16),
-          label: const Text(AccountStyle.addItemBtn,
-              style: AccountStyle.addItemBtnText),
+          label: const Text(
+            AccountStyle.addItemBtn,
+            style: AccountStyle.addItemBtnText,
+          ),
         ),
         AccountStyle.gap10,
         Obx(() => _TotalBox(text: controller.formattedPayTotal)),
@@ -79,7 +83,9 @@ class _RowItem extends StatelessWidget {
                 label: '${AccountStyle.itemPrefix} ${index + 1}',
                 focusColor: AccountStyle.red400,
                 contentPad: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 12),
+                  horizontal: 10,
+                  vertical: 12,
+                ),
               ),
             ),
           ),
@@ -98,15 +104,20 @@ class _RowItem extends StatelessWidget {
                 suffix: AccountStyle.currency,
                 focusColor: AccountStyle.red400,
                 contentPad: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 12),
+                  horizontal: 8,
+                  vertical: 12,
+                ),
               ),
             ),
           ),
           if (showDelete)
             IconButton(
               onPressed: onDelete,
-              icon: const Icon(Icons.remove_circle_outline,
-                  color: AccountStyle.red600, size: 22),
+              icon: const Icon(
+                Icons.remove_circle_outline,
+                color: AccountStyle.red600,
+                size: 22,
+              ),
             ),
         ],
       ),
@@ -116,9 +127,11 @@ class _RowItem extends StatelessWidget {
   InputDecoration _deco({
     required String label,
     String? suffix,
-    Color focusColor = AccountStyle.brown400,
+    Color? focusColor,
     EdgeInsets? contentPad,
   }) {
+    final effectiveFocusColor = focusColor ?? AccountStyle.brown400;
+
     return InputDecoration(
       labelText: label,
       labelStyle: AccountStyle.inputLabel,
@@ -134,7 +147,7 @@ class _RowItem extends StatelessWidget {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: AccountStyle.inputRadius,
-        borderSide: BorderSide(color: focusColor, width: 1.5),
+        borderSide: BorderSide(color: effectiveFocusColor, width: 1.5),
       ),
       contentPadding: contentPad,
     );
@@ -155,24 +168,33 @@ class _TotalBox extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.summarize_outlined,
-              color: AccountStyle.error700, size: 18),
+          const Icon(
+            Icons.summarize_outlined,
+            color: AccountStyle.error700,
+            size: 18,
+          ),
           AccountStyle.gap6,
           const Expanded(
-            child: Text(AccountStyle.totalLabel,
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    color: AccountStyle.error700)),
+            child: Text(
+              AccountStyle.totalLabel,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                color: AccountStyle.error700,
+              ),
+            ),
           ),
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(text,
-                style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: AccountStyle.error700,
-                    letterSpacing: 0.2)),
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: AccountStyle.error700,
+                letterSpacing: 0.2,
+              ),
+            ),
           ),
         ],
       ),

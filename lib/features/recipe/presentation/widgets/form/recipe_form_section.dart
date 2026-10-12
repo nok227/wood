@@ -33,7 +33,7 @@ class RecipeFormSection extends StatelessWidget {
         children: [
           Container(
             padding: RecipeStyle.padSectionHeader,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: RecipeStyle.brown50,
               borderRadius: RecipeStyle.topR13,
             ),
@@ -42,7 +42,7 @@ class RecipeFormSection extends StatelessWidget {
                 Container(
                   width: RecipeStyle.sectionNumberSize,
                   height: RecipeStyle.sectionNumberSize,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: RecipeStyle.primary,
                     shape: BoxShape.circle,
                   ),

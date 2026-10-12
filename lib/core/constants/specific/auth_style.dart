@@ -6,31 +6,29 @@ import 'package:wood/core/constants/global/app_shadows.dart';
 import 'package:wood/core/constants/global/app_durations.dart';
 import 'package:wood/core/constants/global/app_strings.dart';
 
-/// ══════════════════════════════════════════════
-/// 📍 AUTH STYLE — Feature: Auth
-/// ══════════════════════════════════════════════
 class AuthStyle {
   AuthStyle._();
 
-  // ══════════ COLORS ══════════
-  static const Color primary = AppColors.primary;
-  static const Color primaryDark = AppColors.primaryDark;
-  static const Color primaryLight = AppColors.primaryLight;
+  // ══════ COLORS (Brand = get) ══════
+  static Color get primary => AppColors.primary;
+  static Color get primaryDark => AppColors.primaryDark;
+  static Color get primaryLight => AppColors.primaryLight;
 
-  static const Color bg = AppColors.brown50;
+  static Color get bg => AppColors.brown50;
   static const Color surface = AppColors.surface;
 
-  static const Color brown50 = AppColors.brown50;
-  static const Color brown100 = AppColors.brown100;
-  static const Color brown200 = AppColors.brown200;
-  static const Color brown300 = AppColors.brown300;
-  static const Color brown400 = AppColors.brown400;
-  static const Color brown500 = AppColors.brown500;
-  static const Color brown600 = AppColors.brown600;
-  static const Color brown700 = AppColors.brown700;
-  static const Color brown800 = AppColors.brown800;
-  static const Color brown900 = AppColors.brown900;
+  static Color get brown50 => AppColors.brown50;
+  static Color get brown100 => AppColors.brown100;
+  static Color get brown200 => AppColors.brown200;
+  static Color get brown300 => AppColors.brown300;
+  static Color get brown400 => AppColors.brown400;
+  static Color get brown500 => AppColors.brown500;
+  static Color get brown600 => AppColors.brown600;
+  static Color get brown700 => AppColors.brown700;
+  static Color get brown800 => AppColors.brown800;
+  static Color get brown900 => AppColors.brown900;
 
+  // ── คงที่ (const) ──
   static const Color white = AppColors.white;
   static const Color white24 = AppColors.white24;
   static const Color white70 = AppColors.white70;
@@ -60,17 +58,16 @@ class AuthStyle {
   static const Color error700 = AppColors.error700;
   static const Color errorRed = AppColors.errorRed;
 
-  // ── Extend ──
-  static const Color profileGradStart = AppColors.brown800;
-  static const Color profileGradEnd = AppColors.brown600;
+  // ── Extend (ใช้ brown → get) ──
+  static Color get profileGradStart => AppColors.brown800;
+  static Color get profileGradEnd => AppColors.brown600;
   static const Color profileShadow = Color(0x4D5D4037);
   static const Color avatarBg = Color(0x33FFFFFF);
 
-  // ── Opacity factors ──
   static const double borderOpacity = 0.25;
   static const double circleBorderOpacity = 0.5;
 
-  // ══════════ TEXT STYLES ══════════
+  // ══════ TEXT (คงเดิม) ══════
   static const TextStyle heading1 = AppTextStyles.heading1;
   static const TextStyle heading2 = AppTextStyles.heading2;
   static const TextStyle heading3 = AppTextStyles.heading3;
@@ -149,14 +146,12 @@ class AuthStyle {
   static const TextStyle emptyText = TextStyle(color: AppColors.grey600);
   static const TextStyle dialogText = TextStyle(color: AppColors.grey600);
 
-  // ══════════ LAYOUT ══════════
+  // ══════ LAYOUT (คงเดิม) ══════
   static const Widget gapSm = AppLayout.gapSm;
   static const Widget gapMd = AppLayout.gapMd;
   static const Widget gapLg = AppLayout.gapLg;
-
   static const double gap20 = 20;
   static const double gap24 = 24;
-
   static const Widget gap2 = AppLayout.gap2;
   static const Widget gap3 = AppLayout.gap3;
   static const Widget gap4 = AppLayout.gap4;
@@ -176,16 +171,9 @@ class AuthStyle {
   static const EdgeInsets padInfo = EdgeInsets.all(10);
   static const EdgeInsets padHeaderIcon = EdgeInsets.all(6);
   static const EdgeInsets padPresetBtn = EdgeInsets.symmetric(vertical: 10);
-  static const EdgeInsets padChipBadge = EdgeInsets.symmetric(
-    horizontal: 10,
-    vertical: 4,
-  );
-  static const EdgeInsets padBadgeTiny = EdgeInsets.symmetric(
-    horizontal: 6,
-    vertical: 1,
-  );
+  static const EdgeInsets padChipBadge = EdgeInsets.symmetric(horizontal: 10, vertical: 4);
+  static const EdgeInsets padBadgeTiny = EdgeInsets.symmetric(horizontal: 6, vertical: 1);
   static const EdgeInsets padEmptyCard = EdgeInsets.all(24);
-
   static const EdgeInsets marginTileBottom = EdgeInsets.only(bottom: 8);
 
   static const BorderRadius r6 = AppLayout.r6;
@@ -195,14 +183,12 @@ class AuthStyle {
   static const BorderRadius r14 = AppLayout.r14;
   static const BorderRadius r16 = AppLayout.r16;
   static const BorderRadius r20 = AppLayout.r20;
-
   static const BorderRadius inputRadius = AppLayout.r8;
   static const BorderRadius cardRadius = AppLayout.r12;
   static const BorderRadius profileRadius = AppLayout.r16;
   static const BorderRadius chipRadius = AppLayout.r20;
   static const BorderRadius badgeRadius = AppLayout.r6;
 
-  // ── Sizes — base ──
   static const double buttonHeight = AppLayout.buttonHeight;
   static const double avatarLg = 32;
   static const double avatarMd = 24;
@@ -211,17 +197,13 @@ class AuthStyle {
   static const double iconMd = AppLayout.iconMd;
   static const double iconLg = AppLayout.iconLg;
   static const double snackbarRadius = 12;
-
-  // ── Sizes — Icon (alias จาก AppLayout) ──
-  static const double iconAvatarBig = 34; // ← เฉพาะ auth
+  static const double iconAvatarBig = 34;
   static const double iconAvatarMd = AppLayout.icon26;
   static const double iconToolbar = AppLayout.icon22;
-  static const double iconTile = AppLayout.iconMd; // 20
+  static const double iconTile = AppLayout.iconMd;
   static const double iconMenuTile = AppLayout.icon18;
-  static const double iconPreset = AppLayout.iconSm; // 16
-  static const double iconBadgeSmall = AppLayout.icon12; // icon role badge
-
-  // ── Sizes — Avatar / Box ──
+  static const double iconPreset = AppLayout.iconSm;
+  static const double iconBadgeSmall = AppLayout.icon12;
   static const double userAvatarSize = 42;
   static const double skeletonAvatarSize = 64;
   static const double emptyIconSize = 40;
@@ -230,9 +212,6 @@ class AuthStyle {
   static const double spinnerStroke = 2;
   static const double iconBtnSize = 36;
   static const double borderWidth = 1.2;
-
-  // ── Sizes — Skeleton ──
-  // ── Sizes — Skeleton (ชื่อยาว) ──
   static const double skeletonTextHeight = 16;
   static const double skeletonTextWidth = 140;
   static const double skeletonTextSmallHeight = 12;
@@ -244,8 +223,6 @@ class AuthStyle {
   static const double skeletonCardHeight = 64;
   static const double skeletonCardRadius = 12;
   static const double skeletonMinHeight = 400;
-
-  // ── Alias ชื่อสั้น (backward-compat) ──
   static const double skeletonTextH = skeletonTextHeight;
   static const double skeletonTextW = skeletonTextWidth;
   static const double skeletonTextHSm = skeletonTextSmallHeight;
@@ -256,18 +233,13 @@ class AuthStyle {
   static const double skeletonTitleH = skeletonTitleHeight;
   static const double skeletonCardH = skeletonCardHeight;
   static const double skeletonCardR = skeletonCardRadius;
-
-  // ── Border widths ──
   static const double borderWidthSelected = 1.6;
   static const double borderWidthNormal = 1.0;
-
-  // ── BoxConstraints ──
   static const BoxConstraints iconBtnConstraints = BoxConstraints(
     minWidth: iconBtnSize,
     minHeight: iconBtnSize,
   );
 
-  // ══════════ SHADOWS ══════════
   static List<BoxShadow> get card => AppShadows.card;
   static List<BoxShadow> colored(Color c) => AppShadows.colored(c);
   static List<BoxShadow> get profile => [
@@ -281,11 +253,10 @@ class AuthStyle {
     ),
   ];
 
-  // ══════════ DURATIONS ══════════
   static const Duration fast = AppDurations.fast;
   static const Duration normal = AppDurations.normal;
 
-  // ══════════ STRINGS ══════════
+  // ══════ STRINGS (คงเดิม) ══════
   static const String save = AppStrings.save;
   static const String cancel = AppStrings.cancel;
   static const String successMsg = AppStrings.success;
@@ -332,8 +303,7 @@ class AuthStyle {
   static const String allMenus = 'ທັງໝົດ';
   static const String noAccess = 'ບໍ່ໃຫ້';
   static const String menuAllowed = 'ເມນູທີ່ອະນຸຍາດ';
-  static const String permissionInfo =
-      'ຖ້າບໍ່ເລືອກເມນູໃດເລີຍ ຜູ້ໃຊ້ຈະເຫັນໜ້າ "ຢູ່ລະຫວ່າງການກວດສອບ"';
+  static const String permissionInfo = 'ຖ້າບໍ່ເລືອກເມນູໃດເລີຍ ຜູ້ໃຊ້ຈະເຫັນໜ້າ "ຢູ່ລະຫວ່າງການກວດສອບ"';
   static const String permissionSaveSuccess = 'ອັບເດດສິດຂອງ';
   static const String permissionSaveSuccessSuffix = 'ແລ້ວ';
   static const String keyPrefix = 'key: ';

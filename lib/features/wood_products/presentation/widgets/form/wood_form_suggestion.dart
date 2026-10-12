@@ -23,7 +23,7 @@ class WoodFormSuggestion extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.lightbulb_outline, size: 13, color: WoodStyle.brown400),
+              Icon(Icons.lightbulb_outline, size: 13, color: WoodStyle.brown400),
               const SizedBox(width: 4),
               Text(
                 '${WoodStyle.prevInput} (${sorted.length})',
@@ -39,7 +39,7 @@ class WoodFormSuggestion extends StatelessWidget {
               return ActionChip(
                 label: Text(t, style: WoodStyle.suggestionChip),
                 backgroundColor: WoodStyle.brown50,
-                side: const BorderSide(color: WoodStyle.brown200),
+                side: BorderSide(color: WoodStyle.brown200),
                 visualDensity: VisualDensity.compact,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 onPressed: () => onPick(t),

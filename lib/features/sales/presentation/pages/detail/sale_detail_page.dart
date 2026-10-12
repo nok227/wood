@@ -437,7 +437,7 @@ class _SaleDetailPageState extends State<SaleDetailPage>
               }
             },
             itemBuilder: (_) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'edit_images',
                 child: Row(
                   children: [
@@ -446,7 +446,7 @@ class _SaleDetailPageState extends State<SaleDetailPage>
                       color: SaleStyle.brown700,
                       size: 20,
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Text(
                       SaleStyle.detailEditImages,
                       style: TextStyle(
@@ -514,7 +514,7 @@ class _SaleDetailPageState extends State<SaleDetailPage>
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [SaleStyle.brown700, SaleStyle.brown500],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -782,7 +782,7 @@ class _SaleDetailPageState extends State<SaleDetailPage>
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Row(
                 children: [
-                  const Text(
+                  Text(
                     SaleStyle.totalLabel,
                     style: TextStyle(
                       fontSize: 13,
@@ -793,7 +793,7 @@ class _SaleDetailPageState extends State<SaleDetailPage>
                   const Spacer(),
                   Text(
                     '${fmt.format(sale.totalAmount)} ${SaleStyle.currency}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
                       color: SaleStyle.brown800,
@@ -1091,7 +1091,7 @@ class _SaleDetailPageState extends State<SaleDetailPage>
               const SizedBox(width: 6),
               Text(
                 fmt.format(it.totalAmount),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w900,
                   color: SaleStyle.brown700,
@@ -1731,7 +1731,7 @@ class _SaleDetailPageState extends State<SaleDetailPage>
             const SizedBox(height: 6),
             Text(
               '${NumberFormat('#,###').format(widget.sale.totalAmount)} ${SaleStyle.currency}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: SaleStyle.brown700,

@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:wood/core/constants/specific/auth_style.dart';
-import 'package:wood/core/widgets/global/app_snackbar.dart';
-import 'package:wood/features/auth/presentation/pages/register_page.dart';
+import 'package:wood/core/widgets/shared/settings_button.dart';
 
 import '../controllers/admin_users_controller.dart';
 import '../controllers/auth_controller.dart';
-import '../widgets/profile/logout_dialog.dart';
 import '../widgets/profile/profile_empty.dart';
 import '../widgets/profile/profile_my_card.dart';
 import '../widgets/profile/profile_skeleton.dart';
@@ -51,12 +49,8 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
           title: const Text(AuthStyle.profileTitle),
           backgroundColor: AuthStyle.primary,
           foregroundColor: AuthStyle.white,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout, size: AuthStyle.iconToolbar),
-              tooltip: AuthStyle.logoutTooltip,
-              onPressed: () => _logout(_auth),
-            ),
+          actions: const [
+            SettingsButton(iconColor: AuthStyle.white),   // ⭐ เปลี่ยน
           ],
         ),
         body: ListView(
@@ -91,31 +85,5 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
         ),
       );
     });
-  }
-
-  // ══════════════════════════════════════════
-  // 🚪 Logout
-  // ══════════════════════════════════════════
-  void _logout(AuthController auth) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
-      builder: (dialogCtx) => LogoutDialog(
-        onCancel: () => Navigator.of(dialogCtx).pop(),
-        onConfirm: () async {
-          Navigator.of(dialogCtx).pop();
-          try {
-            await auth.logout();
-            Get.offAll(() => const RegisterPage());
-          } catch (e) {
-            AppSnackbar.err(
-              AuthStyle.errorMsg,
-              '${AuthStyle.logoutError}: $e',
-            );
-          }
-        },
-      ),
-    );
   }
 }

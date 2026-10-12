@@ -6,32 +6,19 @@ import 'package:wood/core/constants/global/app_shadows.dart';
 import 'package:wood/core/constants/global/app_durations.dart';
 import 'package:wood/core/constants/global/app_strings.dart';
 
-/// ══════════════════════════════════════════════
-/// 📍 SALE STYLE — Feature: Sales
-///
-/// ไฟล์ที่เรียกใช้ (17 ไฟล์):
-///   pages: sales_list_page, add_payment_page, sale_detail_page,
-///          debt_payment_page, sale_image_edit_page,
-///          sales_summary_page, sales_summary_detail_page
-///   widgets: sale_card, sale_order_preview_card,
-///            sales_list_skeleton, sales_summary_skeleton,
-///            add_payment_bills_panel, add_payment_debt_form,
-///            add_payment_items_panel, add_payment_summary,
-///            add_payment_wood_picker, full_image_viewer
-/// ══════════════════════════════════════════════
 class SaleStyle {
   SaleStyle._();
 
   // ══════════════════════════════════════════
   // 🎨 COLORS
   // ══════════════════════════════════════════
-  static const Color primary = AppColors.primary;
-  static const Color primaryDark = AppColors.primaryDark;
-  static const Color primaryLight = AppColors.primaryLight;
+  static Color get primary => AppColors.primary;
+  static Color get primaryDark => AppColors.primaryDark;
+  static Color get primaryLight => AppColors.primaryLight;
 
-  static const Color bg = AppColors.bg;
+  static Color get bg => AppColors.bg;
   static const Color surface = AppColors.surface;
-  static const Color softBg = AppColors.brown50;
+  static Color get softBg => AppColors.brown50;
   static const Color greyBg = AppColors.grey50;
   static const Color greyLight = AppColors.grey100;
   static const Color divider = AppColors.divider;
@@ -53,17 +40,17 @@ class SaleStyle {
   static const Color textSecondary = AppColors.textSecondary;
   static const Color textHint = AppColors.textHint;
 
-  // ── Brown scale ──
-  static const Color brown50 = AppColors.brown50;
-  static const Color brown100 = AppColors.brown100;
-  static const Color brown200 = AppColors.brown200;
-  static const Color brown300 = AppColors.brown300;
-  static const Color brown400 = AppColors.brown400;
-  static const Color brown500 = AppColors.brown500;
-  static const Color brown600 = AppColors.brown600;
-  static const Color brown700 = AppColors.brown700;
-  static const Color brown800 = AppColors.brown800;
-  static const Color brown900 = AppColors.brown900;
+  // ── Brown scale (dynamic) ──
+  static Color get brown50 => AppColors.brown50;
+  static Color get brown100 => AppColors.brown100;
+  static Color get brown200 => AppColors.brown200;
+  static Color get brown300 => AppColors.brown300;
+  static Color get brown400 => AppColors.brown400;
+  static Color get brown500 => AppColors.brown500;
+  static Color get brown600 => AppColors.brown600;
+  static Color get brown700 => AppColors.brown700;
+  static Color get brown800 => AppColors.brown800;
+  static Color get brown900 => AppColors.brown900;
 
   // ── Grey scale ──
   static const Color grey50 = AppColors.grey50;
@@ -143,31 +130,28 @@ class SaleStyle {
   static const Color blueAccent = AppColors.blueAccent;
   static const Color blueGrey700 = Color(0xFF455A64);
 
-  // ── Accent ──
   static const Color indigo = AppColors.indigo;
   static const Color indigo700 = AppColors.indigo700;
 
-  // ── Payment ──
   static const Color cash = AppColors.cash;
   static const Color transfer = AppColors.transfer;
   static const Color mixed = AppColors.mixed;
   static const Color debt = AppColors.debt;
 
-  // ── Status ──
   static const Color confirmed = AppColors.confirmed;
   static const Color mismatch = AppColors.mismatch;
   static const Color pending = AppColors.pending;
 
-  // ── Extend ສະເພາະ sale (alias token) ──
+  // ── Extend — sale-specific (dynamic) ──
   static const Color discountBadge = AppColors.red700;
-  static const Color changeGradStart = AppColors.brown800;
-  static const Color changeGradEnd = AppColors.brown600;
-  static const Color summaryGradStart = AppColors.brown700;
-  static const Color summaryGradEnd = AppColors.brown500;
+  static Color get changeGradStart => AppColors.brown800;
+  static Color get changeGradEnd => AppColors.brown600;
+  static Color get summaryGradStart => AppColors.brown700;
+  static Color get summaryGradEnd => AppColors.brown500;
   static const Color medal1 = AppColors.amber700;
   static const Color medal2 = AppColors.grey600;
-  static const Color medal3 = AppColors.brown400;
-  static const Color medal4 = AppColors.brown200;
+  static Color get medal3 => AppColors.brown400;
+  static Color get medal4 => AppColors.brown200;
 
   // ══════════════════════════════════════════
   // 📝 TEXT STYLES
@@ -186,10 +170,10 @@ class SaleStyle {
   static const TextStyle moneyBig = AppTextStyles.moneyBig;
   static const TextStyle moneyHuge = AppTextStyles.moneyHuge;
 
-  // ── Alias ຈາກ Global (ເຄີຍຊ້ຳ) ──
-  static const TextStyle dateHeader = AppTextStyles.dateHeader;
-  static const TextStyle sectionTitle = AppTextStyles.sectionTitle;
-  static const TextStyle sectionLabel = AppTextStyles.sectionLabel;
+  // ── Alias — AppTextStyles ที่เป็น get ──
+  static TextStyle get dateHeader => AppTextStyles.dateHeader;
+  static TextStyle get sectionTitle => AppTextStyles.sectionTitle;
+  static TextStyle get sectionLabel => AppTextStyles.sectionLabel;
   static const TextStyle itemName = AppTextStyles.itemName;
   static const TextStyle itemNameBold = AppTextStyles.itemNameBold;
 
@@ -312,14 +296,9 @@ class SaleStyle {
   static const EdgeInsets padImgHeader = EdgeInsets.fromLTRB(18, 16, 18, 8);
   static const EdgeInsets padImgBody = EdgeInsets.fromLTRB(18, 8, 18, 16);
   static const EdgeInsets padBottomBar = EdgeInsets.fromLTRB(12, 8, 12, 12);
-  static const EdgeInsets padListFAB = EdgeInsets.only(
-    bottom: 200,
-    left: 12,
-    right: 12,
-  );
+  static const EdgeInsets padListFAB = EdgeInsets.only(bottom: 200, left: 12, right: 12);
   static const EdgeInsets padSummary = EdgeInsets.fromLTRB(10, 4, 10, 20);
 
-  // ── Radius ──
   static const BorderRadius r2 = AppLayout.r4;
   static const BorderRadius r4 = AppLayout.r4;
   static const BorderRadius r5 = BorderRadius.all(Radius.circular(5));
@@ -340,20 +319,14 @@ class SaleStyle {
   static const BorderRadius chipRadius = AppLayout.r6;
   static const BorderRadius bannerRadius = AppLayout.r14;
   static const BorderRadius pillRadius = AppLayout.r20;
-  static const BorderRadius topR13 = BorderRadius.vertical(
-    top: Radius.circular(13),
-  );
-  static const BorderRadius topR14 = BorderRadius.vertical(
-    top: Radius.circular(14),
-  );
+  static const BorderRadius topR13 = BorderRadius.vertical(top: Radius.circular(13));
+  static const BorderRadius topR14 = BorderRadius.vertical(top: Radius.circular(14));
 
-  // ── Icons ──
   static const double iconSm = AppLayout.iconSm;
   static const double iconMd = AppLayout.iconMd;
   static const double iconLg = AppLayout.iconLg;
   static const double iconXl = AppLayout.iconXl;
 
-  // ── Sizes ──
   static const double thumbSale = 76;
   static const double thumbSaleLg = 90;
   static const double thumbSaleH = 76;
@@ -373,21 +346,14 @@ class SaleStyle {
   static const double billCardRadius = 8;
   static const double snackbarRadius = 12;
 
-  // ── Nav / Sections ──
   static const double navIconSelected = 26;
   static const double navIconUnselected = 22;
 
-  // ══════════════════════════════════════════
-  // 🎭 SHADOWS
-  // ══════════════════════════════════════════
   static List<BoxShadow> get card => AppShadows.card;
   static List<BoxShadow> get cardMd => AppShadows.cardMd;
   static List<BoxShadow> get cardLg => AppShadows.cardLg;
   static List<BoxShadow> colored(Color c) => AppShadows.colored(c);
 
-  // ══════════════════════════════════════════
-  // ⏱️ DURATIONS
-  // ══════════════════════════════════════════
   static const Duration fast = AppDurations.fast;
   static const Duration normal = AppDurations.normal;
   static const Duration slow = AppDurations.slow;
@@ -466,8 +432,7 @@ class SaleStyle {
   static const String confirmPaymentSub = 'ບັນທຶກວ່າຮັບເງິນຄົບແລ້ວ';
   static const String mismatchBtn = 'ບັນຊີບໍ່ຕົງກັນ';
   static const String mismatchBtnSub = 'ບັນທຶກບັນຫາ · ລໍຖ້າກວດສອບ';
-  static const String deleteConfirmPrefix =
-      'ຈະລຶບອອກຈາກ Firebase ແລະ Cloudinary ຖາວອນ';
+  static const String deleteConfirmPrefix = 'ຈະລຶບອອກຈາກ Firebase ແລະ Cloudinary ຖາວອນ';
   static const String deleteConfirmMsg = 'ຢືນຢັນການລຶບ?';
   static const String saveImageSuccess = 'ບັນທຶກລົງຄັງຮູບແລ້ວ';
   static const String saveImageError = 'ບໍ່ສາມາດບັນທຶກໄດ້';
@@ -653,8 +618,7 @@ class SaleStyle {
   static const String detailAddrPrefix = 'ທີ່ຢູ່';
   static const String detailReason = 'ເຫດຜົນ';
 
-  static const String imgEditHint =
-      'ແກ້ໄຂໄດ້ສະເພາະຮູບ — ບໍ່ສາມາດແກ້ລາຄາ / ຈຳນວນ / ລູກຄ້າ';
+  static const String imgEditHint = 'ແກ້ໄຂໄດ້ສະເພາະຮູບ — ບໍ່ສາມາດແກ້ລາຄາ / ຈຳນວນ / ລູກຄ້າ';
   static const String imgEditPay = 'ຮູບການຊຳລະ';
   static const String imgEditPaySub = 'ຮູບເງິນສົດ / ສະລິບໂອນ';
   static const String imgEditBill = 'ຮູບໃບບິນ';
@@ -738,34 +702,21 @@ class SaleStyle {
   static const String dashIcon = '·';
 
   static const List<int> billDenominations = [
-    100000,
-    50000,
-    20000,
-    10000,
-    5000,
-    2000,
-    1000,
-    500,
+    100000, 50000, 20000, 10000, 5000, 2000, 1000, 500,
   ];
 
   static const double dialogWidth = 8;
-  // ══════════════════════════════════════════
-  // ⭐ EXTEND 2 — Round 1 (list + edit_images)
-  // ══════════════════════════════════════════
 
-  // ── Opacity factors ──
+  // EXTEND 2
   static const double overlayOpacity = 0.2;
   static const double fabGlowOpacity = 0.35;
   static const double fabShadowOpacity = 0.5;
   static const double imgSectionBgOpacity = 0.08;
   static const double imgSectionBorderOpacity = 0.25;
   static const double imgSectionSubOpacity = 0.7;
-
-  // ── Border widths ──
   static const double borderWidthNormal = 1.2;
   static const double borderWidthActive = 2.0;
 
-  // ── Sizes — Icons ──
   static const double iconCalendar = 13;
   static const double iconCheckSm = 16;
   static const double iconMenuSmall = 18;
@@ -776,7 +727,6 @@ class SaleStyle {
   static const double iconChevronLg = 18;
   static const double iconBadgeCircle = 32;
 
-  // ── Sizes — Lists ──
   static const int perPage = 10;
   static const double scrollLoadMoreThreshold = 200;
   static const double loadingIndicatorSize = 20;
@@ -784,7 +734,6 @@ class SaleStyle {
   static const double loadingBoxSpinner = 18;
   static const double loadingBoxPad = 24;
 
-  // ── Gap ──
   static const Widget gap2 = SizedBox(height: 2, width: 2);
   static const Widget gap3 = SizedBox(height: 3, width: 3);
   static const Widget gap4 = SizedBox(height: 4, width: 4);
@@ -795,81 +744,34 @@ class SaleStyle {
   static const Widget gap90 = SizedBox(height: 90);
   static const Widget gap120 = SizedBox(height: 120);
 
-  // ── Wrap spacing ──
   static const double wrapSpacing = 6.0;
   static const double wrapRunSpacing = 6.0;
   static const double wrapCardSpacing = 5.0;
   static const double wrapCardRunSpacing = 4.0;
 
-  // ── Padding ──
   static const EdgeInsets padFilterRow = EdgeInsets.only(top: 4, bottom: 4);
   static const EdgeInsets padH8 = EdgeInsets.symmetric(horizontal: 8);
   static const EdgeInsets padDateHeader = EdgeInsets.fromLTRB(4, 10, 4, 6);
   static const EdgeInsets padLoadMore = EdgeInsets.symmetric(vertical: 20);
-  static const EdgeInsets padFabAction = EdgeInsets.symmetric(
-    horizontal: 18,
-    vertical: 12,
-  );
+  static const EdgeInsets padFabAction = EdgeInsets.symmetric(horizontal: 18, vertical: 12);
   static const EdgeInsets padFilterChip = EdgeInsets.symmetric(horizontal: 4.0);
   static const EdgeInsets padImgCloseBadge = EdgeInsets.all(3);
-  static const EdgeInsets padSectionHeaderImg = EdgeInsets.symmetric(
-    horizontal: 12,
-    vertical: 10,
-  );
-  static const EdgeInsets padBadgeTiny = EdgeInsets.symmetric(
-    horizontal: 5,
-    vertical: 1,
-  );
+  static const EdgeInsets padSectionHeaderImg = EdgeInsets.symmetric(horizontal: 12, vertical: 10);
+  static const EdgeInsets padBadgeTiny = EdgeInsets.symmetric(horizontal: 5, vertical: 1);
 
-  // ── Text Styles ──
-  static const TextStyle textEmptyList = TextStyle(
-    fontSize: 14,
-    color: AppColors.grey600,
-  );
-  static const TextStyle textFabAction = TextStyle(
-    color: AppColors.white,
-    fontSize: 14,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 0.2,
-  );
-  static const TextStyle textFilterChip = TextStyle(
-    fontSize: 12.5,
-    fontWeight: FontWeight.w600,
-  );
-  static const TextStyle textFilterChipSelected = TextStyle(
-    fontSize: 12.5,
-    fontWeight: FontWeight.bold,
-  );
-  static const TextStyle textInfoHint = TextStyle(
-    fontSize: 12,
-    color: AppColors.brown800,
-    fontWeight: FontWeight.w600,
-  );
-  static const TextStyle textImgSectionTitle = TextStyle(
-    fontSize: 13.5,
-    fontWeight: FontWeight.w900,
-  );
+  // TextStyles (dynamic บางตัว)
+  static const TextStyle textEmptyList = TextStyle(fontSize: 14, color: AppColors.grey600);
+  static const TextStyle textFabAction = TextStyle(color: AppColors.white, fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.2);
+  static const TextStyle textFilterChip = TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600);
+  static const TextStyle textFilterChipSelected = TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold);
+  static TextStyle get textInfoHint => TextStyle(fontSize: 12, color: AppColors.brown800, fontWeight: FontWeight.w600);
+  static const TextStyle textImgSectionTitle = TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900);
   static const TextStyle textImgSectionSub = TextStyle(fontSize: 11);
-  static const TextStyle textImgEditAdd = TextStyle(
-    fontSize: 11,
-    color: AppColors.brown600,
-    fontWeight: FontWeight.bold,
-  );
-  static const TextStyle textBadgeNew = TextStyle(
-    color: AppColors.white,
-    fontSize: 9,
-    fontWeight: FontWeight.bold,
-  );
-  static const TextStyle textLoadingBox = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.bold,
-    color: AppColors.brown800,
-  );
-  // ══════════════════════════════════════════
-  // ⭐ EXTEND 3 — Round 2A (widgets)
-  // ══════════════════════════════════════════
+  static TextStyle get textImgEditAdd => TextStyle(fontSize: 11, color: AppColors.brown600, fontWeight: FontWeight.bold);
+  static const TextStyle textBadgeNew = TextStyle(color: AppColors.white, fontSize: 9, fontWeight: FontWeight.bold);
+  static TextStyle get textLoadingBox => TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.brown800);
 
-  // ── Icon sizes เพิ่ม ──
+  // EXTEND 3
   static const double iconDot4 = 4;
   static const double iconDot5 = 5;
   static const double iconDot6 = 6;
@@ -881,8 +783,6 @@ class SaleStyle {
   static const double iconMdLg = 22;
   static const double iconMd24 = 24;
   static const double iconMd26 = 26;
-
-  // ── Sizes สำหรับ widget card ──
   static const double thumbMiniW = 76;
   static const double thumbMiniH = 76;
   static const double iconBtnSmall = 46;
@@ -898,8 +798,6 @@ class SaleStyle {
   static const double checkCircleMd = 18;
   static const double checkMarkSm = 11;
   static const double checkMarkMd = 13;
-
-  // ── Skeleton sizes ──
   static const double skelCardH = 76;
   static const double skelBarH14 = 14;
   static const double skelBarH15 = 15;
@@ -915,8 +813,6 @@ class SaleStyle {
   static const double skelGap4 = 4;
   static const double skelGap6 = 6;
   static const double skelBtnH = 30;
-
-  // ── Bill card sizes ──
   static const double billIconSize = 18;
   static const double billCloseSize = 18;
   static const double billIconClose = 11;
@@ -926,13 +822,11 @@ class SaleStyle {
   static const double billChipPadH6 = 6;
   static const double billChipPadV2 = 2;
 
-  // ── Duration ──
   static const Duration skelPulse = Duration(milliseconds: 1200);
   static const Duration swipeClose = Duration(milliseconds: 180);
   static const Duration swipeDelay = Duration(milliseconds: 200);
   static const Duration floatMenu = Duration(milliseconds: 220);
 
-  // ── Opacity ──
   static const double skelPulseMin = 0.5;
   static const double skelPulseMax = 1.0;
   static const double skelShadowOpacity = 0.05;
@@ -940,103 +834,30 @@ class SaleStyle {
   static const double pulseEnd = 0.5;
   static const double previewDashOpacity = 0.4;
 
-  // ── Border widths ──
   static const double borderW1_0 = 1.0;
   static const double borderW1_5 = 1.5;
   static const double borderW1_8 = 1.8;
   static const double borderW2_5 = 2.5;
 
-  // ── Extend TextStyles (สำหรับ widget) ──
-  static const TextStyle txPreviewTitle = TextStyle(
-    color: AppColors.brown800,
-    fontSize: 15,
-    fontWeight: FontWeight.w900,
-    letterSpacing: 0.3,
-  );
-  static const TextStyle txPreviewSub = TextStyle(
-    color: AppColors.grey500,
-    fontSize: 10.5,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0.5,
-  );
-  static const TextStyle txItemCount = TextStyle(
-    color: AppColors.brown700,
-    fontSize: 11.5,
-    fontWeight: FontWeight.bold,
-  );
-  static const TextStyle txSectionLabel = TextStyle(
-    fontSize: 10.5,
-    fontWeight: FontWeight.w900,
-    color: AppColors.grey500,
-    letterSpacing: 1.5,
-  );
-  static const TextStyle txPreviewItemName = TextStyle(
-    fontSize: 13.5,
-    fontWeight: FontWeight.bold,
-    color: AppColors.black87,
-  );
-  static const TextStyle txPreviewItemSub = TextStyle(
-    fontSize: 11.5,
-    color: AppColors.grey600,
-    fontWeight: FontWeight.w500,
-  );
-  static const TextStyle txPreviewItemSubBold = TextStyle(
-    fontSize: 11.5,
-    color: AppColors.grey600,
-    fontWeight: FontWeight.w700,
-  );
-  static const TextStyle txPreviewItemPrice = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w900,
-    color: AppColors.brown800,
-    letterSpacing: 0.2,
-  );
-  static const TextStyle txPreviewMoneyLabel = TextStyle(
-    fontSize: 12.5,
-    color: AppColors.grey600,
-  );
-  static const TextStyle txPreviewMoneyValue = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w700,
-    color: AppColors.black87,
-  );
-  static const TextStyle txPreviewMoneyValueBold = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w900,
-  );
-  static const TextStyle txPreviewNetLabel = TextStyle(
-    color: AppColors.green800,
-    fontSize: 13.5,
-    fontWeight: FontWeight.w900,
-    letterSpacing: 0.3,
-  );
-  static const TextStyle txPreviewNetValue = TextStyle(
-    color: AppColors.green800,
-    fontSize: 22,
-    fontWeight: FontWeight.w900,
-    letterSpacing: 0.3,
-  );
-  static const TextStyle txPreviewInfoLabel = TextStyle(
-    fontSize: 12,
-    color: AppColors.grey600,
-  );
-  static const TextStyle txPreviewInfoValue = TextStyle(
-    fontSize: 12.5,
-    fontWeight: FontWeight.w700,
-    color: AppColors.black87,
-  );
-  static const TextStyle txPreviewImgText = TextStyle(
-    fontSize: 11.5,
-    fontWeight: FontWeight.w700,
-    color: AppColors.grey700,
-  );
-  static const TextStyle txPreviewFooter = TextStyle(
-    fontSize: 11.5,
-    fontWeight: FontWeight.w600,
-    color: AppColors.grey600,
-  );
+  // TextStyles (มี brown → ต้อง get)
+  static TextStyle get txPreviewTitle => TextStyle(color: AppColors.brown800, fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 0.3);
+  static const TextStyle txPreviewSub = TextStyle(color: AppColors.grey500, fontSize: 10.5, fontWeight: FontWeight.w600, letterSpacing: 0.5);
+  static TextStyle get txItemCount => TextStyle(color: AppColors.brown700, fontSize: 11.5, fontWeight: FontWeight.bold);
+  static const TextStyle txSectionLabel = TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: AppColors.grey500, letterSpacing: 1.5);
+  static const TextStyle txPreviewItemName = TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: AppColors.black87);
+  static const TextStyle txPreviewItemSub = TextStyle(fontSize: 11.5, color: AppColors.grey600, fontWeight: FontWeight.w500);
+  static const TextStyle txPreviewItemSubBold = TextStyle(fontSize: 11.5, color: AppColors.grey600, fontWeight: FontWeight.w700);
+  static TextStyle get txPreviewItemPrice => TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.brown800, letterSpacing: 0.2);
+  static const TextStyle txPreviewMoneyLabel = TextStyle(fontSize: 12.5, color: AppColors.grey600);
+  static const TextStyle txPreviewMoneyValue = TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.black87);
+  static const TextStyle txPreviewMoneyValueBold = TextStyle(fontSize: 13, fontWeight: FontWeight.w900);
+  static const TextStyle txPreviewNetLabel = TextStyle(color: AppColors.green800, fontSize: 13.5, fontWeight: FontWeight.w900, letterSpacing: 0.3);
+  static const TextStyle txPreviewNetValue = TextStyle(color: AppColors.green800, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 0.3);
+  static const TextStyle txPreviewInfoLabel = TextStyle(fontSize: 12, color: AppColors.grey600);
+  static const TextStyle txPreviewInfoValue = TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.black87);
+  static const TextStyle txPreviewImgText = TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.grey700);
+  static const TextStyle txPreviewFooter = TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.grey600);
 
-  // ── Skeleton card decorations ──
   static const double skelCardRadius = 12;
   static const double skelCardPad = 10;
   static const double skelBoxRadius = 4;

@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:wood/core/constants/specific/sale_style.dart';
 import 'package:wood/core/widgets/global/animated_number.dart';
-import 'package:wood/core/widgets/global/number_formatter.dart'; // ← ใหม่
+import 'package:wood/core/widgets/global/number_formatter.dart';
 import 'package:wood/features/wood_products/domain/entities/wood_product.dart';
 import 'package:wood/features/wood_products/presentation/controllers/wood_product_controller.dart';
 import '../../controllers/sales_controller.dart';
@@ -47,12 +47,37 @@ class AddPaymentWoodPicker extends StatelessWidget {
     required this.onAddItem,
   });
 
+  /// key ที่ไม่รวม zone → ถ้าต่างกันแค่ zone ถือว่าเป็น "สินค้าเดียวกัน"
+  static String _variantKey(WoodProduct p) =>
+      '${p.woodType}|${p.name}|'
+      '${p.width}|${p.length}|${p.thickness}|${p.sizeUnit}|'
+      '${p.price}|${p.unit}|${p.note}';
+
+  /// ⭐ input ที่สะอาด — underline อย่างเดียว ไม่มีกล่อง
+  static InputDecoration _deco(String label, IconData icon, {String? hint}) =>
+      InputDecoration(
+        labelText: label,
+        hintText: hint,
+        isDense: true,
+        filled: false,
+        border: InputBorder.none,
+        enabledBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: SaleStyle.grey300, width: 1),
+        ),
+        focusedBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: SaleStyle.brown700, width: 1.5),
+        ),
+        prefixIcon: Icon(icon, color: SaleStyle.brown700, size: 20),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+      );
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       if (pc.isLoading.value) {
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
           child: Center(
             child: CircularProgressIndicator(color: SaleStyle.brown700),
           ),
@@ -88,29 +113,41 @@ class AddPaymentWoodPicker extends StatelessWidget {
           ? <WoodProduct>[]
           : filteredProducts.where((p) => p.name == wood).toList();
 
-      final types =
-          wood == null
-                ? <String>[]
-                : woodVariants
-                      .map(
-                        (p) => p.woodType.trim().isEmpty
-                            ? SaleStyle.woodUnnamedType
-                            : p.woodType,
-                      )
-                      .toSet()
-                      .toList()
-            ..sort();
+      final types = wood == null
+          ? <String>[]
+          : woodVariants
+                .map(
+                  (p) => p.woodType.trim().isEmpty
+                      ? SaleStyle.woodUnnamedType
+                      : p.woodType,
+                )
+                .toSet()
+                .toList()
+        ..sort();
 
-      final list =
-          (wood == null || type == null)
-                ? <WoodProduct>[]
-                : (woodVariants.where((p) {
-                    final t = p.woodType.trim().isEmpty
-                        ? SaleStyle.woodUnnamedType
-                        : p.woodType;
-                    return t == type;
-                  }).toList())
-            ..sort((a, b) => b.price.compareTo(a.price));
+      final rawList = (wood == null || type == null)
+          ? <WoodProduct>[]
+          : (woodVariants.where((p) {
+              final t = p.woodType.trim().isEmpty
+                  ? SaleStyle.woodUnnamedType
+                  : p.woodType;
+              return t == type;
+            }).toList())
+        ..sort((a, b) => b.price.compareTo(a.price));
+
+      // Dedupe: ต่างกันแค่ zone → เหลือ 1
+      final seenKeys = <String>{};
+      final list = <WoodProduct>[];
+      for (final p in rawList) {
+        if (seenKeys.add(_variantKey(p))) list.add(p);
+      }
+
+      final selected = c.selectedProduct.value;
+      final selectedKey = selected == null ? null : _variantKey(selected);
+      final initialKey = (selectedKey != null &&
+              list.any((p) => _variantKey(p) == selectedKey))
+          ? selectedKey
+          : null;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -118,23 +155,14 @@ class AddPaymentWoodPicker extends StatelessWidget {
           DropdownButtonFormField<String>(
             initialValue: currentUnit,
             isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: SaleStyle.woodUnit,
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.straighten, color: SaleStyle.brown700),
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 14,
-              ),
-            ),
+            decoration: _deco(SaleStyle.woodUnit, Icons.straighten),
             items: unitList
                 .map(
                   (u) => DropdownMenuItem<String>(
                     value: u,
                     child: Text(
                       u == SaleStyle.woodStatusAll ? SaleStyle.woodUnitAll : u,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -142,62 +170,37 @@ class AddPaymentWoodPicker extends StatelessWidget {
                 .toList(),
             onChanged: (v) => onUnitFilterChanged(v ?? SaleStyle.woodStatusAll),
           ),
-          SaleStyle.gapMd,
+          _dashed(),
           DropdownButtonFormField<String>(
             initialValue: wood,
             isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: SaleStyle.woodName,
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.category, color: SaleStyle.brown700),
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 14,
-              ),
-            ),
-            hint: const Text(SaleStyle.woodNameHint),
+            decoration: _deco(SaleStyle.woodName, Icons.category,
+                hint: SaleStyle.woodNameHint),
             items: names
                 .map(
                   (n) => DropdownMenuItem<String>(
                     value: n,
-                    child: Text(
-                      n,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    child: Text(n,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 )
                 .toList(),
             onChanged: onWoodChanged,
           ),
           if (wood != null) ...[
-            SaleStyle.gapMd,
+            _dashed(),
             DropdownButtonFormField<String>(
               initialValue: type,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: SaleStyle.woodType,
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(
-                  Icons.local_florist,
-                  color: SaleStyle.brown700,
-                ),
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 14,
-                ),
-              ),
-              hint: const Text(SaleStyle.woodTypeHint),
+              decoration: _deco(SaleStyle.woodType, Icons.local_florist,
+                  hint: SaleStyle.woodTypeHint),
               items: types
                   .map(
                     (t) => DropdownMenuItem<String>(
                       value: t,
-                      child: Text(
-                        t,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      child: Text(t,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   )
                   .toList(),
@@ -205,25 +208,16 @@ class AddPaymentWoodPicker extends StatelessWidget {
             ),
           ],
           if (type != null && list.isNotEmpty) ...[
-            SaleStyle.gapMd,
+            _dashed(),
             DropdownButtonFormField<String>(
-              initialValue: c.selectedProduct.value?.id,
+              initialValue: initialKey,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: SaleStyle.woodSize,
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.straighten, color: SaleStyle.brown700),
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 14,
-                ),
-              ),
-              hint: const Text(SaleStyle.woodSizeHint),
+              decoration: _deco(SaleStyle.woodSize, Icons.straighten,
+                  hint: SaleStyle.woodSizeHint),
               items: list
                   .map(
                     (p) => DropdownMenuItem<String>(
-                      value: p.id,
+                      value: _variantKey(p),
                       child: Text(
                         '${p.width}x${p.length}x${p.thickness} ${p.sizeUnit} · ${fmt.format(p.price)} ${SaleStyle.currency}',
                         overflow: TextOverflow.ellipsis,
@@ -231,9 +225,10 @@ class AddPaymentWoodPicker extends StatelessWidget {
                     ),
                   )
                   .toList(),
-              onChanged: (id) {
-                if (id == null) return;
-                c.selectedProduct.value = list.firstWhere((p) => p.id == id);
+              onChanged: (key) {
+                if (key == null) return;
+                c.selectedProduct.value =
+                    list.firstWhere((p) => _variantKey(p) == key);
               },
             ),
           ],
@@ -254,6 +249,7 @@ class AddPaymentWoodPicker extends StatelessWidget {
                   shape: const RoundedRectangleBorder(
                     borderRadius: SaleStyle.r10,
                   ),
+                  elevation: 0,
                 ),
                 onPressed: onAddItem,
                 icon: const Icon(Icons.add_shopping_cart),
@@ -272,21 +268,37 @@ class AddPaymentWoodPicker extends StatelessWidget {
     });
   }
 
+  /// ⭐ เส้นขีดๆ ระหว่างช่อง
+  Widget _dashed() => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const dashWidth = 4.0;
+            const dashSpace = 4.0;
+            final count =
+                (constraints.maxWidth / (dashWidth + dashSpace)).floor();
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(
+                count,
+                (_) => Container(
+                  width: dashWidth,
+                  height: 1,
+                  color: SaleStyle.grey300,
+                ),
+              ),
+            );
+          },
+        ),
+      );
+
   Widget _emptyBox(String text) {
     return Container(
       padding: SaleStyle.padAll16,
-      decoration: BoxDecoration(
-        color: SaleStyle.grey50,
-        borderRadius: SaleStyle.r10,
-        border: Border.all(color: SaleStyle.grey300),
-      ),
       child: Row(
         children: [
-          const Icon(
-            Icons.inventory_2_outlined,
-            color: SaleStyle.grey500,
-            size: 24,
-          ),
+          const Icon(Icons.inventory_2_outlined,
+              color: SaleStyle.grey500, size: 24),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -303,24 +315,19 @@ class AddPaymentWoodPicker extends StatelessWidget {
     return Container(
       padding: SaleStyle.padCardLg,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [SaleStyle.brown50, SaleStyle.brown100],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: SaleStyle.brown50,
         borderRadius: SaleStyle.r10,
-        border: Border.all(color: SaleStyle.brown300, width: 1.5),
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
               color: SaleStyle.brown700,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check, color: SaleStyle.white, size: 22),
+            child: const Icon(Icons.check, color: SaleStyle.white, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -329,7 +336,7 @@ class AddPaymentWoodPicker extends StatelessWidget {
               children: [
                 Text(
                   p.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: SaleStyle.brown900,
@@ -340,7 +347,7 @@ class AddPaymentWoodPicker extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   '${p.width}x${p.length}x${p.thickness} ${p.sizeUnit} · ${SaleStyle.woodInStock} ${p.quantity} ${p.unit}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11.5,
                     color: SaleStyle.brown700,
                   ),
@@ -353,7 +360,7 @@ class AddPaymentWoodPicker extends StatelessWidget {
             value: p.price,
             suffix: ' ${SaleStyle.currency}',
             duration: SaleStyle.animFast.inMilliseconds,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w900,
               color: SaleStyle.brown800,
@@ -382,15 +389,18 @@ class AddPaymentWoodPicker extends StatelessWidget {
               ],
               decoration: InputDecoration(
                 labelText: '${SaleStyle.qtyLabel} *',
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(
-                  Icons.numbers,
-                  color: SaleStyle.brown700,
-                ),
-                suffixText: p.unit,
                 isDense: true,
+                border: InputBorder.none,
+                enabledBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: SaleStyle.grey300),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: SaleStyle.brown700, width: 1.5),
+                ),
+                prefixIcon: Icon(Icons.numbers,
+                    color: SaleStyle.brown700, size: 18),
+                suffixText: p.unit,
               ),
-              // ✅ แก้: ลบจุดก่อน parse
               onChanged: (v) {
                 final n = int.tryParse(v.replaceAll('.', '')) ?? 1;
                 onQtyChanged(n.clamp(1, 9999));
@@ -408,22 +418,23 @@ class AddPaymentWoodPicker extends StatelessWidget {
                 const DigitLimitFormatter(5),
                 DotNumberFormatter(),
               ],
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: SaleStyle.pricePerUnit,
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(
-                  Icons.discount,
-                  color: SaleStyle.brown700,
-                  size: 18,
-                ),
-                suffixText: SaleStyle.currency,
                 isDense: true,
+                border: InputBorder.none,
+                enabledBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: SaleStyle.grey300),
+                ),
+                focusedBorder:  UnderlineInputBorder(
+                  borderSide: BorderSide(color: SaleStyle.brown700, width: 1.5),
+                ),
+                prefixIcon:  Icon(Icons.discount,
+                    color: SaleStyle.brown700, size: 18),
+                suffixText: SaleStyle.currency,
               ),
               onChanged: (v) => onDiscChanged(
-                (double.tryParse(v.replaceAll(',', '')) ?? 0).clamp(
-                  0,
-                  double.infinity,
-                ),
+                (double.tryParse(v.replaceAll(',', '')) ?? 0)
+                    .clamp(0, double.infinity),
               ),
             ),
           ),
@@ -443,16 +454,15 @@ class AddPaymentWoodPicker extends StatelessWidget {
       decoration: BoxDecoration(
         color: SaleStyle.red50,
         borderRadius: SaleStyle.r10,
-        border: Border.all(color: SaleStyle.red300, width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: [
-              const Icon(Icons.discount, color: SaleStyle.red700, size: 18),
-              const SizedBox(width: 6),
-              const Text(
+            children: const [
+              Icon(Icons.discount, color: SaleStyle.red700, size: 18),
+              SizedBox(width: 6),
+              Text(
                 SaleStyle.discountLabel,
                 style: TextStyle(
                   fontSize: 13,
@@ -508,12 +518,8 @@ class AddPaymentWoodPicker extends StatelessWidget {
     );
   }
 
-  Widget _discRow(
-    String label,
-    String value,
-    Color color, {
-    bool bold = false,
-  }) {
+  Widget _discRow(String label, String value, Color color,
+      {bool bold = false}) {
     return Row(
       children: [
         Expanded(

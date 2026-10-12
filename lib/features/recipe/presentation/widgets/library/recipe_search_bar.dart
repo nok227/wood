@@ -19,7 +19,7 @@ class RecipeSearchBar extends StatelessWidget {
         decoration: InputDecoration(
           hintText: RecipeStyle.searchHint,
           prefixIcon:
-              const Icon(Icons.search, color: RecipeStyle.primary),
+              Icon(Icons.search, color: RecipeStyle.primary),
           suffixIcon: Obx(() => controller.searchQuery.value.isNotEmpty
               ? IconButton(
                   icon: const Icon(Icons.close, size: RecipeStyle.iconSm),
@@ -29,11 +29,11 @@ class RecipeSearchBar extends StatelessWidget {
           isDense: true,
           filled: true,
           fillColor: RecipeStyle.white,
-          border: const OutlineInputBorder(
+          border: OutlineInputBorder(
             borderRadius: RecipeStyle.r12,
             borderSide: BorderSide(color: RecipeStyle.brown200),
           ),
-          enabledBorder: const OutlineInputBorder(
+          enabledBorder: OutlineInputBorder(
             borderRadius: RecipeStyle.r12,
             borderSide: BorderSide(color: RecipeStyle.brown200),
           ),

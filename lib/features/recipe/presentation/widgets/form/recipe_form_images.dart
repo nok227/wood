@@ -48,7 +48,7 @@ class RecipeFormImages extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.add_a_photo,
                   color: RecipeStyle.brown400,
                   size: RecipeStyle.iconAdd,

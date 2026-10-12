@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:wood/core/constants/specific/account_style.dart';
+import 'package:wood/core/widgets/global/dashed_divider.dart';
 
 import '../controllers/account_form_controller.dart';
 import 'account_form_pay.dart';
@@ -19,7 +20,6 @@ class AccountFormSheet extends StatelessWidget {
     );
 
     return Container(
-      padding: AccountStyle.padFormSheet,
       constraints: BoxConstraints(
         maxHeight: Get.height * AccountStyle.formMaxHeightFactor,
       ),
@@ -32,105 +32,145 @@ class AccountFormSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // handle
+            // ── Drag handle ──
+            const SizedBox(height: 12),
             Center(
               child: Container(
-                width: AccountStyle.handleW,
-                height: AccountStyle.handleH,
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: AccountStyle.grey300,
-                  borderRadius: AccountStyle.r4,
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            AccountStyle.gapMd,
-            _Header(c: c),
-            AccountStyle.gapSm,
-            _TypeToggle(c: c),
-            AccountStyle.gapLg,
+            const SizedBox(height: 16),
 
+            // ── Header ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _Header(c: c),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Body scrollable ──
             Flexible(
               child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Obx(() => Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // Toggle รับเข้า / จ่ายออก
+                        _TypeToggle(c: c),
+                        const SizedBox(height: 20),
+
+                        // จำนวนเงิน
                         if (c.isIn)
                           AccountFormReceive(controller: c)
                         else
                           AccountFormPay(controller: c),
-                        AccountStyle.gapLg,
+                        const SizedBox(height: 20),
+
+                        // เส้นประคั่น
+                        DashedDivider(
+                          color: Colors.grey.shade300,
+                          height: 1,
+                          dashWidth: 4,
+                          dashSpace: 4,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // ประเภทเงิน
                         _PaymentTypeToggle(c: c),
-                        AccountStyle.gapLg,
+                        const SizedBox(height: 20),
+
+                        // เส้นประคั่น
+                        DashedDivider(
+                          color: Colors.grey.shade300,
+                          height: 1,
+                          dashWidth: 4,
+                          dashSpace: 4,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // หมายเหตุ
                         TextField(
                           controller: c.noteCtrl,
                           maxLines: 2,
-                          decoration: _inputDeco(
-                            label: AccountStyle.noteLabel,
+                          decoration: _softInput(
+                            hint: AccountStyle.noteLabel,
                             prefix: Icons.sticky_note_2_outlined,
+                            prefixColor: Colors.purple.shade300,
                           ),
                         ),
-                        AccountStyle.gapLg,
+                        const SizedBox(height: 24),
                       ],
                     )),
               ),
             ),
 
-            // save
-            Obx(() => SizedBox(
-                  height: AccountStyle.saveButtonHeight,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: c.isIn
-                          ? AccountStyle.success
-                          : AccountStyle.error700,
-                      foregroundColor: AccountStyle.white,
-                      elevation: 0,
-                      shape: const RoundedRectangleBorder(
-                          borderRadius: AccountStyle.r12),
+            // ── Save button ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              child: Obx(() => SizedBox(
+                    height: AccountStyle.saveButtonHeight,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: c.isIn
+                            ? AccountStyle.success
+                            : AccountStyle.error700,
+                        foregroundColor: AccountStyle.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: c.submit,
+                      icon: const Icon(Icons.save_outlined, size: 20),
+                      label: Text(
+                        c.isIn
+                            ? AccountStyle.saveReceiveBtn
+                            : AccountStyle.savePayBtn,
+                        style: AccountStyle.formSaveBtnText,
+                      ),
                     ),
-                    onPressed: c.submit,
-                    icon: const Icon(Icons.save_outlined, size: 20),
-                    label: Text(
-                      c.isIn
-                          ? AccountStyle.saveReceiveBtn
-                          : AccountStyle.savePayBtn,
-                      style: AccountStyle.formSaveBtnText,
-                    ),
-                  ),
-                )),
+                  )),
+            ),
           ],
         ),
       ),
     );
   }
 
-  // ── Helpers ──
-  static InputDecoration _inputDeco({
-    required String label,
+  // ── Input แบบ filled ไม่มีกรอบ ──
+  static InputDecoration _softInput({
+    required String hint,
     IconData? prefix,
-    String? suffix,
-    Color focusColor = AccountStyle.brown400,
+    Color? prefixColor,
   }) {
     return InputDecoration(
-      labelText: label,
-      labelStyle: AccountStyle.inputLabel,
-      suffixText: suffix,
+      hintText: hint,
+      hintStyle: TextStyle(color: Colors.grey.shade400),
+      filled: true,
+      fillColor: Colors.grey.shade50,
       isDense: true,
-      border: const OutlineInputBorder(
-        borderRadius: AccountStyle.inputRadius,
-        borderSide: BorderSide(color: AccountStyle.grey300),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
       ),
-      enabledBorder: const OutlineInputBorder(
-        borderRadius: AccountStyle.inputRadius,
-        borderSide: BorderSide(color: AccountStyle.grey300),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: AccountStyle.inputRadius,
-        borderSide: BorderSide(color: focusColor, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
       ),
       prefixIcon: prefix == null
           ? null
-          : Icon(prefix, color: AccountStyle.brown400, size: 20),
+          : Icon(prefix, color: prefixColor, size: 20),
     );
   }
 }
@@ -147,28 +187,29 @@ class _Header extends StatelessWidget {
       return Row(
         children: [
           Container(
-            width: AccountStyle.iconCircleSize,
-            height: AccountStyle.iconCircleSize,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: isIn
-                  ? AccountStyle.successLight
-                  : AccountStyle.errorLight,
+                  ? AccountStyle.success.withOpacity(0.12)
+                  : AccountStyle.error700.withOpacity(0.12),
               shape: BoxShape.circle,
             ),
             child: Icon(
               isIn
                   ? Icons.arrow_downward_rounded
                   : Icons.arrow_upward_rounded,
-              color:
-                  isIn ? AccountStyle.success : AccountStyle.error700,
-              size: AccountStyle.iconMd,
+              color: isIn ? AccountStyle.success : AccountStyle.error700,
+              size: 20,
             ),
           ),
-          AccountStyle.gapSm,
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               isIn ? AccountStyle.receiveBtn : AccountStyle.payBtn,
-              style: AccountStyle.formTitle.copyWith(
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
                 color: isIn
                     ? AccountStyle.green800
                     : AccountStyle.error800,
@@ -176,8 +217,7 @@ class _Header extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.close,
-                color: AccountStyle.grey600, size: 22),
+            icon: Icon(Icons.close, color: Colors.grey.shade600, size: 22),
             onPressed: () => Get.back(),
           ),
         ],
@@ -196,7 +236,7 @@ class _TypeToggle extends StatelessWidget {
     return Obx(() => Row(
           children: [
             Expanded(
-              child: _ToggleButton(
+              child: _SoftToggle(
                 label: AccountStyle.typeIn,
                 icon: Icons.arrow_downward_rounded,
                 color: AccountStyle.success,
@@ -204,9 +244,9 @@ class _TypeToggle extends StatelessWidget {
                 onTap: () => c.setType('in'),
               ),
             ),
-            AccountStyle.gapSm,
+            const SizedBox(width: 10),
             Expanded(
-              child: _ToggleButton(
+              child: _SoftToggle(
                 label: AccountStyle.typeOut,
                 icon: Icons.arrow_upward_rounded,
                 color: AccountStyle.error700,
@@ -229,13 +269,19 @@ class _PaymentTypeToggle extends StatelessWidget {
     return Obx(() => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(AccountStyle.paymentTypeLabel,
-                style: AccountStyle.sectionLabel),
-            AccountStyle.gap6,
+            Text(
+              AccountStyle.paymentTypeLabel,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
-                  child: _ToggleButton(
+                  child: _SoftToggle(
                     label: AccountStyle.cashFull,
                     icon: Icons.payments_outlined,
                     color: AccountStyle.amber800,
@@ -243,9 +289,9 @@ class _PaymentTypeToggle extends StatelessWidget {
                     onTap: () => c.setPayType('cash'),
                   ),
                 ),
-                AccountStyle.gapSm,
+                const SizedBox(width: 10),
                 Expanded(
-                  child: _ToggleButton(
+                  child: _SoftToggle(
                     label: AccountStyle.transferFull,
                     icon: Icons.account_balance,
                     color: AccountStyle.blue700,
@@ -260,15 +306,15 @@ class _PaymentTypeToggle extends StatelessWidget {
   }
 }
 
-// ── Reusable toggle ──
-class _ToggleButton extends StatelessWidget {
+// ── Soft toggle (สีจางเมื่อเลือก ไม่ทึบ) ──
+class _SoftToggle extends StatelessWidget {
   final String label;
   final IconData icon;
   final Color color;
   final bool selected;
   final VoidCallback onTap;
 
-  const _ToggleButton({
+  const _SoftToggle({
     required this.label,
     required this.icon,
     required this.color,
@@ -279,32 +325,39 @@ class _ToggleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AccountStyle.transparent,
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: AccountStyle.inputRadius,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: selected ? color : AccountStyle.white,
-            borderRadius: AccountStyle.inputRadius,
+            color: selected
+                ? color.withOpacity(0.12)
+                : Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: selected ? color : AccountStyle.grey300,
-              width: selected ? 0 : 1.2,
+              color: selected ? color.withOpacity(0.4) : Colors.transparent,
+              width: 1,
             ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon,
-                  color: selected ? AccountStyle.white : color, size: 16),
-              const SizedBox(width: 5),
-              Text(label,
-                  style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
-                      color: selected ? AccountStyle.white : color,
-                      letterSpacing: 0.2)),
+                  color: selected ? color : Colors.grey.shade500,
+                  size: 16),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight:
+                      selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? color : Colors.grey.shade600,
+                ),
+              ),
             ],
           ),
         ),

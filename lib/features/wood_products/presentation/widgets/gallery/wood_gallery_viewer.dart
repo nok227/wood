@@ -7,6 +7,8 @@ class WoodGalleryViewer extends StatefulWidget {
   final PageController pageController;
   final int currentIndex;
   final ValueChanged<int> onPageChanged;
+  final ValueChanged<bool>? onZoomChanged;
+  final VoidCallback? onLongPress;                    // ⭐ ใหม่
 
   const WoodGalleryViewer({
     super.key,
@@ -14,6 +16,8 @@ class WoodGalleryViewer extends StatefulWidget {
     required this.pageController,
     required this.currentIndex,
     required this.onPageChanged,
+    this.onZoomChanged,
+    this.onLongPress,
   });
 
   @override
@@ -34,12 +38,14 @@ class _WoodGalleryViewerState extends State<WoodGalleryViewer> {
     final zoomed = _transform.value.getMaxScaleOnAxis() > 1.05;
     if (zoomed != _isZoomed && mounted) {
       setState(() => _isZoomed = zoomed);
+      widget.onZoomChanged?.call(zoomed);
     }
   }
 
   void _resetTransform() {
     _transform.value = Matrix4.identity();
     _isZoomed = false;
+    widget.onZoomChanged?.call(false);
   }
 
   @override
@@ -66,17 +72,23 @@ class _WoodGalleryViewerState extends State<WoodGalleryViewer> {
           transformationController: isCurrent ? _transform : null,
           minScale: 1,
           maxScale: 4,
-          child: Center(
-            child: CachedNetworkImage(
-              imageUrl: urls[i],
-              fit: BoxFit.contain,
-              placeholder: (c, u) => const Center(
-                child: CircularProgressIndicator(color: WoodStyle.white),
-              ),
-              errorWidget: (c, u, e) => const Icon(
-                Icons.broken_image,
-                color: WoodStyle.white,
-                size: WoodStyle.galleryErrorLg,
+          child: GestureDetector(
+            // ⭐ กดค้าง → หยุดสไลด์
+            onLongPress: widget.onLongPress,
+            // ⭐ ไม่ให้ tap ทำอะไร (แค่กัน event)
+            onTap: () {},
+            child: Center(
+              child: CachedNetworkImage(
+                imageUrl: urls[i],
+                fit: BoxFit.contain,
+                placeholder: (c, u) => const Center(
+                  child: CircularProgressIndicator(color: WoodStyle.white),
+                ),
+                errorWidget: (c, u, e) => const Icon(
+                  Icons.broken_image,
+                  color: WoodStyle.white,
+                  size: WoodStyle.galleryErrorLg,
+                ),
               ),
             ),
           ),
@@ -86,7 +98,8 @@ class _WoodGalleryViewerState extends State<WoodGalleryViewer> {
 
         return Dismissible(
           key: ValueKey('wood-viewer-$i-${urls[i]}'),
-          direction: _isZoomed ? DismissDirection.none : DismissDirection.vertical,
+          direction:
+              _isZoomed ? DismissDirection.none : DismissDirection.vertical,
           dismissThresholds: const {
             DismissDirection.up: 0.25,
             DismissDirection.down: 0.25,

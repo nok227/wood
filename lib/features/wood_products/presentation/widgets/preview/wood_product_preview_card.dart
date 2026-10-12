@@ -369,7 +369,7 @@ class _ZoneRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.place_outlined, size: 14, color: WoodStyle.brown400),
+        Icon(Icons.place_outlined, size: 14, color: WoodStyle.brown400),
         const SizedBox(width: 6),
         const SizedBox(
           width: 78,
@@ -459,7 +459,7 @@ class _NoteBox extends StatelessWidget {
           const SizedBox(height: 5),
           Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12.5,
               color: WoodStyle.brown900,
               height: 1.4,

@@ -53,7 +53,7 @@ class _Lazy3DWrapperState extends State<Lazy3DWrapper>
   Widget build(BuildContext context) {
     super.build(context);
     if (!_ready) {
-      return const ColoredBox(
+      return ColoredBox(
         color: HomeStyle.brown50,
         child: Center(
           child: CircularProgressIndicator(color: HomeStyle.primary),

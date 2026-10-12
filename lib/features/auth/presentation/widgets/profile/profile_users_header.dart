@@ -18,7 +18,7 @@ class ProfileUsersHeader extends StatelessWidget {
       children: [
         Container(
           padding: AuthStyle.padHeaderIcon,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AuthStyle.primary,
             shape: BoxShape.circle,
           ),

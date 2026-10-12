@@ -31,7 +31,7 @@ class Wood3DChipRow extends StatelessWidget {
               child: ChoiceChip(
                 showCheckmark: false,
                 avatar: isSel
-                    ? const Icon(
+                    ? Icon(
                         Icons.check_circle,
                         size: Wood3DStyle.iconStar13,
                         color: Wood3DStyle.brown700,

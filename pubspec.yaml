@@ -34,6 +34,8 @@ dependencies:
   screenshot: ^3.0.0
   gal: ^2.3.1
   flutter_image_compress: ^2.3.0
+  get_storage: ^2.1.1 
+  
 
 dev_dependencies:
   flutter_test:
@@ -65,4 +67,10 @@ flutter:
   assets:
     - assets/Icons/
     - assets/Images/
-    - assets/lottie/          # ⭐ เพิ่มบรรทัดนี้
+    - assets/lottie/          
+  # fonts:                       
+  #   - family: NotoSansLao      
+  #     fonts:
+  #       - asset: assets/fonts/NotoSansLao-Regular.ttf
+  #       - asset: assets/fonts/NotoSansLao-Bold.ttf
+  #         weight: 700

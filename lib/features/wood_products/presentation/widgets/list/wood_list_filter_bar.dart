@@ -33,18 +33,11 @@ class WoodListFilterBar extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(5),
+                padding: const EdgeInsets.all(0),
                 decoration: BoxDecoration(
                   color: WoodStyle.brown700,
                   borderRadius: WoodStyle.r6,
                 ),
-                child: const Icon(Icons.filter_list,
-                    color: WoodStyle.white, size: 13),
-              ),
-              const SizedBox(width: 6),
-              const Text(
-                WoodStyle.filterLabel,
-                style: WoodStyle.filterTitle,
               ),
             ],
           ),
@@ -60,7 +53,7 @@ class WoodListFilterBar extends StatelessWidget {
                   child: ChoiceChip(
                     showCheckmark: false,
                     avatar: sel
-                        ? const Icon(Icons.check_circle,
+                        ? Icon(Icons.check_circle,
                             size: 14, color: WoodStyle.brown700)
                         : null,
                     label: Text(

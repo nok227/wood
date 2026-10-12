@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:wood/core/constants/specific/auth_style.dart';
+import 'package:wood/core/widgets/global/loading/loading.dart';   // ⭐
 
 import '../controllers/auth_controller.dart';
 import '../controllers/auth_form_controller.dart';
@@ -31,7 +32,6 @@ class LoginPage extends StatelessWidget {
               const AuthHeroHeader(),
               const SizedBox(height: 4),
 
-              // ── Form Card ──
               AuthFormCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -50,32 +50,34 @@ class LoginPage extends StatelessWidget {
                       obscure: true,
                     ),
                     const SizedBox(height: 22),
-                    Obx(
-                      () => controller.isLoading.value
-                          ? const Center(
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 12),
-                                child: CircularProgressIndicator(
-                                  color: AuthStyle.primary,
-                                ),
-                              ),
-                            )
-                          : AuthPrimaryButton(
-                              label: AuthStyle.loginBtn,
-                              onPressed: controller.signInWithEmail,
+
+                    // ⭐ ใช้ LoadingButton แทน
+                    Obx(() => LoadingButton(
+                          isLoading: controller.isLoading.value,
+                          onPressed: controller.signInWithEmail,
+                          backgroundColor: AuthStyle.primary,
+                          foregroundColor: AuthStyle.white,
+                          loaderSize: 24,
+                          height: 52,
+                          borderRadius: BorderRadius.circular(14),
+                          child: Text(
+                            AuthStyle.loginBtn,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5,
                             ),
-                    ),
+                          ),
+                        )),
                   ],
                 ),
               ),
 
               const SizedBox(height: 24),
-
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 40),
                 child: AuthOrDivider(label: AuthStyle.orLabel),
               ),
-
               const SizedBox(height: 20),
 
               AuthGoogleButton(

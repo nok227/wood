@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'package:wood/core/constants/specific/auth_style.dart';
 import 'package:wood/core/widgets/global/app_snackbar.dart';
+import 'package:wood/core/widgets/global/loading/loading.dart';   // ⭐
 
 import '../../domain/entities/menu_permission.dart';
 import '../controllers/admin_users_controller.dart';
@@ -100,51 +101,46 @@ class _UserPermissionPageState extends State<UserPermissionPage> {
         backgroundColor: AuthStyle.primary,
         foregroundColor: AuthStyle.white,
       ),
-      body: Stack(
-        children: [
-          ListView(
-            padding: AuthStyle.padPageList,
-            children: [
-              PermissionHeader(
-                name: widget.name,
-                email: widget.email,
-              ),
-              AuthStyle.gapLg,
-              PermissionPresets(
-                onViewOnly: _presetViewOnly,
-                onAll: _presetAll,
-                onNone: _presetNone,
-              ),
-              AuthStyle.gapLg,
-              const PermissionInfoBox(),
-              AuthStyle.gapLg,
-              Text(
-                AuthStyle.menuAllowed,
-                style: AuthStyle.sectionLabel.copyWith(color: AuthStyle.primary),
-              ),
-              AuthStyle.gapSm,
-              ...MenuKey.values.map(
-                (k) => PermissionMenuTile(
-                  menuKey: k,
-                  isSelected: _selected.contains(k),
-                  onToggle: () => _toggle(k),
-                ),
-              ),
-              AuthStyle.gap24W,
-              PermissionSaveButton(
-                isSaving: _saving,
-                onSave: _save,
-              ),
-            ],
-          ),
-          if (_saving)
-            Positioned.fill(
-              child: Container(
-                color: AuthStyle.black12,
-                child: const SizedBox.shrink(),
+      // ⭐ ใช้ LoadingOverlay ครอบ body
+      body: LoadingOverlay(
+        isLoading: _saving,
+        message: AuthStyle.saving,
+        loaderSize: 64,
+        child: ListView(
+          padding: AuthStyle.padPageList,
+          children: [
+            PermissionHeader(
+              name: widget.name,
+              email: widget.email,
+            ),
+            AuthStyle.gapLg,
+            PermissionPresets(
+              onViewOnly: _presetViewOnly,
+              onAll: _presetAll,
+              onNone: _presetNone,
+            ),
+            AuthStyle.gapLg,
+            const PermissionInfoBox(),
+            AuthStyle.gapLg,
+            Text(
+              AuthStyle.menuAllowed,
+              style: AuthStyle.sectionLabel.copyWith(color: AuthStyle.primary),
+            ),
+            AuthStyle.gapSm,
+            ...MenuKey.values.map(
+              (k) => PermissionMenuTile(
+                menuKey: k,
+                isSelected: _selected.contains(k),
+                onToggle: () => _toggle(k),
               ),
             ),
-        ],
+            AuthStyle.gap24W,
+            PermissionSaveButton(
+              isSaving: _saving,
+              onSave: _save,
+            ),
+          ],
+        ),
       ),
     );
   }

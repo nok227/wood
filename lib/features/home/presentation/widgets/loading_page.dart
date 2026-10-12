@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wood/core/constants/specific/home_style.dart';
+import 'package:wood/core/widgets/global/loading/rotating_squares_loader.dart';
 
 class LoadingPage extends StatelessWidget {
   const LoadingPage({super.key});
@@ -8,11 +9,12 @@ class LoadingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: HomeStyle.bg,
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: HomeStyle.primary),
+            // 3 สี่เหลี่ยมหมุนวน
+            const RotatingSquaresLoader(),
             HomeStyle.gapLg,
             Text(
               HomeStyle.loading,

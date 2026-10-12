@@ -7,8 +7,9 @@ import 'package:lottie/lottie.dart';
 import 'package:wood/core/constants/specific/home_style.dart';
 import 'package:wood/core/widgets/global/app_snackbar.dart';
 import 'package:wood/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:wood/features/auth/presentation/pages/register_page.dart';
+import 'package:wood/core/widgets/shared/settings_button.dart';
 import 'package:wood/features/auth/presentation/pages/profile_view_page.dart';
+import 'package:wood/features/auth/presentation/pages/register_page.dart';
 
 class PendingApprovalPage extends StatefulWidget {
   const PendingApprovalPage({super.key});
@@ -258,9 +259,9 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
           ),
           onPressed: () => Get.to(() => const ProfileViewPage()),
         ),
-        IconButton(
-          icon: const Icon(Icons.logout, size: HomeStyle.iconLogoutSize),
-          onPressed: () => _showLogoutSheet(auth),
+        const SettingsButton(
+          iconColor: HomeStyle.white,
+          size: HomeStyle.iconLogoutSize,
         ),
       ],
     );
@@ -307,7 +308,7 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   HomeStyle.pendingInfoTitle,
                   style: HomeStyle.infoTitle,
                 ),
@@ -348,7 +349,7 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
           Container(
             width: 46,
             height: 46,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: [HomeStyle.brown600, HomeStyle.brown800],
@@ -446,7 +447,7 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
         style: OutlinedButton.styleFrom(
           foregroundColor: HomeStyle.primary,
           backgroundColor: HomeStyle.white,
-          side: const BorderSide(color: HomeStyle.brown300),
+          side: BorderSide(color: HomeStyle.brown300),
           padding: HomeStyle.padRefreshBtn,
           shape: const RoundedRectangleBorder(borderRadius: HomeStyle.r12),
         ),
@@ -593,7 +594,7 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
           ),
         ),
         HomeStyle.gap32,
-        const SizedBox(
+        SizedBox(
           width: HomeStyle.loadingIndicator,
           height: HomeStyle.loadingIndicator,
           child: CircularProgressIndicator(
@@ -602,7 +603,7 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
           ),
         ),
         HomeStyle.gap24,
-        const Text(HomeStyle.loggingOut, style: HomeStyle.logoutLoadingText),
+        Text(HomeStyle.loggingOut, style: HomeStyle.logoutLoadingText),
         HomeStyle.gap32,
       ],
     );

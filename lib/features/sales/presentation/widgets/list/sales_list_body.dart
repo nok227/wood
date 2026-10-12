@@ -65,7 +65,7 @@ class SalesListBody extends StatelessWidget {
           itemCount: displayKeys.length + (hasMore ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == displayKeys.length) {
-              return const Padding(
+              return Padding(
                 padding: SaleStyle.padLoadMore,
                 child: Center(
                   child: CircularProgressIndicator(

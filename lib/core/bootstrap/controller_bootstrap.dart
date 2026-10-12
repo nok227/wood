@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import 'package:wood/core/theme/app_color_service.dart';   // ⭐ ใหม่
 import 'package:wood/features/account/presentation/bindings/account_binding.dart';
 import 'package:wood/features/auth/presentation/bindings/auth_binding.dart';
 import 'package:wood/features/notifications/presentation/bindings/notification_binding.dart';
@@ -14,18 +15,15 @@ class ControllerBootstrap {
   ControllerBootstrap._();
 
   static void init() {
-    // ══════════════════════════════════════════
-    // 🔐 Feature ที่ใช้ Bindings แล้ว
-    // ══════════════════════════════════════════
+    // ⭐ Theme service (permanent)
+    Get.put<AppColorService>(AppColorService(), permanent: true);
+
     AuthBinding().dependencies();
     AccountBinding().dependencies();
     NotificationBinding().dependencies();
     RecipeBinding().dependencies();
-    SalesBinding().dependencies();   // ← ใหม่
+    SalesBinding().dependencies();
 
-    // ══════════════════════════════════════════
-    // 🚀 Lazy controllers (ยังไม่ refactor)
-    // ══════════════════════════════════════════
     Get.lazyPut(
       () => WoodProductController(
         repository: WoodRepositoryImpl(
