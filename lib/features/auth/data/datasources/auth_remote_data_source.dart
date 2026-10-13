@@ -19,7 +19,6 @@ class AuthRemoteDataSource {
   // 🔐 REGISTER
   // ══════════════════════════════════════════
   Future<UserModel> registerWithEmail({
-    required String name,
     required String email,
     required String password,
   }) async {
@@ -30,11 +29,14 @@ class AuthRemoteDataSource {
     final user = cred.user;
     if (user == null) throw Exception('ສ້າງບັນຊີບໍ່ສຳເລັດ');
 
-    await user.updateDisplayName(name);
+    // ⭐ ใช้ email prefix เป็นชื่อแสดง
+    final displayName = email.split('@').first;
+
+    await user.updateDisplayName(displayName);
 
     final model = UserModel(
       uid: user.uid,
-      name: name,
+      name: displayName, // ⭐ ใช้ email prefix
       email: email,
       role: 'user',
       allowedMenus: const [],
@@ -136,9 +138,7 @@ class AuthRemoteDataSource {
   // ══════════════════════════════════════════
   Future<List<UserModel>> getUsers() async {
     final snap = await _db.collection(_col).orderBy('email').get();
-    return snap.docs
-        .map((d) => UserModel.fromMap(d.data(), d.id))
-        .toList();
+    return snap.docs.map((d) => UserModel.fromMap(d.data(), d.id)).toList();
   }
 
   /// ⭐ Real-time stream ของ users ทั้งหมด
@@ -148,19 +148,17 @@ class AuthRemoteDataSource {
         .collection(_col)
         .orderBy('email')
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => UserModel.fromMap(d.data(), d.id))
-            .toList());
+        .map(
+          (snap) =>
+              snap.docs.map((d) => UserModel.fromMap(d.data(), d.id)).toList(),
+        );
   }
 
   Future<void> updateAllowedMenus(String uid, List<String> menus) async {
-    await _db.collection(_col).doc(uid).set(
-      {
-        'allowedMenus': menus,
-        'updatedAt': FieldValue.serverTimestamp(),
-      },
-      SetOptions(merge: true),
-    );
+    await _db.collection(_col).doc(uid).set({
+      'allowedMenus': menus,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   // ══════════════════════════════════════════

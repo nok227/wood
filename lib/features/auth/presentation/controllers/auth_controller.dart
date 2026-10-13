@@ -81,23 +81,23 @@ class AuthController extends GetxController {
   }
 
   // ── Register ──
-  Future<void> registerWithEmail() async {
-    final form = Get.find<AuthFormController>();
-    try {
-      isLoading.value = true;
-      await authRepository.registerWithEmail(
-        name: form.nameController.text.trim(),
-        email: form.emailController.text.trim(),
-        password: form.passwordController.text.trim(),
-      );
-      form.clear();
-      Get.offAll(() => const HomeShell());
-    } catch (e) {
-      AppSnackbar.err('ຜິດພາດ', e.toString());
-    } finally {
-      isLoading.value = false;
-    }
+ Future<void> registerWithEmail() async {
+  final form = Get.find<AuthFormController>();
+  try {
+    isLoading.value = true;
+    await authRepository.registerWithEmail(
+      // ⭐ ลบ name ออก — ใช้ email prefix แทนที่ชั้น datasource
+      email: form.emailController.text.trim(),
+      password: form.passwordController.text.trim(),
+    );
+    form.clear();
+    Get.offAll(() => const HomeShell());
+  } catch (e) {
+    AppSnackbar.err('ຜິດພາດ', e.toString());
+  } finally {
+    isLoading.value = false;
   }
+}
 
   // ── Login ──
   Future<void> signInWithEmail() async {

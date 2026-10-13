@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:wood/core/constants/specific/wood_style.dart';
 import '../../controllers/wood_product_controller.dart';
 
@@ -17,7 +16,7 @@ class WoodFormSavingBox extends StatelessWidget {
         border: Border.all(color: WoodStyle.brown200),
         boxShadow: [
           BoxShadow(
-            color: WoodStyle.brown700.withOpacity(0.08),
+            color: WoodStyle.brown700.withValues(alpha:0.08),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),

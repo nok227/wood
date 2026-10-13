@@ -35,19 +35,17 @@ class AuthRepositoryImpl implements AuthRepository {
   // ══════════════════════════════════════════
   // Auth
   // ══════════════════════════════════════════
-  @override
-  Future<AppUser> registerWithEmail({
-    required String name,
-    required String email,
-    required String password,
-  }) async {
-    final model = await remoteDataSource.registerWithEmail(
-      name: name,
-      email: email,
-      password: password,
-    );
-    return model.toEntity();
-  }
+ @override
+Future<AppUser> registerWithEmail({
+  required String email,
+  required String password,
+}) async {
+  final model = await remoteDataSource.registerWithEmail(
+    email: email,
+    password: password,
+  );
+  return model.toEntity();
+}
 
   @override
   Future<AppUser> signInWithEmail({

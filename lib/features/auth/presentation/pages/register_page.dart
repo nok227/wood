@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:wood/core/constants/specific/auth_style.dart';
-import 'package:wood/core/widgets/global/loading/loading.dart';   // ⭐
+import 'package:wood/core/widgets/global/loading/loading.dart';
 
 import '../controllers/auth_controller.dart';
 import '../controllers/auth_form_controller.dart';
 import '../widgets/auth_form/auth_hero_header.dart';
 import '../widgets/auth_form/auth_field.dart';
-import '../widgets/auth_form/auth_primary_button.dart';
 import '../widgets/auth_form/auth_or_divider.dart';
 import '../widgets/auth_form/auth_form_card.dart';
 import '../widgets/auth_form/auth_google_button.dart';
@@ -36,12 +35,7 @@ class RegisterPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    AuthField(
-                      controller: form.nameController,
-                      label: AuthStyle.nameLabel,
-                      icon: Icons.person_outline_rounded,
-                    ),
-                    const SizedBox(height: 14),
+                    // ⭐ ลบช่องชื่อออก — เหลือแค่ email + password
                     AuthField(
                       controller: form.emailController,
                       label: AuthStyle.emailLabel,
@@ -57,7 +51,6 @@ class RegisterPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 22),
 
-                    // ⭐ ใช้ LoadingButton
                     Obx(() => LoadingButton(
                           isLoading: controller.isLoading.value,
                           onPressed: controller.registerWithEmail,

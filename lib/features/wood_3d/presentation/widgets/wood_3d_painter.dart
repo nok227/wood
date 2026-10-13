@@ -97,7 +97,7 @@ class Wood3DPainter extends CustomPainter {
       final lineColor = isDark ? darkGrain : lightGrain;
 
       final paint = Paint()
-        ..color = lineColor.withOpacity(isDark ? 0.22 : 0.12)
+        ..color = lineColor.withValues(alpha:isDark ? 0.22 : 0.12)
         ..strokeWidth = thickness
         ..style = PaintingStyle.stroke;
 
@@ -146,7 +146,7 @@ class Wood3DPainter extends CustomPainter {
       [
         Wood3DStyle.transparent,
         Wood3DStyle.transparent,
-        Wood3DStyle.black.withOpacity(0.28 * strength),
+        Wood3DStyle.black.withValues(alpha:0.28 * strength),
       ],
       const [0.0, 0.65, 1.0],
     );
@@ -176,8 +176,8 @@ class Wood3DPainter extends CustomPainter {
       center,
       rad,
       [
-        Wood3DStyle.white.withOpacity(0.28 * strength),
-        Wood3DStyle.white.withOpacity(0.08 * strength),
+        Wood3DStyle.white.withValues(alpha:0.28 * strength),
+        Wood3DStyle.white.withValues(alpha:0.08 * strength),
         Wood3DStyle.transparent,
       ],
       const [0.0, 0.4, 1.0],
@@ -270,14 +270,14 @@ class Wood3DPainter extends CustomPainter {
             Wood3DStyle.woodShadow,
             0.65,
           )!
-              .withOpacity(0.55)
+              .withValues(alpha:0.55)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.2,
       );
       canvas.drawPath(
         path,
         Paint()
-          ..color = Wood3DStyle.white.withOpacity(0.10 * face.brightness)
+          ..color = Wood3DStyle.white.withValues(alpha:0.10 * face.brightness)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 0.5,
       );
@@ -289,7 +289,6 @@ class Wood3DPainter extends CustomPainter {
   void _paintGroundShadow(Canvas canvas, Size size) {
     double maxY = -double.infinity;
     double minX = double.infinity, maxX = -double.infinity;
-    double sumZ = 0;
     int count = 0;
 
     for (final box in geometry.allBoxesVertices) {
@@ -298,7 +297,6 @@ class Wood3DPainter extends CustomPainter {
         if (p.dy > maxY) maxY = p.dy;
         if (p.dx < minX) minX = p.dx;
         if (p.dx > maxX) maxX = p.dx;
-        sumZ += v.z;
         count++;
       }
     }
@@ -318,8 +316,8 @@ class Wood3DPainter extends CustomPainter {
       shadowCenter,
       shadowWidth * 0.5,
       [
-        Wood3DStyle.black.withOpacity(0.22),
-        Wood3DStyle.black.withOpacity(0.08),
+        Wood3DStyle.black.withValues(alpha:0.22),
+        Wood3DStyle.black.withValues(alpha:0.08),
         Wood3DStyle.transparent,
       ],
       const [0.0, 0.5, 1.0],

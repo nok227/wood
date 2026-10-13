@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:wood/core/constants/specific/wood_style.dart';
 import '../../controllers/wood_product_controller.dart';
 import 'wood_form_input_deco.dart';

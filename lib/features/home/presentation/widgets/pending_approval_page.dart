@@ -10,6 +10,8 @@ import 'package:wood/features/auth/presentation/controllers/auth_controller.dart
 import 'package:wood/core/widgets/shared/settings_button.dart';
 import 'package:wood/features/auth/presentation/pages/profile_view_page.dart';
 import 'package:wood/features/auth/presentation/pages/register_page.dart';
+// ⭐ 1. Import ตัว Loading เข้ามา
+import 'package:wood/core/widgets/global/loading/rotating_squares_loader.dart';
 
 class PendingApprovalPage extends StatefulWidget {
   const PendingApprovalPage({super.key});
@@ -20,11 +22,14 @@ class PendingApprovalPage extends StatefulWidget {
 
 class _PendingApprovalPageState extends State<PendingApprovalPage>
     with TickerProviderStateMixin {
+  // ⭐ 2. ตัวแปรเช็กสถานะการโหลด (สำหรับปุ่ม Refresh)
+  bool _isChecking = false;
+
   // ── Animations ──
   late final AnimationController _enterCtrl;
   late final AnimationController _pulseCtrl;
-  late final AnimationController _borderCW; // ⭐ วิ่งตามเข็ม
-  late final AnimationController _borderCCW; // ⭐ วิ่งทวนเข็ม
+  late final AnimationController _borderCW;
+  late final AnimationController _borderCCW;
 
   @override
   void initState() {
@@ -75,15 +80,14 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
       appBar: _appBar(auth),
       body: SafeArea(
         child: Align(
-          alignment: Alignment.topCenter, // ⭐ ชิดบน
+          alignment: Alignment.topCenter,
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              // ⭐ padding ซ้าย-ขวาเท่ากัน
+            padding: const EdgeInsets.symmetric(
               horizontal: 24,
-              vertical: 20, // เว้นจากด้านบน 20px
+              vertical: 20,
             ),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start, // ⭐ เริ่มจากบน
+              mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // ⭐ Video + animated border
@@ -99,24 +103,36 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
 
                 const SizedBox(height: 22),
 
+                // ── การ์ดสีส้ม (Info Card) ──
                 _FadeSlide(a: _iv(0.3, 0.75), dy: 24, child: _infoCard()),
 
                 const SizedBox(height: 14),
 
-                if (user != null)
+                // ⭐ 3. Loading ของปุ่ม Refresh (แสดงเฉพาะตอนกดปุ่ม)
+                if (_isChecking)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: RotatingSquaresLoader(),
+                    ),
+                  )
+                else ...[
+                  // ถ้าไม่ได้โหลด: แสดงการ์ด User และปุ่มตามปกติ
+                  if (user != null)
+                    _FadeSlide(
+                      a: _iv(0.45, 0.85),
+                      dy: 24,
+                      child: _userCard(user),
+                    ),
+
+                  const SizedBox(height: 26),
+
                   _FadeSlide(
-                    a: _iv(0.45, 0.85),
-                    dy: 24,
-                    child: _userCard(user),
+                    a: _iv(0.6, 1.0),
+                    dy: 20,
+                    child: Center(child: _refreshButton()),
                   ),
-
-                const SizedBox(height: 26),
-
-                _FadeSlide(
-                  a: _iv(0.6, 1.0),
-                  dy: 20,
-                  child: Center(child: _refreshButton()),
-                ),
+                ],
               ],
             ),
           ),
@@ -137,7 +153,6 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 10),
-        // ⭐ เส้นประ + จุดตรงกลาง
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -268,7 +283,7 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
   }
 
   // ══════════════════════════════════════════
-  // Info Card — แนวนอน (icon ซ้าย + ข้อความขวา)
+  // Info Card (แก้ไข: เพิ่ม Loading ด้านใน ใต้ icon)
   // ══════════════════════════════════════════
   Widget _infoCard() {
     return Container(
@@ -291,19 +306,30 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: HomeStyle.warning.withValues(alpha: 0.12),
-            ),
-            child: const Icon(
-              Icons.info_outline,
-              color: HomeStyle.warning,
-              size: 22,
-            ),
+          // ⭐ ฝั่งซ้าย: icon + Loading (เรียงลงมา)
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Icon ──
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: HomeStyle.warning.withValues(alpha: 0.12),
+                ),
+                child: const Icon(
+                  Icons.info_outline,
+                  color: HomeStyle.warning,
+                  size: 22,
+                ),
+              ),
+              // ⭐ Loading ด้านล่าง icon (แสดงตลอดเวลา)
+              const SizedBox(height: 12),
+              const RotatingSquaresLoader(size: 24),
+            ],
           ),
           const SizedBox(width: 14),
+          // ── ฝั่งขวา: ข้อความ ──
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,7 +352,7 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
   }
 
   // ══════════════════════════════════════════
-  // User Card — pill style + badge "ລໍຖ້າ"
+  // User Card
   // ══════════════════════════════════════════
   Widget _userCard(dynamic user) {
     return Container(
@@ -345,7 +371,6 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
       ),
       child: Row(
         children: [
-          // ── Avatar ──
           Container(
             width: 46,
             height: 46,
@@ -360,8 +385,6 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
             child: const Icon(Icons.person, size: 22, color: HomeStyle.white),
           ),
           const SizedBox(width: 12),
-
-          // ── Info ──
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,8 +409,6 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
             ),
           ),
           const SizedBox(width: 8),
-
-          // ── Status badge ──
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
@@ -436,7 +457,19 @@ class _PendingApprovalPageState extends State<PendingApprovalPage>
         return Transform.scale(scale: pulse, child: child);
       },
       child: OutlinedButton.icon(
-        onPressed: () {
+        onPressed: () async {
+          setState(() {
+            _isChecking = true;
+          });
+
+          await Future.delayed(const Duration(seconds: 2));
+
+          if (mounted) {
+            setState(() {
+              _isChecking = false;
+            });
+          }
+
           AppSnackbar.info(
             HomeStyle.pendingRefreshToastTitle,
             HomeStyle.pendingRefreshToastMsg,
@@ -617,8 +650,8 @@ class _AnimatedBorder extends StatelessWidget {
   final Widget child;
   final double radius;
   final double borderWidth;
-  final double cwAngle; // 0.0 → 1.0 (วิ่งตามเข็ม)
-  final double ccwAngle; // 0.0 → 1.0 (วิ่งทวนเข็ม)
+  final double cwAngle;
+  final double ccwAngle;
 
   const _AnimatedBorder({
     required this.child,
@@ -632,7 +665,6 @@ class _AnimatedBorder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // ── ① เส้นขอบฐาน (สีน้ำตาลเข้ม) ──
         Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
@@ -641,8 +673,6 @@ class _AnimatedBorder extends StatelessWidget {
             ),
           ),
         ),
-
-        // ── ② แสงวิ่งตามเข็มนาฬิกา (สีทอง) ──
         Positioned.fill(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(radius),
@@ -652,9 +682,9 @@ class _AnimatedBorder extends StatelessWidget {
                 decoration: const BoxDecoration(
                   gradient: SweepGradient(
                     colors: [
-                      Color(0xFFFFD54F), // bright gold
-                      Color(0xFFFFB300), // deep gold
-                      Color(0x00FFD54F), // fade out
+                      Color(0xFFFFD54F),
+                      Color(0xFFFFB300),
+                      Color(0x00FFD54F),
                       Color(0x00FFD54F),
                       Color(0x00FFD54F),
                       Color(0x00FFD54F),
@@ -666,8 +696,6 @@ class _AnimatedBorder extends StatelessWidget {
             ),
           ),
         ),
-
-        // ── ③ แสงวิ่งทวนเข็มนาฬิกา (สีส้ม) ──
         Positioned.fill(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(radius),
@@ -677,9 +705,9 @@ class _AnimatedBorder extends StatelessWidget {
                 decoration: const BoxDecoration(
                   gradient: SweepGradient(
                     colors: [
-                      Color(0xFFFF7043), // bright coral
-                      Color(0xFFE64A19), // deep orange
-                      Color(0x00FF7043), // fade out
+                      Color(0xFFFF7043),
+                      Color(0xFFE64A19),
+                      Color(0x00FF7043),
                       Color(0x00FF7043),
                       Color(0x00FF7043),
                       Color(0x00FF7043),
@@ -691,8 +719,6 @@ class _AnimatedBorder extends StatelessWidget {
             ),
           ),
         ),
-
-        // ── ④ Content (mask ตรงกลาง) ──
         Positioned.fill(
           child: Padding(
             padding: EdgeInsets.all(borderWidth),

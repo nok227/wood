@@ -8,7 +8,6 @@ import '../controllers/auth_controller.dart';
 import '../controllers/auth_form_controller.dart';
 import '../widgets/auth_form/auth_hero_header.dart';
 import '../widgets/auth_form/auth_field.dart';
-import '../widgets/auth_form/auth_primary_button.dart';
 import '../widgets/auth_form/auth_or_divider.dart';
 import '../widgets/auth_form/auth_form_card.dart';
 import '../widgets/auth_form/auth_google_button.dart';

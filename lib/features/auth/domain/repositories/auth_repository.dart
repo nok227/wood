@@ -15,11 +15,10 @@ abstract class AuthRepository {
   Stream<AppUser?> userStream(String uid);
 
   // ── Auth ──
-  Future<AppUser> registerWithEmail({
-    required String name,
-    required String email,
-    required String password,
-  });
+Future<AppUser> registerWithEmail({
+  required String email,
+  required String password,
+});
 
   Future<AppUser> signInWithEmail({
     required String email,
