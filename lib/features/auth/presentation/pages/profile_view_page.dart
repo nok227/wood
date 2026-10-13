@@ -28,7 +28,7 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
     super.initState();
     _auth = Get.find<AuthController>();
     _admin = Get.find<AdminUsersController>();
-    if (_auth.isAdmin) _admin.loadUsers();
+    if (_auth.isAdmin) _admin.startListening();  // ⭐ เปลี่ยนจาก loadUsers()
   }
 
   @override
@@ -50,7 +50,7 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
           backgroundColor: AuthStyle.primary,
           foregroundColor: AuthStyle.white,
           actions: const [
-            SettingsButton(iconColor: AuthStyle.white),   // ⭐ เปลี่ยน
+            SettingsButton(iconColor: AuthStyle.white),
           ],
         ),
         body: ListView(
@@ -61,7 +61,7 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
               AuthStyle.gap20W,
               ProfileUsersHeader(
                 count: users.length,
-                onRefresh: _admin.usersLoading.value ? null : _admin.loadUsers,
+                onRefresh: loading ? null : _admin.refreshUsers,  // ⭐ เปลี่ยน
               ),
               AuthStyle.gapSm,
               if (loading && users.isEmpty)
@@ -76,7 +76,7 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
                   (u) => ProfileUserTile(
                     user: u,
                     currentUid: _auth.currentUser.value?.uid,
-                    onPermissionSaved: _admin.loadUsers,
+                    onPermissionSaved: _admin.refreshUsers,  // ⭐ เปลี่ยน
                   ),
                 ),
             ],

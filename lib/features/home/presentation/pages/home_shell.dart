@@ -16,6 +16,7 @@ import '../widgets/loading_page.dart';
 import '../widgets/pending_approval_page.dart';
 import '../widgets/tab_ticker_gate.dart';
 
+
 class HomeShell extends StatelessWidget {
   const HomeShell({super.key});
 
@@ -32,24 +33,19 @@ class HomeShell extends StatelessWidget {
       }
       if (ctrl.tabs.isEmpty) return const PendingApprovalPage();
 
-      // ⭐ ถ้ามีแค่ 1 tab → แสดงหน้าเดียว ไม่มี BottomNav
-      if (ctrl.tabs.length == 1) {
-        return _singlePage(ctrl);
-      }
-
+      if (ctrl.tabs.length == 1) return _singlePage(ctrl);
       return _scaffold(ctrl);
     });
   }
 
   // ══════════════════════════════════════════
-  // 🎯 1 Tab — แสดงหน้าเดียว ไม่มี BottomNav
+  // 1 Tab
   // ══════════════════════════════════════════
   Widget _singlePage(HomeController ctrl) {
     return Scaffold(
       backgroundColor: HomeStyle.bg,
       body: Column(
         children: [
-          // ── AppBar ──
           Obx(
             () => AnimatedSize(
               duration: HomeStyle.barsAnim,
@@ -60,8 +56,6 @@ class HomeShell extends StatelessWidget {
                   : const SizedBox(width: double.infinity),
             ),
           ),
-
-          // ── Body ──
           Expanded(
             child: NotificationListener<ScrollNotification>(
               onNotification: (n) {
@@ -73,19 +67,17 @@ class HomeShell extends StatelessWidget {
           ),
         ],
       ),
-      // ❌ ไม่มี bottomNavigationBar
     );
   }
 
   // ══════════════════════════════════════════
-  // 🎯 หลาย Tabs — UI ปกติ + BottomNav
+  // หลาย Tabs
   // ══════════════════════════════════════════
   Widget _scaffold(HomeController ctrl) {
     return Scaffold(
       backgroundColor: HomeStyle.bg,
       body: Column(
         children: [
-          // ── AppBar (hide/show) ──
           Obx(
             () => AnimatedSize(
               duration: HomeStyle.barsAnim,
@@ -96,8 +88,6 @@ class HomeShell extends StatelessWidget {
                   : const SizedBox(width: double.infinity),
             ),
           ),
-
-          // ── Body ──
           Expanded(
             child: NotificationListener<ScrollNotification>(
               onNotification: (n) {
@@ -105,10 +95,8 @@ class HomeShell extends StatelessWidget {
                 return false;
               },
               child: Obx(() {
-                final on3D =
-                    ctrl.currentIndex.value < ctrl.tabs.length &&
-                    ctrl.tabs[ctrl.currentIndex.value].key == MenuKey.wood3d;
-                final lock = ctrl.lockSwipe.value && on3D;
+                // ⭐ ล็อกตาม tab ปัจจุบัน (ไม่มีเงื่อนไข on3D แล้ว)
+                final lock = ctrl.lockSwipe.value;
                 return PageView(
                   controller: ctrl.pageController,
                   physics: lock
@@ -128,7 +116,6 @@ class HomeShell extends StatelessWidget {
           ),
         ],
       ),
-
       bottomNavigationBar: Obx(
         () => AnimatedSize(
           duration: HomeStyle.barsAnim,
@@ -200,7 +187,12 @@ class HomeShell extends StatelessWidget {
         page = const KeepAlivePage(child: AccountPage());
         break;
       case MenuKey.wood3d:
-        page = Lazy3DWrapper(swipeLock: ctrl.lockSwipe);
+        // ⭐ ส่ง tabIndex + home เข้าไป
+        page = Lazy3DWrapper(
+          swipeLock: ctrl.lockSwipe,
+          tabIndex: i,
+          home: ctrl,
+        );
         break;
     }
     return TabTickerGate(

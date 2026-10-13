@@ -1,11 +1,11 @@
 import 'package:get/get.dart';
+import 'package:wood/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:wood/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:wood/features/auth/domain/repositories/auth_repository.dart';
+import 'package:wood/features/auth/presentation/controllers/admin_users_controller.dart';
+import 'package:wood/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:wood/features/auth/presentation/controllers/auth_form_controller.dart';
 
-import '../../data/datasources/auth_remote_data_source.dart';
-import '../../data/repositories/auth_repository_impl.dart';
-import '../../domain/repositories/auth_repository.dart';
-import '../controllers/admin_users_controller.dart';
-import '../controllers/auth_controller.dart';
-import '../controllers/auth_form_controller.dart';
 
 class AuthBinding extends Bindings {
   @override

@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Wood App',
+      title: 'ຮ້ານຫຼ້າ+ຂັນ',
       theme: AppTheme.light,
       routingCallback: (_) => PageRouteNotifier.instance.bump(),
       home: firebaseInitError != null

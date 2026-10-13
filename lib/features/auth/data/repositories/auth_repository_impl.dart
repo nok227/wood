@@ -82,6 +82,14 @@ class AuthRepositoryImpl implements AuthRepository {
     return models.map((m) => m.toEntity()).toList();
   }
 
+  /// ⭐ Real-time stream
+  @override
+  Stream<List<AppUser>> usersStream() {
+    return remoteDataSource
+        .usersStream()
+        .map((models) => models.map((m) => m.toEntity()).toList());
+  }
+
   @override
   Future<void> updateAllowedMenus(String uid, List<String> menus) {
     return remoteDataSource.updateAllowedMenus(uid, menus);

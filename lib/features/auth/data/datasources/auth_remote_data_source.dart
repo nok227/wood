@@ -141,6 +141,18 @@ class AuthRemoteDataSource {
         .toList();
   }
 
+  /// ⭐ Real-time stream ของ users ทั้งหมด
+  /// เรียงตาม email เหมือน getUsers()
+  Stream<List<UserModel>> usersStream() {
+    return _db
+        .collection(_col)
+        .orderBy('email')
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => UserModel.fromMap(d.data(), d.id))
+            .toList());
+  }
+
   Future<void> updateAllowedMenus(String uid, List<String> menus) async {
     await _db.collection(_col).doc(uid).set(
       {

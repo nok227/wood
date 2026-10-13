@@ -26,8 +26,9 @@ class Wood3DFilterPanel extends StatelessWidget {
             color: Wood3DStyle.white,
             boxShadow: [
               BoxShadow(
-                color: Wood3DStyle.black
-                    .withValues(alpha: Wood3DStyle.panelShadowOpacity),
+                color: Wood3DStyle.black.withValues(
+                  alpha: Wood3DStyle.panelShadowOpacity,
+                ),
                 blurRadius: 8,
                 offset: const Offset(0, -2),
               ),
@@ -41,35 +42,29 @@ class Wood3DFilterPanel extends StatelessWidget {
                 if (hasSelection)
                   Padding(
                     padding: Wood3DStyle.padPanelRow,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _dimBtn(
-                            Wood3DStyle.dimWidth,
-                            'width',
+                    child: SizedBox(
+                      height: 32, // ⭐ ลดความสูงปุ่ม
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _dimBtn(Wood3DStyle.dimWidth, 'width'),
                           ),
-                        ),
-                        Wood3DStyle.gap8,
-                        Expanded(
-                          child: _dimBtn(
-                            Wood3DStyle.dimLength,
-                            'length',
+                          Wood3DStyle.gap8,
+                          Expanded(
+                            child: _dimBtn(Wood3DStyle.dimLength, 'length'),
                           ),
-                        ),
-                        Wood3DStyle.gap8,
-                        Expanded(
-                          child: _dimBtn(
-                            Wood3DStyle.dimThickness,
-                            'thickness',
+                          Wood3DStyle.gap8,
+                          Expanded(
+                            child: _dimBtn(
+                              Wood3DStyle.dimThickness,
+                              'thickness',
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                Padding(
-                  padding: Wood3DStyle.padPanelBottom,
-                  child: _content(),
-                ),
+                Padding(padding: Wood3DStyle.padPanelBottom, child: _content()),
               ],
             ],
           ),
@@ -138,12 +133,18 @@ class Wood3DFilterPanel extends StatelessWidget {
     return OutlinedButton(
       style: OutlinedButton.styleFrom(
         backgroundColor: active ? Wood3DStyle.brown700 : null,
-        foregroundColor:
-            active ? Wood3DStyle.white : Wood3DStyle.brown700,
+        foregroundColor: active ? Wood3DStyle.white : Wood3DStyle.brown700,
         side: BorderSide(color: Wood3DStyle.brown700),
+        // ⭐ ลดพื้นที่ภายใน + ตัด min size/tap target ออก
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        textStyle: const TextStyle(fontSize: 12),
       ),
       onPressed: () => ctrl.focusDimension(active ? null : value),
-      child: Text(label),
+      child: Text(label, overflow: TextOverflow.ellipsis),
     );
   }
 
@@ -172,6 +173,7 @@ class Wood3DFilterPanel extends StatelessWidget {
           onSelected: ctrl.pickWoodType,
         ),
         Wood3DStyle.gap12,
+
         _label(Wood3DStyle.unitLabel, Icons.straighten),
         Wood3DStyle.gap6,
         Wood3DChipRow(
@@ -180,11 +182,13 @@ class Wood3DFilterPanel extends StatelessWidget {
           onSelected: ctrl.pickUnit,
         ),
         Wood3DStyle.gap12,
+
+        // ⭐ เปลี่ยนจาก dropdown → chip row
         _label(Wood3DStyle.nameLabel, Icons.inventory_2_outlined),
         Wood3DStyle.gap6,
-        _nameDropdown(),
-        if (ctrl.selectedName.value != null &&
-            ctrl.variants.isNotEmpty) ...[
+        _nameChipRow(),
+
+        if (ctrl.selectedName.value != null && ctrl.variants.isNotEmpty) ...[
           Wood3DStyle.gap12,
           Wood3DVariantInfoCard(
             variant: ctrl.selectedVariant.value!,
@@ -200,10 +204,7 @@ class Wood3DFilterPanel extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: TextButton.icon(
               onPressed: ctrl.clearAll,
-              icon: const Icon(
-                Icons.clear_all,
-                size: Wood3DStyle.iconStar14,
-              ),
+              icon: const Icon(Icons.clear_all, size: Wood3DStyle.iconStar14),
               label: const Text(
                 Wood3DStyle.clearSelection,
                 style: Wood3DStyle.txClearBtn,
@@ -227,57 +228,31 @@ class Wood3DFilterPanel extends StatelessWidget {
   Widget _label(String text, IconData icon) {
     return Row(
       children: [
-        Icon(icon,
-            size: Wood3DStyle.iconStar14, color: Wood3DStyle.brown500),
+        Icon(icon, size: Wood3DStyle.iconStar14, color: Wood3DStyle.brown500),
         Wood3DStyle.gap5,
         Text(text, style: Wood3DStyle.txSectionLabel),
       ],
     );
   }
 
-  Widget _nameDropdown() {
+  // ⭐ Chip row สำหรับชื่อไม้ (แทน dropdown เดิม)
+  Widget _nameChipRow() {
     final list = ctrl.names;
-    final isEmpty = list.isEmpty;
 
-    return DropdownButtonFormField<String>(
-      initialValue: ctrl.selectedName.value,
-      isExpanded: true,
-      isDense: true,
-      decoration: InputDecoration(
-        hintText: isEmpty
-            ? Wood3DStyle.noNameInCategory
-            : Wood3DStyle.pickWoodName,
-        hintStyle: const TextStyle(
-          color: Wood3DStyle.grey500,
-          fontSize: 13,
+    if (list.isEmpty) {
+      return const Padding(
+        padding: Wood3DStyle.padEmpty,
+        child: Text(
+          Wood3DStyle.noNameInCategory,
+          style: Wood3DStyle.txPlaceholder,
         ),
-        isDense: true,
-        filled: true,
-        fillColor: Wood3DStyle.brown50
-            .withValues(alpha: Wood3DStyle.dropdownFillOpacity),
-        contentPadding: Wood3DStyle.padDropdown,
-        border: OutlineInputBorder(
-          borderRadius: Wood3DStyle.r10,
-          borderSide: BorderSide(color: Wood3DStyle.brown200),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: Wood3DStyle.r10,
-          borderSide: BorderSide(color: Wood3DStyle.brown200),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: Wood3DStyle.r10,
-          borderSide: BorderSide(color: Wood3DStyle.brown500, width: 1.5),
-        ),
-      ),
-      items: list
-          .map(
-            (n) => DropdownMenuItem(
-              value: n,
-              child: Text(n, overflow: TextOverflow.ellipsis),
-            ),
-          )
-          .toList(),
-      onChanged: isEmpty ? null : ctrl.pickName,
+      );
+    }
+
+    return Wood3DChipRow(
+      options: list,
+      selected: ctrl.selectedName.value ?? '',
+      onSelected: (n) => ctrl.pickName(n),
     );
   }
 }

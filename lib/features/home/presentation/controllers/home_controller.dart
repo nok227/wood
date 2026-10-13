@@ -26,16 +26,15 @@ class HomeController extends GetxController {
   final barsVisible = true.obs;
   final lockSwipe = false.obs;
 
-  // ⭐ flag: พร้อม render หรือยัง
+  // ⭐ lock per tab
+  final Map<int, bool> _tabLocks = {};
+
   final isReady = false.obs;
 
-  // ⭐ PageController nullable — สร้างเมื่อพร้อม
   PageController? _pageController;
   PageController get pageController => _pageController!;
 
   bool _initialTabSet = false;
-
-  // ⭐ flag: ระหว่าง programmatic animation → block onPageChanged
   bool _isAnimating = false;
 
   Timer? _bumpTimer;
@@ -45,9 +44,25 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
     _rebuildTabs();
     _authWorker = ever(auth.currentUser, (_) => _rebuildTabs());
+  }
+
+  // ══════════════════════════════════════════
+  // ⭐ Tab Lock API
+  //    ให้ page (Form / 3D ฯลฯ) เรียกเมื่อ state เปลี่ยน
+  //    → ถ้าเป็น tab ปัจจุบัน จะ lock PageView ทันที
+  // ══════════════════════════════════════════
+  void setTabLock(int tabIndex, bool locked) {
+    if ((_tabLocks[tabIndex] ?? false) == locked) return;
+    _tabLocks[tabIndex] = locked;
+    if (currentIndex.value == tabIndex) {
+      lockSwipe.value = locked;
+    }
+  }
+
+  void _syncLock() {
+    lockSwipe.value = _tabLocks[currentIndex.value] ?? false;
   }
 
   // ══════════════════════════════════════════
@@ -86,13 +101,13 @@ class HomeController extends GetxController {
 
     if (tabs.isEmpty) return;
 
-    // ⭐ ครั้งแรก — สร้าง PageController ด้วย initialPage ที่ถูกต้อง
     if (!_initialTabSet) {
       _initialTabSet = true;
       final idx = _computeDefaultIndex();
 
       currentIndex.value = idx;
       titleIndex.value = idx;
+      _syncLock();                       // ⭐
 
       _pageController?.dispose();
       _pageController = PageController(initialPage: idx);
@@ -100,11 +115,11 @@ class HomeController extends GetxController {
       return;
     }
 
-    // Rebuild ครั้งต่อ ๆ ไป (auth เปลี่ยน) → clamp กัน
     final safe = currentIndex.value.clamp(0, tabs.length - 1);
     if (safe != currentIndex.value) {
       currentIndex.value = safe;
       titleIndex.value = safe;
+      _syncLock();                       // ⭐
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!isClosed && (_pageController?.hasClients ?? false)) {
           _pageController!.jumpToPage(safe);
@@ -113,7 +128,6 @@ class HomeController extends GetxController {
     }
   }
 
-  /// 🎯 Default = ລາຍການໄມ້ (ທັງ admin ແລະ user)
   int _computeDefaultIndex() {
     if (tabs.isEmpty) return 0;
     final i = tabs.indexWhere((t) => t.key == MenuKey.woodList);
@@ -130,10 +144,10 @@ class HomeController extends GetxController {
   }
 
   void onPageChanged(int i) {
-    // ⭐ ข้ามถ้ากำลัง programmatic animate → กัน nav/title กระตุก
     if (_isAnimating) return;
 
     currentIndex.value = i;
+    _syncLock();                         // ⭐
     _scheduleBump();
     if (!barsVisible.value) barsVisible.value = true;
 
@@ -186,9 +200,7 @@ class HomeController extends GetxController {
   }
 
   // ══════════════════════════════════════════
-  // 🎯 goToTab — เปลี่ยน tab ด้วย MenuKey
-  //    distance == 1 → animate
-  //    distance >  1 → jump (ไม่ scroll ผ่าน pages กลาง)
+  // goToTab
   // ══════════════════════════════════════════
   void goToTab(MenuKey key) {
     final idx = tabs.indexWhere((t) => t.key == key);
@@ -198,16 +210,15 @@ class HomeController extends GetxController {
 
     final distance = (idx - currentIndex.value).abs();
 
-    // set ทันที → nav + title sync
     currentIndex.value = idx;
     titleIndex.value = idx;
+    _syncLock();                         // ⭐
     if (!barsVisible.value) barsVisible.value = true;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (isClosed || !(_pageController?.hasClients ?? false)) return;
 
       if (distance == 1) {
-        // ⭐ ข้ามใกล้ → animate นุ่มนวล + block onPageChanged
         _isAnimating = true;
         try {
           await _pageController!.animateToPage(
@@ -219,7 +230,6 @@ class HomeController extends GetxController {
           _isAnimating = false;
         }
       } else {
-        // ⭐ ข้ามไกล → jump ทันที (ไม่ scroll ผ่าน pages กลาง)
         _pageController!.jumpToPage(idx);
       }
     });

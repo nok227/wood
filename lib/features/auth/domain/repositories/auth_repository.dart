@@ -32,5 +32,6 @@ abstract class AuthRepository {
 
   // ── Admin ──
   Future<List<AppUser>> getUsers();
+  Stream<List<AppUser>> usersStream();
   Future<void> updateAllowedMenus(String uid, List<String> menus);
 }

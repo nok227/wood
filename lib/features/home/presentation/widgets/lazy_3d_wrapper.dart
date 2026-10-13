@@ -2,11 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:wood/core/constants/specific/home_style.dart';
+import 'package:wood/features/home/presentation/controllers/home_controller.dart';
 import 'package:wood/features/wood_3d/presentation/pages/wood_3d_page.dart';
 
 class Lazy3DWrapper extends StatefulWidget {
   final RxBool? swipeLock;
-  const Lazy3DWrapper({super.key, this.swipeLock});
+  final int tabIndex;
+  final HomeController home;
+
+  const Lazy3DWrapper({
+    super.key,
+    this.swipeLock,
+    required this.tabIndex,
+    required this.home,
+  });
 
   @override
   State<Lazy3DWrapper> createState() => _Lazy3DWrapperState();
@@ -16,10 +25,10 @@ class _Lazy3DWrapperState extends State<Lazy3DWrapper>
     with AutomaticKeepAliveClientMixin {
   bool _ready = false;
 
-  /// Bridge: RxBool → ValueNotifier
-  /// (เพราะ Wood3DPage ยังรับ ValueNotifier<bool>?)
+  /// Bridge 2 ทาง: RxBool (HomeController) ⇄ ValueNotifier (Wood3DPage)
   late final ValueNotifier<bool> _lockVN;
   Worker? _lockWorker;
+  VoidCallback? _vnListener;
 
   @override
   bool get wantKeepAlive => true;
@@ -30,11 +39,18 @@ class _Lazy3DWrapperState extends State<Lazy3DWrapper>
 
     _lockVN = ValueNotifier<bool>(widget.swipeLock?.value ?? false);
 
-    if (widget.swipeLock != null) {
-      _lockWorker = ever(
-        widget.swipeLock!,
-        (v) => _lockVN.value = v,
-      );
+    final rx = widget.swipeLock;
+    if (rx != null) {
+      // ── RxBool → VN (external change) ──
+      _lockWorker = ever(rx, (v) {
+        if (_lockVN.value != v) _lockVN.value = v;
+      });
+
+      // ── VN → HomeController (Wood3DController เขียนกลับ) ──
+      _vnListener = () {
+        widget.home.setTabLock(widget.tabIndex, _lockVN.value);
+      };
+      _lockVN.addListener(_vnListener!);
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -44,6 +60,7 @@ class _Lazy3DWrapperState extends State<Lazy3DWrapper>
 
   @override
   void dispose() {
+    if (_vnListener != null) _lockVN.removeListener(_vnListener!);
     _lockWorker?.dispose();
     _lockVN.dispose();
     super.dispose();

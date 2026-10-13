@@ -15,7 +15,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key, this.title, this.titleWidget})
       : assert(
           title != null || titleWidget != null,
-          'ต้องระบุ title หรือ titleWidget อย่างใดอย่างหนึ่ง',
+          'ຕ້ອງລະບຸ title ຫຼື titleWidget ຢ່າງໃດຢ່າງໜຶ່ງ',
         );
 
   @override
