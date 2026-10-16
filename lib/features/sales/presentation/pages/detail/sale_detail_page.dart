@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:gal/gal.dart';
+import 'package:wood/core/widgets/global/loading/loading.dart';
 
 import 'package:wood/core/constants/specific/sale_style.dart';
 import 'package:wood/core/widgets/global/app_image_viewer.dart';
@@ -145,7 +146,7 @@ class _SaleDetailPageState extends State<SaleDetailPage>
       animationDuration: SaleStyle.delayDialog,
       boxShadows: [
         BoxShadow(
-          color: bg.withOpacity(0.35),
+          color: bg.withValues(alpha: 0.35),
           blurRadius: 12,
           offset: const Offset(0, 4),
         ),
@@ -691,6 +692,7 @@ class _SaleDetailPageState extends State<SaleDetailPage>
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ⭐ ຊ້າຍ 1: ຮູບສະລິບ ສົດ/ໂອນ
                 Expanded(
                   child: _imageTile9x16(
                     payUrl,
@@ -706,24 +708,7 @@ class _SaleDetailPageState extends State<SaleDetailPage>
                   ),
                 ),
                 const SizedBox(width: 6),
-                Expanded(
-                  child: _imageTile9x16(
-                    thirdUrl,
-                    thirdLabel,
-                    onTap: thirdUrl == null
-                        ? null
-                        : () => Get.to(
-                            () => AppImageViewer(
-                              images: allImages,
-                              initialIndex: _firstIndexInViewer(
-                                allImages,
-                                thirdUrl,
-                              ),
-                            ),
-                          ),
-                  ),
-                ),
-                const SizedBox(width: 6),
+                // ⭐ ຊ້າຍ 2: ຮູບບິນຂາຍ
                 Expanded(
                   child: _imageTile9x16(
                     billUrl,
@@ -736,6 +721,25 @@ class _SaleDetailPageState extends State<SaleDetailPage>
                               initialIndex: _firstIndexInViewer(
                                 allImages,
                                 billUrl,
+                              ),
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                // ⭐ ຂວາ: ຮູບຈ່າຍເຕີມ / ຮູບຈ່າຍໜີ້
+                Expanded(
+                  child: _imageTile9x16(
+                    thirdUrl,
+                    thirdLabel,
+                    onTap: thirdUrl == null
+                        ? null
+                        : () => Get.to(
+                            () => AppImageViewer(
+                              images: allImages,
+                              initialIndex: _firstIndexInViewer(
+                                allImages,
+                                thirdUrl,
                               ),
                             ),
                           ),
@@ -796,7 +800,7 @@ class _SaleDetailPageState extends State<SaleDetailPage>
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
-                      color: SaleStyle.brown800,
+                      color: Color(0xFF00A86B),
                       letterSpacing: 0.3,
                     ),
                   ),
@@ -1146,7 +1150,7 @@ class _SaleDetailPageState extends State<SaleDetailPage>
       out.add(const SizedBox(height: 4));
       out.add(
         _moneyRow(
-          SaleStyle.detailCashPrefix,
+          SaleStyle.detailAmountDue, // ⭐ "ຈຳນວນທີ່ຕ້ອງຈ່າຍ"
           '${fmt.format(sale.cashPaidAmount)} ${SaleStyle.currency}',
           SaleStyle.green700,
         ),
@@ -1156,19 +1160,21 @@ class _SaleDetailPageState extends State<SaleDetailPage>
       out.add(const SizedBox(height: 4));
       out.add(
         _moneyRow(
-          SaleStyle.detailTransferPrefix,
+          SaleStyle.detailAmountDue,
           '${fmt.format(sale.transferPaidAmount)} ${SaleStyle.currency}',
           SaleStyle.blue700,
         ),
       );
     }
-    if (sale.receivedAmount > 0 && sale.paymentType == 'cash') {
-      out.add(const SizedBox(height: 4));
+    // ⭐ ສະແດງ "ຮັບມາ" ທັງເງິນສົດ ແລະ ເງິນໂອນ
+    if (sale.receivedAmount > 0) {
+      out.add(const SizedBox(height: 6));
       out.add(
         _moneyRow(
           SaleStyle.detailReceived,
           '${fmt.format(sale.receivedAmount)} ${SaleStyle.currency}',
-          SaleStyle.grey800,
+          const Color(0xFF00A86B), // jade green
+          bold: true,
         ),
       );
     }
@@ -1381,27 +1387,8 @@ class _SaleDetailPageState extends State<SaleDetailPage>
   }
 
   Widget _spinIcon(Color c) {
-    return SizedBox(
-      width: 20,
-      height: 20,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          RotationTransition(
-            turns: _spinCtrl,
-            child: Icon(Icons.hourglass_bottom, color: c, size: 16),
-          ),
-          SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 1.8,
-              valueColor: AlwaysStoppedAnimation<Color>(c),
-            ),
-          ),
-        ],
-      ),
-    );
+    // ⭐ ໃຊ້ສີເດີມຂອງ loader — ບໍ່ override ຫຍັງ
+    return const RotatingSquaresLoader(size: 24);
   }
 
   void _onStatusTap(SalesController ctrl, SaleOrderEntity sale) {

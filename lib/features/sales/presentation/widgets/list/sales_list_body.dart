@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:wood/core/constants/specific/sale_style.dart';
+import 'package:wood/core/widgets/global/loading/rotating_squares_loader.dart';
 import 'package:wood/features/auth/presentation/controllers/auth_controller.dart';
 
 import '../../controllers/sales_controller.dart';
 import '../../controllers/sales_list_controller.dart';
 import '../sale_card.dart';
-import '../sales_list_skeleton.dart';
 import 'sales_date_header.dart';
 import 'sales_list_empty.dart';
 
@@ -26,8 +26,11 @@ class SalesListBody extends StatelessWidget {
     final isAdmin = Get.find<AuthController>().isAdmin;
 
     return Obx(() {
+      // ⭐ ໂຫຼດຄັ້ງທຳອິດ — RotatingSquaresLoader ຄືກັບ detail
       if (sales.isLoading.value && sales.allSalesList.isEmpty) {
-        return const SalesListSkeleton(count: 5);
+        return const Center(
+          child: RotatingSquaresLoader(size: 64),
+        );
       }
 
       final rev = sales.salesRevision.value;
@@ -64,13 +67,12 @@ class SalesListBody extends StatelessWidget {
           padding: SaleStyle.padListFAB,
           itemCount: displayKeys.length + (hasMore ? 1 : 0),
           itemBuilder: (context, index) {
+            // ⭐ ໂຫຼດເພີ່ມ — RotatingSquaresLoader ຄືກັບ detail
             if (index == displayKeys.length) {
-              return Padding(
+              return const Padding(
                 padding: SaleStyle.padLoadMore,
                 child: Center(
-                  child: CircularProgressIndicator(
-                    color: SaleStyle.primary,
-                  ),
+                  child: RotatingSquaresLoader(size: 40),
                 ),
               );
             }

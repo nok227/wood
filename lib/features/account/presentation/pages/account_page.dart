@@ -28,29 +28,24 @@ class AccountPage extends StatelessWidget {
       body: Column(
         children: [
           // ── Banner + Buttons (hide/show) ──
-          Obx(() => AnimatedSize(
-                duration: AccountStyle.normal,
-                curve: Curves.easeOutCubic,
-                child: AnimatedOpacity(
-                  duration: AccountStyle.fast,
-                  opacity: header.bannerVisible.value ? 1 : 0,
-                  child: header.bannerVisible.value
-                      ? Obx(() => Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              AccountBalanceBanner(
-                                balance: controller.balance,
-                                cashBalance: controller.cashBalance,
-                                transferBalance: controller.transferBalance,
-                              ),
-                              AccountActionButtons(
-                                onTap: (t) => _openForm(t),
-                              ),
-                            ],
-                          ))
-                      : const SizedBox(width: double.infinity),
-                ),
-              )),
+          // ⭐ 1) Banner — ສະແດງຕະຫຼອດ (ນອກ Obx)
+          AccountBalanceBanner(
+            balance: controller.balance,
+            cashBalance: controller.cashBalance,
+            transferBalance: controller.transferBalance,
+          ),
+
+          // ⭐ 2) ປຸ່ມ ຮັບ/ຈ່າຍ — ຊ່ອນ/ສະແດງ ຕາມ scroll
+          Obx(
+            () => AnimatedSize(
+              duration: AccountStyle.normal,
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter, // ຍຸບຈາກເທິງລົງ → ບໍ່ກະຕຸກ
+              child: header.actionsVisible.value
+                  ? AccountActionButtons(onTap: (t) => _openForm(t))
+                  : const SizedBox(width: double.infinity),
+            ),
+          ),
 
           // ── List ──
           Expanded(

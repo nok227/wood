@@ -597,6 +597,7 @@ class SaleStyle {
   static const String detailNoteLabel = 'ໝາຍເຫດ';
   static const String detailMismatchLabel = 'ເຫດຜົນບັນຊີບໍ່ຕົງ';
   static const String detailCashPrefix = 'ຈ່າຍສົດ';
+  static const String detailAmountDue = 'ຈຳນວນທີ່ຕ້ອງຈ່າຍ';
   static const String detailTransferPrefix = 'ຈ່າຍໂອນ';
   static const String detailReceived = 'ຮັບມາ';
   static const String detailChange = 'ເງິນທອນ';

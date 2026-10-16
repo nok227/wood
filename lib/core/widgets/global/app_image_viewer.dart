@@ -49,6 +49,15 @@ class _AppImageViewerState extends State<AppImageViewer> {
   final TransformationController _transform = TransformationController();
   bool _isZoomed = false;
 
+  // ⭐ ສຳລັບ double-tap zoom ຕາມຈຸດທີ່ແຕະ
+  TapDownDetails? _doubleTapDetails;
+
+  // ⭐ ສຳລັບ swipe-to-close
+  double? _downY;
+  double? _downX;
+  static const double _minSwipe = 80;
+  static const double _hRatio = 1.3;
+
   @override
   void initState() {
     super.initState();
@@ -59,12 +68,59 @@ class _AppImageViewerState extends State<AppImageViewer> {
 
   void _onTransform() {
     final z = _transform.value.getMaxScaleOnAxis() > 1.05;
-    if (z != _isZoomed && mounted) setState(() => _isZoomed = z);
+    if (z != _isZoomed && mounted) {
+      setState(() => _isZoomed = z);
+    }
   }
 
   void _reset() {
     _transform.value = Matrix4.identity();
     _isZoomed = false;
+  }
+
+  /// ⭐ Double-tap → zoom 2.5x ຕາມຈຸດທີ່ແຕະ ຫຼື reset
+  void _handleDoubleTap() {
+    final details = _doubleTapDetails;
+    if (details == null) {
+      _reset();
+      return;
+    }
+
+    if (_isZoomed) {
+      _reset();
+    } else {
+      final pos = details.localPosition;
+      const scale = 2.5;
+      final x = -pos.dx * (scale - 1);
+      final y = -pos.dy * (scale - 1);
+      _transform.value = Matrix4.identity()
+        ..translate(x, y)
+        ..scale(scale);
+    }
+  }
+
+  /// ⭐ ຈັບ swipe ດ້ວຍ Listener (ບໍ່ແຍ່ງ gesture ກັບ InteractiveViewer)
+  void _onPointerDown(PointerDownEvent e) {
+    _downX = e.position.dx;
+    _downY = e.position.dy;
+  }
+
+  void _onPointerUp(PointerUpEvent e) {
+    final dx0 = _downX;
+    final dy0 = _downY;
+    _downX = null;
+    _downY = null;
+
+    if (!widget.closeOnSwipe || _isZoomed) return;
+    if (dx0 == null || dy0 == null) return;
+
+    final dx = e.position.dx - dx0;
+    final dy = e.position.dy - dy0;
+
+    if (dy.abs() < _minSwipe) return;
+    if (dy.abs() < dx.abs() * _hRatio) return;
+
+    Navigator.of(context).maybePop();
   }
 
   @override
@@ -79,6 +135,7 @@ class _AppImageViewerState extends State<AppImageViewer> {
   Widget build(BuildContext context) {
     final total = widget.images.length;
     final current = widget.images[_index];
+
     return Scaffold(
       backgroundColor: AppColors.black,
       appBar: AppBar(
@@ -98,54 +155,56 @@ class _AppImageViewerState extends State<AppImageViewer> {
             ),
         ],
       ),
-      body: PageView.builder(
-        controller: _pageController,
-        itemCount: total,
-        onPageChanged: (i) {
-          setState(() => _index = i);
-          _reset();
-        },
-        itemBuilder: (_, i) {
-          final isCurrent = i == _index;
-          final viewer = InteractiveViewer(
-            transformationController: isCurrent ? _transform : null,
-            minScale: 1,
-            maxScale: 5,
-            child: Center(
-              child: CachedNetworkImage(
-                imageUrl: widget.images[i].url,
-                fit: BoxFit.contain,
-                placeholder: (c, u) => const Center(
-                  child: CircularProgressIndicator(color: AppColors.white),
-                ),
-                errorWidget: (_, _, _) => const Icon(
-                  Icons.broken_image,
-                  size: 64,
-                  color: AppColors.white54,
+      body: Listener(
+        onPointerDown: _onPointerDown,
+        onPointerUp: _onPointerUp,
+        child: PageView.builder(
+          controller: _pageController,
+          // ⭐ ຢຸດປັດໜ້າ ເມື່ອ zoom ຢູ່
+          physics: _isZoomed
+              ? const NeverScrollableScrollPhysics()
+              : const PageScrollPhysics(),
+          itemCount: total,
+          onPageChanged: (i) {
+            setState(() => _index = i);
+            _reset();
+          },
+          itemBuilder: (_, i) {
+            final isCurrent = i == _index;
+
+            // ⭐ InteractiveViewer ຢູ່ໃນ GestureDetector ທີ່ຈັບ double-tap
+            return GestureDetector(
+              onDoubleTapDown: isCurrent
+                  ? (d) => _doubleTapDetails = d
+                  : null,
+              onDoubleTap: isCurrent ? _handleDoubleTap : null,
+              child: InteractiveViewer(
+                transformationController: isCurrent ? _transform : null,
+                minScale: 1,
+                maxScale: 5,
+                panEnabled: true,
+                scaleEnabled: true,
+                clipBehavior: Clip.none,
+                child: Center(
+                  child: CachedNetworkImage(
+                    imageUrl: widget.images[i].url,
+                    fit: BoxFit.contain,
+                    placeholder: (c, u) => const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.white,
+                      ),
+                    ),
+                    errorWidget: (_, _, _) => const Icon(
+                      Icons.broken_image,
+                      size: 64,
+                      color: AppColors.white54,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          );
-
-          if (!isCurrent) return viewer;
-          if (!widget.closeOnSwipe) return viewer;
-
-          return Dismissible(
-            key: ValueKey('viewer-${widget.images[i].url}'),
-            direction: _isZoomed
-                ? DismissDirection.none
-                : DismissDirection.vertical,
-            dismissThresholds: const {
-              DismissDirection.up: 0.25,
-              DismissDirection.down: 0.25,
-            },
-            confirmDismiss: (_) async {
-              Navigator.of(context).maybePop();
-              return false;
-            },
-            child: viewer,
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

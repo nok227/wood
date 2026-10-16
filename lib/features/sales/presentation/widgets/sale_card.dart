@@ -12,6 +12,7 @@ import 'package:wood/features/sales/presentation/pages/detail/sale_detail_page.d
 import 'package:wood/features/wood_products/presentation/widgets/option_tile.dart';
 
 import '../../domain/entities/sale_order_entity.dart';
+import 'package:wood/core/widgets/global/loading/rotating_squares_loader.dart';
 
 final ValueNotifier<String?> _openMenuId = ValueNotifier<String?>(null);
 
@@ -1135,11 +1136,8 @@ class _Waiting extends StatelessWidget {
   const _Waiting({this.size = 18});
 
   @override
-  Widget build(BuildContext context) => Icon(
-    Icons.hourglass_bottom,
-    size: size * 0.85,
-    color: SaleStyle.amber800,
-  );
+  Widget build(BuildContext context) =>
+      RotatingSquaresLoader(size: size); // ⭐ ສີເດີມ
 }
 
 class _Checkmark extends StatelessWidget {
