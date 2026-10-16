@@ -11,6 +11,7 @@ import '../widgets/account_action_buttons.dart';
 import '../widgets/account_balance_banner.dart';
 import '../widgets/account_delete_dialog.dart';
 import '../widgets/account_form_sheet.dart';
+import '../widgets/account_period_filter.dart';
 import '../widgets/account_session_list.dart';
 import '../widgets/account_skeleton.dart';
 
@@ -36,7 +37,10 @@ class AccountPage extends StatelessWidget {
             ),
           ),
 
-          // ⭐ 2) ປຸ່ມ ຮັບ/ຈ່າຍ — ຊ່ອນ/ສະແດງ ຕາມ scroll
+          // ⭐ 2) Filter ໄລຍະ + ກາດສະຫຼຸບ
+          AccountPeriodFilter(controller: controller),
+
+          // ⭐ 3) ປຸ່ມ ຮັບ/ຈ່າຍ — ຊ່ອນ/ສະແດງ ຕາມ scroll
           Obx(
             () => AnimatedSize(
               duration: AccountStyle.normal,

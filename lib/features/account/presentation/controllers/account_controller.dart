@@ -9,15 +9,34 @@ import '../../domain/entities/account_transaction.dart';
 import '../../domain/repositories/account_repository.dart';
 import '../models/session_group.dart';
 
+// ══════════════════════════════════════════════
+// ⭐ ໄລຍະເວລາ
+// ══════════════════════════════════════════════
+enum AccountPeriod {
+  today('ມື້ນີ້', 1),
+  twoDays('2 ວັນ', 2),
+  threeDays('3 ວັນ', 3),
+  fourDays('4 ວັນ', 4),
+  fiveDays('5 ວັນ', 5),
+  sixDays('6 ວັນ', 6),
+  week('7 ວັນ', 7),
+  all('ທັງໝົດ', 0);
+
+  final String label;
+  final int days; // 0 = ທັງໝົດ
+  const AccountPeriod(this.label, this.days);
+}
+
 class AccountController extends GetxController {
   final AccountRepository repository;
   AccountController({required this.repository});
 
   final allTransactions = <AccountTransaction>[].obs;
   final isLoading = false.obs;
+  final selectedPeriod = AccountPeriod.today.obs;
 
   // ══════════════════════════════════════════════
-  // Derived state
+  // Derived state — ທັງໝົດ
   // ══════════════════════════════════════════════
   double get totalIn => allTransactions
       .where((t) => t.isIncome)
@@ -37,7 +56,36 @@ class AccountController extends GetxController {
       .where((t) => t.isTransfer)
       .fold(0.0, (s, t) => s + (t.isIncome ? t.totalAmount : -t.totalAmount));
 
-  List<SessionGroup> get sessionGroups => _buildGroups(allTransactions);
+  // ══════════════════════════════════════════════
+  // ⭐ Derived state — ຕາມໄລຍະທີ່ເລືອກ
+  // ══════════════════════════════════════════════
+  void setPeriod(AccountPeriod p) => selectedPeriod.value = p;
+
+  List<AccountTransaction> get periodTransactions {
+    if (selectedPeriod.value == AccountPeriod.all) {
+      return allTransactions.toList();
+    }
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final from = today.subtract(
+      Duration(days: selectedPeriod.value.days - 1),
+    );
+    return allTransactions
+        .where((t) => !t.date.isBefore(from))
+        .toList();
+  }
+
+  double get periodIncome => periodTransactions
+      .where((t) => t.isIncome)
+      .fold(0.0, (s, t) => s + t.totalAmount);
+
+  double get periodExpense => periodTransactions
+      .where((t) => t.isExpense)
+      .fold(0.0, (s, t) => s + t.totalAmount);
+
+  double get periodBalance => periodIncome - periodExpense;
+
+  List<SessionGroup> get sessionGroups => _buildGroups(periodTransactions);
 
   @override
   void onInit() {

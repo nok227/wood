@@ -8,6 +8,7 @@ import 'package:wood/core/constants/specific/sale_style.dart';
 import 'package:wood/core/utils/cloudinary_service.dart';
 import '../../../domain/entities/sale_order_entity.dart';
 import '../../controllers/sales_controller.dart';
+import 'package:wood/core/widgets/global/loading/rotating_squares_loader.dart';
 
 class SaleImageEditPage extends StatefulWidget {
   final SaleOrderEntity sale;
@@ -46,10 +47,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
         child: Wrap(
           children: [
             ListTile(
-              leading: Icon(
-                Icons.photo_camera,
-                color: SaleStyle.brown700,
-              ),
+              leading: Icon(Icons.photo_camera, color: SaleStyle.brown700),
               title: const Text(SaleStyle.pickCamera),
               onTap: () async {
                 Get.back();
@@ -64,10 +62,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
               },
             ),
             ListTile(
-              leading: Icon(
-                Icons.photo_library,
-                color: SaleStyle.brown700,
-              ),
+              leading: Icon(Icons.photo_library, color: SaleStyle.brown700),
               title: const Text(SaleStyle.pickGallery),
               onTap: () async {
                 Get.back();
@@ -275,10 +270,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CircularProgressIndicator(
-                          color: SaleStyle.brown700,
-                          strokeWidth: 3,
-                        ),
+                        const RotatingSquaresLoader(size: 56), // ⭐ ໃຊ້ຂອງເຮົາ
                         const SizedBox(height: 14),
                         Text(SaleStyle.saving, style: SaleStyle.textLoadingBox),
                       ],
@@ -329,14 +321,7 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
                 child: ElevatedButton.icon(
                   onPressed: _saving ? null : _save,
                   icon: _saving
-                      ? const SizedBox(
-                          width: SaleStyle.loadingBoxSpinner,
-                          height: SaleStyle.loadingBoxSpinner,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: SaleStyle.white,
-                          ),
-                        )
+                      ? const RotatingSquaresLoader(size: 22) // ⭐ ໃຊ້ຂອງເຮົາ
                       : const Icon(Icons.save),
                   label: Text(
                     _saving ? SaleStyle.saving : SaleStyle.save,
@@ -484,8 +469,8 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
       GestureDetector(
         onTap: onAdd,
         child: Container(
-          width: SaleStyle.thumbSaleLg,
-          height: SaleStyle.thumbSaleLg,
+          width: SaleStyle.thumbSaleLg, // 90
+          height: SaleStyle.thumbSaleLg * 16 / 9, // ⭐ 160 (9/16)
           decoration: BoxDecoration(
             color: SaleStyle.grey50,
             border: Border.all(
@@ -526,8 +511,8 @@ class _SaleImageEditPageState extends State<SaleImageEditPage> {
       clipBehavior: Clip.none,
       children: [
         Container(
-          width: SaleStyle.thumbSaleLg,
-          height: SaleStyle.thumbSaleLg,
+          width: SaleStyle.thumbSaleLg, // 90
+          height: SaleStyle.thumbSaleLg * 16 / 9, // ⭐ 160 (9/16)
           decoration: BoxDecoration(
             borderRadius: SaleStyle.r10,
             border: Border.all(

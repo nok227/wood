@@ -68,7 +68,6 @@ class SaleCard extends StatelessWidget {
           .map((u) => AppImageItem(u, label: SaleStyle.previewImgDebt)),
     ];
 
-    // helper — หา index ของ url ใน images
     int idxOf(String? url) {
       if (url == null) return 0;
       final i = images.indexWhere((e) => e.url == url);
@@ -98,25 +97,8 @@ class SaleCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── 3 ຮູບ ──
-                  Column(
-                    children: [
-                      _thumb(
-                        payUrl,
-                        payUrl == null ? null : () => openAt(payUrl),
-                      ),
-                      SaleStyle.gap4,
-                      _thumb(
-                        billUrl,
-                        billUrl == null ? null : () => openAt(billUrl),
-                      ),
-                      SaleStyle.gap4,
-                      _thumb(
-                        thirdUrl,
-                        thirdUrl == null ? null : () => openAt(thirdUrl),
-                      ),
-                    ],
-                  ),
+                  // ⭐ ຮູບແບບ Adaptive
+                  _buildThumbs(payUrl, billUrl, thirdUrl, openAt),
                   const SizedBox(width: 10),
                   Expanded(child: _buildInfo(ctrl, fmt)),
                   _FloatingActionsButton(
@@ -133,6 +115,61 @@ class SaleCard extends StatelessWidget {
       ),
     );
   }
+
+ Widget _buildThumbs(
+  String? payUrl,
+  String? billUrl,
+  String? thirdUrl,
+  void Function(String?) openAt,
+) {
+  final bool hasThird = thirdUrl != null;
+  const double gapV = 4;
+
+  // ⭐ ຄວາມກວ້າງຂອງ column ຄົງທີ່ = thumbSale (76)
+  final double columnW = SaleStyle.thumbSale;
+
+  // ກວ້າງຕໍ່ຮູບ: 3 ຮູບ → 50, 2 ຮູບ → 76
+  final double imgW = hasThird ? 50.0 : columnW;
+
+  // ສູງ 9/16
+  final double imgH = imgW * 16 / 9;
+
+  final int count = hasThird ? 3 : 2;
+  final double blockH = imgH * count + gapV * (count - 1);
+
+  // ⭐ ຈັດຮູບຢູ່ກາງ columnW
+  return SizedBox(
+    width: columnW,
+    height: blockH,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.center, // ⭐ ຈັດກາງ
+      children: [
+        _thumb(
+          payUrl,
+          payUrl == null ? null : () => openAt(payUrl),
+          width: imgW,
+          height: imgH,
+        ),
+        const SizedBox(height: gapV),
+        _thumb(
+          billUrl,
+          billUrl == null ? null : () => openAt(billUrl),
+          width: imgW,
+          height: imgH,
+        ),
+        if (hasThird) ...[
+          const SizedBox(height: gapV),
+          _thumb(
+            thirdUrl,
+            () => openAt(thirdUrl),
+            width: imgW,
+            height: imgH,
+          ),
+        ],
+      ],
+    ),
+  );
+}
 
   Widget _buildInfo(SalesController ctrl, NumberFormat fmt) {
     return Column(
@@ -399,19 +436,25 @@ class SaleCard extends StatelessWidget {
     return null;
   }
 
-  Widget _thumb(String? url, VoidCallback? onTap) {
+  /// ⭐ ຮັບ width + height ຈາກພາຍນອກ
+  Widget _thumb(
+    String? url,
+    VoidCallback? onTap, {
+    required double width,
+    required double height,
+  }) {
     return GestureDetector(
       onTap: url != null ? onTap : null,
       child: ClipRRect(
         borderRadius: SaleStyle.thumbRadius,
         child: SizedBox(
-          width: SaleStyle.thumbSale,
-          height: SaleStyle.thumbSaleH,
+          width: width,
+          height: height,
           child: url != null
               ? CachedNetworkImage(
                   imageUrl: url,
-                  fit: BoxFit.contain,
-                  memCacheWidth: 152,
+                  fit: BoxFit.cover,
+                  memCacheWidth: 300,
                   placeholder: (c, u) => const SizedBox.shrink(),
                   errorWidget: (_, _, _) => _noImagePlaceholder(),
                 )
@@ -1137,7 +1180,7 @@ class _Waiting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      RotatingSquaresLoader(size: size); // ⭐ ສີເດີມ
+      RotatingSquaresLoader(size: size);
 }
 
 class _Checkmark extends StatelessWidget {

@@ -102,7 +102,7 @@ class _SwipeableImageState extends State<SwipeableImage> {
                     onTap: widget.onTap,
                     child: CachedNetworkImage(
                       imageUrl: widget.imageUrls[i],
-                      fit: BoxFit.contain,
+                      fit: BoxFit.cover,
                       memCacheWidth: 216,
                       fadeInDuration: const Duration(milliseconds: 400),
                       fadeOutDuration: const Duration(milliseconds: 400),

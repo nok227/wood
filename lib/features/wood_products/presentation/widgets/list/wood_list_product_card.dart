@@ -30,7 +30,7 @@ class WoodListProductCard extends StatelessWidget {
         children: [
           SwipeableImage(
             imageUrls: item.imageUrls,
-            width: 72,
+            width: 83, 
             height: 148,
             onTap: item.imageUrls.isEmpty ? null : onImageTap,
           ),

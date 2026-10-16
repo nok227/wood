@@ -192,7 +192,7 @@ class _ShimmerProductCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _box(w: 72, h: 130, r: 8),
+          _box(w: 83, h: 130, r: 8),
           const SizedBox(width: 10),
           Expanded(
             child: SizedBox(

@@ -296,7 +296,11 @@ class SaleStyle {
   static const EdgeInsets padImgHeader = EdgeInsets.fromLTRB(18, 16, 18, 8);
   static const EdgeInsets padImgBody = EdgeInsets.fromLTRB(18, 8, 18, 16);
   static const EdgeInsets padBottomBar = EdgeInsets.fromLTRB(12, 8, 12, 12);
-  static const EdgeInsets padListFAB = EdgeInsets.only(bottom: 200, left: 12, right: 12);
+  static const EdgeInsets padListFAB = EdgeInsets.only(
+    bottom: 200,
+    left: 12,
+    right: 12,
+  );
   static const EdgeInsets padSummary = EdgeInsets.fromLTRB(10, 4, 10, 20);
 
   static const BorderRadius r2 = AppLayout.r4;
@@ -319,8 +323,12 @@ class SaleStyle {
   static const BorderRadius chipRadius = AppLayout.r6;
   static const BorderRadius bannerRadius = AppLayout.r14;
   static const BorderRadius pillRadius = AppLayout.r20;
-  static const BorderRadius topR13 = BorderRadius.vertical(top: Radius.circular(13));
-  static const BorderRadius topR14 = BorderRadius.vertical(top: Radius.circular(14));
+  static const BorderRadius topR13 = BorderRadius.vertical(
+    top: Radius.circular(13),
+  );
+  static const BorderRadius topR14 = BorderRadius.vertical(
+    top: Radius.circular(14),
+  );
 
   static const double iconSm = AppLayout.iconSm;
   static const double iconMd = AppLayout.iconMd;
@@ -432,7 +440,8 @@ class SaleStyle {
   static const String confirmPaymentSub = 'ບັນທຶກວ່າຮັບເງິນຄົບແລ້ວ';
   static const String mismatchBtn = 'ບັນຊີບໍ່ຕົງກັນ';
   static const String mismatchBtnSub = 'ບັນທຶກບັນຫາ · ລໍຖ້າກວດສອບ';
-  static const String deleteConfirmPrefix = 'ຈະລຶບອອກຈາກ Firebase ແລະ Cloudinary ຖາວອນ';
+  static const String deleteConfirmPrefix =
+      'ຈະລຶບອອກຈາກ Firebase ແລະ Cloudinary ຖາວອນ';
   static const String deleteConfirmMsg = 'ຢືນຢັນການລຶບ?';
   static const String saveImageSuccess = 'ບັນທຶກລົງຄັງຮູບແລ້ວ';
   static const String saveImageError = 'ບໍ່ສາມາດບັນທຶກໄດ້';
@@ -619,7 +628,8 @@ class SaleStyle {
   static const String detailAddrPrefix = 'ທີ່ຢູ່';
   static const String detailReason = 'ເຫດຜົນ';
 
-  static const String imgEditHint = 'ແກ້ໄຂໄດ້ສະເພາະຮູບ — ບໍ່ສາມາດແກ້ລາຄາ / ຈຳນວນ / ລູກຄ້າ';
+  static const String imgEditHint =
+      'ແກ້ໄຂໄດ້ສະເພາະຮູບ — ບໍ່ສາມາດແກ້ລາຄາ / ຈຳນວນ / ລູກຄ້າ';
   static const String imgEditPay = 'ຮູບການຊຳລະ';
   static const String imgEditPaySub = 'ຮູບເງິນສົດ / ສະລິບໂອນ';
   static const String imgEditBill = 'ຮູບໃບບິນ';
@@ -703,7 +713,14 @@ class SaleStyle {
   static const String dashIcon = '·';
 
   static const List<int> billDenominations = [
-    100000, 50000, 20000, 10000, 5000, 2000, 1000, 500,
+    100000,
+    50000,
+    20000,
+    10000,
+    5000,
+    2000,
+    1000,
+    500,
   ];
 
   static const double dialogWidth = 8;
@@ -737,7 +754,8 @@ class SaleStyle {
 
   static const Widget gap2 = SizedBox(height: 2, width: 2);
   static const Widget gap3 = SizedBox(height: 3, width: 3);
-  static const Widget gap4 = SizedBox(height: 4, width: 4);
+  static const double gap4Value = 4;
+  static const Widget gap4 = SizedBox(height: gap4Value, width: gap4Value);
   static const Widget gap6 = SizedBox(height: 6, width: 6);
   static const Widget gap10 = SizedBox(height: 10, width: 10);
   static const Widget gap12 = SizedBox(height: 12, width: 12);
@@ -754,23 +772,65 @@ class SaleStyle {
   static const EdgeInsets padH8 = EdgeInsets.symmetric(horizontal: 8);
   static const EdgeInsets padDateHeader = EdgeInsets.fromLTRB(4, 10, 4, 6);
   static const EdgeInsets padLoadMore = EdgeInsets.symmetric(vertical: 20);
-  static const EdgeInsets padFabAction = EdgeInsets.symmetric(horizontal: 18, vertical: 12);
+  static const EdgeInsets padFabAction = EdgeInsets.symmetric(
+    horizontal: 18,
+    vertical: 12,
+  );
   static const EdgeInsets padFilterChip = EdgeInsets.symmetric(horizontal: 4.0);
   static const EdgeInsets padImgCloseBadge = EdgeInsets.all(3);
-  static const EdgeInsets padSectionHeaderImg = EdgeInsets.symmetric(horizontal: 12, vertical: 10);
-  static const EdgeInsets padBadgeTiny = EdgeInsets.symmetric(horizontal: 5, vertical: 1);
+  static const EdgeInsets padSectionHeaderImg = EdgeInsets.symmetric(
+    horizontal: 12,
+    vertical: 10,
+  );
+  static const EdgeInsets padBadgeTiny = EdgeInsets.symmetric(
+    horizontal: 5,
+    vertical: 1,
+  );
 
   // TextStyles (dynamic บางตัว)
-  static const TextStyle textEmptyList = TextStyle(fontSize: 14, color: AppColors.grey600);
-  static const TextStyle textFabAction = TextStyle(color: AppColors.white, fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.2);
-  static const TextStyle textFilterChip = TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600);
-  static const TextStyle textFilterChipSelected = TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold);
-  static TextStyle get textInfoHint => TextStyle(fontSize: 12, color: AppColors.brown800, fontWeight: FontWeight.w600);
-  static const TextStyle textImgSectionTitle = TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900);
+  static const TextStyle textEmptyList = TextStyle(
+    fontSize: 14,
+    color: AppColors.grey600,
+  );
+  static const TextStyle textFabAction = TextStyle(
+    color: AppColors.white,
+    fontSize: 14,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.2,
+  );
+  static const TextStyle textFilterChip = TextStyle(
+    fontSize: 12.5,
+    fontWeight: FontWeight.w600,
+  );
+  static const TextStyle textFilterChipSelected = TextStyle(
+    fontSize: 12.5,
+    fontWeight: FontWeight.bold,
+  );
+  static TextStyle get textInfoHint => TextStyle(
+    fontSize: 12,
+    color: AppColors.brown800,
+    fontWeight: FontWeight.w600,
+  );
+  static const TextStyle textImgSectionTitle = TextStyle(
+    fontSize: 13.5,
+    fontWeight: FontWeight.w900,
+  );
   static const TextStyle textImgSectionSub = TextStyle(fontSize: 11);
-  static TextStyle get textImgEditAdd => TextStyle(fontSize: 11, color: AppColors.brown600, fontWeight: FontWeight.bold);
-  static const TextStyle textBadgeNew = TextStyle(color: AppColors.white, fontSize: 9, fontWeight: FontWeight.bold);
-  static TextStyle get textLoadingBox => TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.brown800);
+  static TextStyle get textImgEditAdd => TextStyle(
+    fontSize: 11,
+    color: AppColors.brown600,
+    fontWeight: FontWeight.bold,
+  );
+  static const TextStyle textBadgeNew = TextStyle(
+    color: AppColors.white,
+    fontSize: 9,
+    fontWeight: FontWeight.bold,
+  );
+  static TextStyle get textLoadingBox => TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
+    color: AppColors.brown800,
+  );
 
   // EXTEND 3
   static const double iconDot4 = 4;
@@ -841,23 +901,94 @@ class SaleStyle {
   static const double borderW2_5 = 2.5;
 
   // TextStyles (มี brown → ต้อง get)
-  static TextStyle get txPreviewTitle => TextStyle(color: AppColors.brown800, fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 0.3);
-  static const TextStyle txPreviewSub = TextStyle(color: AppColors.grey500, fontSize: 10.5, fontWeight: FontWeight.w600, letterSpacing: 0.5);
-  static TextStyle get txItemCount => TextStyle(color: AppColors.brown700, fontSize: 11.5, fontWeight: FontWeight.bold);
-  static const TextStyle txSectionLabel = TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: AppColors.grey500, letterSpacing: 1.5);
-  static const TextStyle txPreviewItemName = TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: AppColors.black87);
-  static const TextStyle txPreviewItemSub = TextStyle(fontSize: 11.5, color: AppColors.grey600, fontWeight: FontWeight.w500);
-  static const TextStyle txPreviewItemSubBold = TextStyle(fontSize: 11.5, color: AppColors.grey600, fontWeight: FontWeight.w700);
-  static TextStyle get txPreviewItemPrice => TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.brown800, letterSpacing: 0.2);
-  static const TextStyle txPreviewMoneyLabel = TextStyle(fontSize: 12.5, color: AppColors.grey600);
-  static const TextStyle txPreviewMoneyValue = TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.black87);
-  static const TextStyle txPreviewMoneyValueBold = TextStyle(fontSize: 13, fontWeight: FontWeight.w900);
-  static const TextStyle txPreviewNetLabel = TextStyle(color: AppColors.green800, fontSize: 13.5, fontWeight: FontWeight.w900, letterSpacing: 0.3);
-  static const TextStyle txPreviewNetValue = TextStyle(color: AppColors.green800, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 0.3);
-  static const TextStyle txPreviewInfoLabel = TextStyle(fontSize: 12, color: AppColors.grey600);
-  static const TextStyle txPreviewInfoValue = TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.black87);
-  static const TextStyle txPreviewImgText = TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.grey700);
-  static const TextStyle txPreviewFooter = TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.grey600);
+  static TextStyle get txPreviewTitle => TextStyle(
+    color: AppColors.brown800,
+    fontSize: 15,
+    fontWeight: FontWeight.w900,
+    letterSpacing: 0.3,
+  );
+  static const TextStyle txPreviewSub = TextStyle(
+    color: AppColors.grey500,
+    fontSize: 10.5,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.5,
+  );
+  static TextStyle get txItemCount => TextStyle(
+    color: AppColors.brown700,
+    fontSize: 11.5,
+    fontWeight: FontWeight.bold,
+  );
+  static const TextStyle txSectionLabel = TextStyle(
+    fontSize: 10.5,
+    fontWeight: FontWeight.w900,
+    color: AppColors.grey500,
+    letterSpacing: 1.5,
+  );
+  static const TextStyle txPreviewItemName = TextStyle(
+    fontSize: 13.5,
+    fontWeight: FontWeight.bold,
+    color: AppColors.black87,
+  );
+  static const TextStyle txPreviewItemSub = TextStyle(
+    fontSize: 11.5,
+    color: AppColors.grey600,
+    fontWeight: FontWeight.w500,
+  );
+  static const TextStyle txPreviewItemSubBold = TextStyle(
+    fontSize: 11.5,
+    color: AppColors.grey600,
+    fontWeight: FontWeight.w700,
+  );
+  static TextStyle get txPreviewItemPrice => TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w900,
+    color: AppColors.brown800,
+    letterSpacing: 0.2,
+  );
+  static const TextStyle txPreviewMoneyLabel = TextStyle(
+    fontSize: 12.5,
+    color: AppColors.grey600,
+  );
+  static const TextStyle txPreviewMoneyValue = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
+    color: AppColors.black87,
+  );
+  static const TextStyle txPreviewMoneyValueBold = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w900,
+  );
+  static const TextStyle txPreviewNetLabel = TextStyle(
+    color: AppColors.green800,
+    fontSize: 13.5,
+    fontWeight: FontWeight.w900,
+    letterSpacing: 0.3,
+  );
+  static const TextStyle txPreviewNetValue = TextStyle(
+    color: AppColors.green800,
+    fontSize: 22,
+    fontWeight: FontWeight.w900,
+    letterSpacing: 0.3,
+  );
+  static const TextStyle txPreviewInfoLabel = TextStyle(
+    fontSize: 12,
+    color: AppColors.grey600,
+  );
+  static const TextStyle txPreviewInfoValue = TextStyle(
+    fontSize: 12.5,
+    fontWeight: FontWeight.w700,
+    color: AppColors.black87,
+  );
+  static const TextStyle txPreviewImgText = TextStyle(
+    fontSize: 11.5,
+    fontWeight: FontWeight.w700,
+    color: AppColors.grey700,
+  );
+  static const TextStyle txPreviewFooter = TextStyle(
+    fontSize: 11.5,
+    fontWeight: FontWeight.w600,
+    color: AppColors.grey600,
+  );
 
   static const double skelCardRadius = 12;
   static const double skelCardPad = 10;
